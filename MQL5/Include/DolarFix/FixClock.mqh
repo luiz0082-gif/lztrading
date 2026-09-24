@@ -91,6 +91,18 @@ datetime ClkLondonToServer(const datetime lon)
    return gmt + ClkServerOffset(gmt) * 3600;
   }
 
+datetime ClkServerToNY(const datetime srv)
+  {
+   datetime ny = ClkServerToGMT(srv) - 5 * 3600;
+   return ny + (ClkIsUSDST(ny) ? 3600 : 0);
+  }
+
+datetime ClkNYToServer(const datetime ny)
+  {
+   datetime gmt = ny + 5 * 3600 - (ClkIsUSDST(ny) ? 3600 : 0);
+   return gmt + ClkServerOffset(gmt) * 3600;
+  }
+
 datetime ClkDayStart(const datetime t) { return (datetime)((long)t - (long)t % 86400); }
 
 bool ClkIsWeekday(const datetime t)
