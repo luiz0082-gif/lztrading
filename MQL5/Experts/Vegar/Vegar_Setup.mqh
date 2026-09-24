@@ -316,6 +316,44 @@ bool Vegar_FindLastMicroSwing(const ENUM_VEGAR_BIAS direction,const datetime bef
    return false;
   }
 
+// RC9: nivel interno do MSS. A vela do sweep e' a vela fechada de shift 1
+// (before_time). Procura, das velas mais recentes para as antigas, o pivo
+// 1/1 mais proximo que esteja a no maximo InpMSSMaxDistanciaATR do extremo
+// do sweep. Sem pivo nessa faixa, a quebra exigida e' a maxima (compra) ou
+// minima (venda) da vela do sweep e da vela anterior a ele.
+bool Vegar_FindInternalMSSLevel(const ENUM_VEGAR_BIAS direction,const datetime before_time,const double sweep_extreme,double &level)
+  {
+   level=0.0; MqlRates r[]; ENUM_TIMEFRAMES tf=Vegar_ExecutionTF();
+   if(!Vegar_CopyRates(tf,1,40,r)) return false;
+   double atr=Vegar_ATR(tf,1); if(atr<=0.0 || sweep_extreme<=0.0) return false;
+   int s=-1;
+   for(int i=0;i<ArraySize(r);i++) if(r[i].time==before_time) { s=i; break; }
+   if(s<0 || s+2>=ArraySize(r)) return false;
+   double maxDist=InpMSSMaxDistanciaATR*atr;
+   for(int i=s+1;i<ArraySize(r)-1;i++)
+     {
+      if(direction==VEGAR_BIAS_BUYER)
+        {
+         if(r[i].high-sweep_extreme>maxDist) continue;
+         if(r[i].high>r[i+1].high && r[i].high>=r[i-1].high) { level=r[i].high; return true; }
+        }
+      else if(direction==VEGAR_BIAS_SELLER)
+        {
+         if(sweep_extreme-r[i].low>maxDist) continue;
+         if(r[i].low<r[i+1].low && r[i].low<=r[i-1].low) { level=r[i].low; return true; }
+        }
+     }
+   if(direction==VEGAR_BIAS_BUYER)  { level=MathMax(r[s].high,r[s+1].high); return true; }
+   if(direction==VEGAR_BIAS_SELLER) { level=MathMin(r[s].low,r[s+1].low);   return true; }
+   return false;
+  }
+
+bool Vegar_FindMSSLevel(const ENUM_VEGAR_BIAS direction,const datetime before_time,const double sweep_extreme,double &level)
+  {
+   if(InpModoMSS==VEGAR_MSS_INTERNO) return Vegar_FindInternalMSSLevel(direction,before_time,sweep_extreme,level);
+   return Vegar_FindLastMicroSwing(direction,before_time,level);
+  }
+
 bool Vegar_SweepConfirmed(const SVegarZone &z,const MqlRates &bar,bool &too_deep,double &extreme)
   {
    too_deep=false; extreme=0.0;
@@ -351,8 +389,8 @@ bool Vegar_DisplacementConfirmed(const ENUM_VEGAR_BIAS direction,const MqlRates 
    double range=bar.high-bar.low; if(range<=0.0) return false;
    double avg20=Vegar_AvgRange(Vegar_ExecutionTF(),2,20); if(avg20<=0.0) return false;
    double body=MathAbs(bar.close-bar.open); double cl=(bar.close-bar.low)/range;
-   if(direction==VEGAR_BIAS_BUYER) return (range>=2.0*avg20 && body/range>=0.60 && cl>=0.75);
-   if(direction==VEGAR_BIAS_SELLER) return (range>=2.0*avg20 && body/range>=0.60 && cl<=0.25);
+   if(direction==VEGAR_BIAS_BUYER) return (range>=InpDisplacementRangeMult*avg20 && body/range>=0.60 && cl>=0.75);
+   if(direction==VEGAR_BIAS_SELLER) return (range>=InpDisplacementRangeMult*avg20 && body/range>=0.60 && cl<=0.25);
    return false;
   }
 
@@ -467,7 +505,7 @@ void Vegar_ProcessActiveOpportunity(const MqlRates &bar)
          gVegarOpportunity.sweep_same_bar_as_approach=(gVegarOpportunity.created_time==bar.time);
          int szi=Vegar_FindZoneIndex(gVegarOpportunity.source_zone_id);
          if(szi>=0) gVegarOpportunity.source_zone_post_state=gVegarZones[szi].state;
-         if(!Vegar_FindLastMicroSwing(gVegarOpportunity.direction,bar.time,gVegarOpportunity.micro_break_level))
+         if(!Vegar_FindMSSLevel(gVegarOpportunity.direction,bar.time,extreme,gVegarOpportunity.micro_break_level))
            { Vegar_TerminateOpportunity(VEGAR_SETUP_EXPIRED,MSS_NOT_CONFIRMED,"NO_MICRO_SWING"); return; }
          Vegar_SetOpportunityState(VEGAR_SETUP_SWEEP_CONFIRMED,VEGAR_REASON_NONE,"SWEEP_CONFIRMED");
          Vegar_SetOpportunityState(VEGAR_SETUP_WAITING_MSS,VEGAR_REASON_NONE,"WAITING_MSS");
@@ -494,7 +532,7 @@ void Vegar_ProcessActiveOpportunity(const MqlRates &bar)
          gVegarOpportunity.mss_time=bar.time; gVegarOpportunity.bars_since_mss=0;
          Vegar_SetOpportunityState(VEGAR_SETUP_MSS_CONFIRMED,VEGAR_REASON_NONE,"MSS_CONFIRMED");
          double __avg_disp=Vegar_AvgRange(Vegar_ExecutionTF(),2,20); double __rng_disp=bar.high-bar.low;
-         gVegarOpportunity.displacement_required_range_ratio=2.0;
+         gVegarOpportunity.displacement_required_range_ratio=InpDisplacementRangeMult;
          gVegarOpportunity.displacement_observed_range_ratio=(__avg_disp>0.0?__rng_disp/__avg_disp:0.0);
          gVegarOpportunity.displacement_required_close_location=(gVegarOpportunity.direction==VEGAR_BIAS_BUYER?0.75:0.25);
          gVegarOpportunity.displacement_observed_close_location=(__rng_disp>0.0?(bar.close-bar.low)/__rng_disp:0.0);
@@ -511,10 +549,10 @@ void Vegar_ProcessActiveOpportunity(const MqlRates &bar)
    if(gVegarOpportunity.state==VEGAR_SETUP_WAITING_DISPLACEMENT)
      {
       gVegarOpportunity.bars_since_mss++;
-      if(gVegarOpportunity.bars_since_mss>1)
+      if(gVegarOpportunity.bars_since_mss>InpMaxBarsMssToDisplacement)
         { Vegar_TerminateOpportunity(VEGAR_SETUP_EXPIRED,DISPLACEMENT_NOT_CONFIRMED,"MSS_TO_DISPLACEMENT_EXPIRED"); return; }
       double __avg_disp2=Vegar_AvgRange(Vegar_ExecutionTF(),2,20); double __rng_disp2=bar.high-bar.low;
-      gVegarOpportunity.displacement_required_range_ratio=2.0;
+      gVegarOpportunity.displacement_required_range_ratio=InpDisplacementRangeMult;
       gVegarOpportunity.displacement_observed_range_ratio=(__avg_disp2>0.0?__rng_disp2/__avg_disp2:0.0);
       gVegarOpportunity.displacement_required_close_location=(gVegarOpportunity.direction==VEGAR_BIAS_BUYER?0.75:0.25);
       gVegarOpportunity.displacement_observed_close_location=(__rng_disp2>0.0?(bar.close-bar.low)/__rng_disp2:0.0);

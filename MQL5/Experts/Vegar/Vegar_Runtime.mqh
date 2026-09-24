@@ -921,7 +921,7 @@ void Vegar_RC8ObserveClosedBar(const MqlRates &bar)
          gVegarObservationCandidate.source_zone_post_state=VEGAR_ZONE_SWEPT;
          gVegarObservationZones[zi].state=VEGAR_ZONE_SWEPT;
          gVegarObservationZones[zi].last_changed=TimeTradeServer();
-         if(!Vegar_FindLastMicroSwing(gVegarObservationCandidate.direction,bar.time,gVegarObservationCandidate.micro_break_level))
+         if(!Vegar_FindMSSLevel(gVegarObservationCandidate.direction,bar.time,ex,gVegarObservationCandidate.micro_break_level))
            {
             if(gVegarObservationCandidate.setup_family==VEGAR_SETUP_FAMILY_MICRO_CONTINUATION)
                Vegar_RC8ObservationTelemetry("NO_MICRO_SWING",VEGAR_SETUP_EXPIRED,MSS_NOT_CONFIRMED);
@@ -971,7 +971,7 @@ void Vegar_RC8ObserveClosedBar(const MqlRates &bar)
             Vegar_RC8ObservationTelemetry("MSS_CONFIRMED",VEGAR_SETUP_MSS_CONFIRMED,VEGAR_REASON_NONE);
 
          double avg=Vegar_AvgRange(Vegar_ExecutionTF(),2,20),rng=bar.high-bar.low;
-         gVegarObservationCandidate.displacement_required_range_ratio=2.0;
+         gVegarObservationCandidate.displacement_required_range_ratio=InpDisplacementRangeMult;
          gVegarObservationCandidate.displacement_observed_range_ratio=(avg>0.0?rng/avg:0.0);
          gVegarObservationCandidate.displacement_required_close_location=(gVegarObservationCandidate.direction==VEGAR_BIAS_BUYER?0.75:0.25);
          gVegarObservationCandidate.displacement_observed_close_location=(rng>0.0?(bar.close-bar.low)/rng:0.0);
@@ -994,11 +994,11 @@ void Vegar_RC8ObserveClosedBar(const MqlRates &bar)
      {
       gVegarObservationCandidate.bars_since_mss++;
       double avg=Vegar_AvgRange(Vegar_ExecutionTF(),2,20),rng=bar.high-bar.low;
-      gVegarObservationCandidate.displacement_required_range_ratio=2.0;
+      gVegarObservationCandidate.displacement_required_range_ratio=InpDisplacementRangeMult;
       gVegarObservationCandidate.displacement_observed_range_ratio=(avg>0.0?rng/avg:0.0);
       gVegarObservationCandidate.displacement_required_close_location=(gVegarObservationCandidate.direction==VEGAR_BIAS_BUYER?0.75:0.25);
       gVegarObservationCandidate.displacement_observed_close_location=(rng>0.0?(bar.close-bar.low)/rng:0.0);
-      if(gVegarObservationCandidate.bars_since_mss>1)
+      if(gVegarObservationCandidate.bars_since_mss>InpMaxBarsMssToDisplacement)
         {
          if(gVegarObservationCandidate.setup_family==VEGAR_SETUP_FAMILY_MICRO_CONTINUATION)
             Vegar_RC8ObservationTelemetry("MSS_TO_DISPLACEMENT_EXPIRED",VEGAR_SETUP_EXPIRED,DISPLACEMENT_NOT_CONFIRMED);

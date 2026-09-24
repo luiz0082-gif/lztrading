@@ -5,7 +5,7 @@
 #define VEGAR_EA_VERSION            "1.01.0"
 #define VEGAR_MQL_VERSION           "1.01"
 #define VEGAR_SCHEMA_VERSION        2100
-#define VEGAR_BUILD_ID              "VEGAR-1.01.0-RC8"
+#define VEGAR_BUILD_ID              "VEGAR-1.01.0-RC9"
 #define VEGAR_DEFAULT_MAGIC         26091701
 #define VEGAR_TELEMETRY_SCHEMA      "2100"
 #define VEGAR_COMMENT_PREFIX        "VEGAR"

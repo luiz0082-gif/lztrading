@@ -232,7 +232,7 @@ bool Vegar_TestDisplacement()
   {
    double avg20=Vegar_AvgRange(Vegar_ExecutionTF(),2,20);
    if(avg20<=0.0) return false;
-   double range=2.10*avg20;
+   double range=(InpDisplacementRangeMult+0.10)*avg20;
    MqlRates b; ZeroMemory(b);
    b.low=100.0; b.high=100.0+range;
    b.open=100.0+0.10*range;

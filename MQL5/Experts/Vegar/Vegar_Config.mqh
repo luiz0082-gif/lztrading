@@ -3,6 +3,19 @@
 
 #include "Vegar_Types.mqh"
 
+// RC9: nivel de confirmacao do MSS.
+// ESTRUTURAL = comportamento RC8: ultimo pivo 2/2 confirmado ANTES do sweep.
+//   Nos dados de 22-24/09 esse nivel ficou em mediana 2,7 ATR do preco,
+//   8 velas atras, com prazo de 5 velas M1: 0 de 20 sweeps confirmaram.
+// INTERNO    = pivo 1/1 mais recente dentro de InpMSSMaxDistanciaATR do
+//   extremo do sweep; sem pivo nessa faixa, usa a maxima/minima da vela
+//   do sweep e da anterior (quebra da estrutura interna do M1/M5).
+enum ENUM_VEGAR_MSS_MODE
+  {
+   VEGAR_MSS_ESTRUTURAL=0,   // Estrutural (RC8)
+   VEGAR_MSS_INTERNO=1       // Interno (RC9)
+  };
+
 input group "=== IDENTIFICAÇÃO E EXECUÇÃO ==="
 input long   InpMagicNumber=VEGAR_DEFAULT_MAGIC;                    // Magic Number
 input double InpLoteOperacional=0.01;                               // Lote Operacional
@@ -17,6 +30,10 @@ input double InpMaxSweepATR=0.60;                                   // Penetraç
 input double InpMSSBufferATR=0.02;                                  // Buffer de confirmação MSS por ATR
 input double InpMinFVGATR=0.05;                                     // Tamanho mínimo FVG por ATR
 input int    InpMaxBarsSweepToMSS=5;                                // Máximo de Candles Sweep → MSS
+input ENUM_VEGAR_MSS_MODE InpModoMSS=VEGAR_MSS_INTERNO;              // Nível do MSS (Interno=RC9, Estrutural=RC8)
+input double InpMSSMaxDistanciaATR=1.5;                              // MSS Interno: distância máx. do sweep por ATR
+input int    InpMaxBarsMssToDisplacement=2;                          // Máximo de Candles MSS → Deslocamento (RC8=1)
+input double InpDisplacementRangeMult=1.5;                           // Deslocamento: range mínimo x média 20 (RC8=2.0)
 input int    InpMaxBarsMssToRetest=6;                               // Máximo de Candles MSS → Reteste
 input bool   InpConfirmarM5QuandoM1=true;                            // Confirmar M5 quando operar M1
 input bool   InpAtivarMicroContinuacaoOperacional=true;               // RC8: segunda familia operacional, subordinada ao M15
@@ -165,7 +182,7 @@ string Vegar_StrategyCanonicalString()
    s += "Magic="+(string)InpMagicNumber+"|Lot="+DoubleToString(InpLoteOperacional,8)+"|";
    s += "ZoneMin="+(string)InpForcaMinimaZona+"|EqATR="+DoubleToString(InpEqualToleranceATR,8)+"|ZoneATR="+DoubleToString(InpZoneWidthATR,8)+"|Approach="+DoubleToString(InpApproachDistanceATR,8)+"|";
    s += "SweepMin="+DoubleToString(InpMinSweepATR,8)+"|SweepMax="+DoubleToString(InpMaxSweepATR,8)+"|MSSBuf="+DoubleToString(InpMSSBufferATR,8)+"|FVG="+DoubleToString(InpMinFVGATR,8)+"|StopBuf="+DoubleToString(InpStopBufferATR,8)+"|";
-   s += "BarsSM="+(string)InpMaxBarsSweepToMSS+"|BarsMR="+(string)InpMaxBarsMssToRetest+"|M5="+(InpConfirmarM5QuandoM1?"1":"0")+"|MicroOp="+(InpAtivarMicroContinuacaoOperacional?"1":"0")+"|";
+   s += "BarsSM="+(string)InpMaxBarsSweepToMSS+"|MSSMode="+(string)(int)InpModoMSS+"|MSSMaxDist="+DoubleToString(InpMSSMaxDistanciaATR,8)+"|BarsMD="+(string)InpMaxBarsMssToDisplacement+"|DispMult="+DoubleToString(InpDisplacementRangeMult,8)+"|BarsMR="+(string)InpMaxBarsMssToRetest+"|M5="+(InpConfirmarM5QuandoM1?"1":"0")+"|MicroOp="+(InpAtivarMicroContinuacaoOperacional?"1":"0")+"|";
    if(InpAtivarFiltroDeSessao)
       s += "SessionFilter=1|Lon="+(InpOperarLondon?"1":"0")+InpInicioLondonNY+InpFimLondonNY+"|NY="+(InpOperarNewYork?"1":"0")+InpInicioNewYorkNY+InpFimNewYorkNY+"|";
    else
@@ -241,6 +258,7 @@ ENUM_VEGAR_CONFIG_VALIDITY Vegar_ValidateConfiguration(ENUM_VEGAR_REASON_CODE &r
       InpEqualToleranceATR<0.0 || InpZoneWidthATR<=0.0 || InpApproachDistanceATR<0.0 ||
       InpMinSweepATR<0.0 || InpMaxSweepATR<=InpMinSweepATR || InpMSSBufferATR<0.0 ||
       InpMinFVGATR<0.0 || InpStopBufferATR<0.0 || InpMaxBarsSweepToMSS<1 || InpMaxBarsMssToRetest<1 ||
+      InpMSSMaxDistanciaATR<=0.0 || InpMaxBarsMssToDisplacement<1 || InpDisplacementRangeMult<=0.0 ||
       InpMaxTradesPerDay<1 || InpMaxConsecutiveLosses<1 || InpMargemMinimaPermitidaPct<0.0 ||
       InpMaxSpreadTargetPercent<=0.0 || InpDesvioMaxExecucaoTicks<0 || InpTamanhoMaxArquivoMB<1 ||
       InpHorizonteReplayCandles<1 || InpFlushIntervalSeconds<1 || InpMaxSignalMarkersOnChart<1 || InpSweptMarkerCandles<1 || InpEscalaPainelPct<70 || InpEscalaPainelPct>160 ||
