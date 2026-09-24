@@ -26,7 +26,7 @@ input double InpEqualToleranceATR=0.10;                              // Tolerân
 input double InpZoneWidthATR=0.05;                                  // Espessura da Zona por ATR
 input double InpApproachDistanceATR=0.35;                            // Distância de Aproximação por ATR
 input double InpMinSweepATR=0.03;                                   // Penetração Mínima do Sweep por ATR
-input double InpMaxSweepATR=0.60;                                   // Penetração Máxima do Sweep por ATR
+input double InpMaxSweepATR=1.00;                                   // Penetração Máxima do Sweep por ATR (RC8=0.60)
 input double InpMSSBufferATR=0.02;                                  // Buffer de confirmação MSS por ATR
 input double InpMinFVGATR=0.05;                                     // Tamanho mínimo FVG por ATR
 input int    InpMaxBarsSweepToMSS=5;                                // Máximo de Candles Sweep → MSS
@@ -37,6 +37,8 @@ input double InpDisplacementRangeMult=1.5;                           // Deslocam
 input int    InpMaxBarsMssToRetest=6;                               // Máximo de Candles MSS → Reteste
 input bool   InpConfirmarM5QuandoM1=true;                            // Confirmar M5 quando operar M1
 input bool   InpAtivarMicroContinuacaoOperacional=true;               // RC8: segunda familia operacional, subordinada ao M15
+input bool   InpMicroAutoridadeEmTransicao=true;                      // RC9: micro M1/M5 opera com M15 em TRANSIÇÃO (RC8=false)
+input bool   InpFiltrarContextoAntesDoSetup=true;                     // RC9: não iniciar setup que o ContextGate vai reprovar (RC8=false)
 
 input group "=== SESSÕES ==="
 input bool   InpAtivarFiltroDeSessao=false;                          // Ativar filtro de sessão; false = sessão livre
@@ -182,7 +184,7 @@ string Vegar_StrategyCanonicalString()
    s += "Magic="+(string)InpMagicNumber+"|Lot="+DoubleToString(InpLoteOperacional,8)+"|";
    s += "ZoneMin="+(string)InpForcaMinimaZona+"|EqATR="+DoubleToString(InpEqualToleranceATR,8)+"|ZoneATR="+DoubleToString(InpZoneWidthATR,8)+"|Approach="+DoubleToString(InpApproachDistanceATR,8)+"|";
    s += "SweepMin="+DoubleToString(InpMinSweepATR,8)+"|SweepMax="+DoubleToString(InpMaxSweepATR,8)+"|MSSBuf="+DoubleToString(InpMSSBufferATR,8)+"|FVG="+DoubleToString(InpMinFVGATR,8)+"|StopBuf="+DoubleToString(InpStopBufferATR,8)+"|";
-   s += "BarsSM="+(string)InpMaxBarsSweepToMSS+"|MSSMode="+(string)(int)InpModoMSS+"|MSSMaxDist="+DoubleToString(InpMSSMaxDistanciaATR,8)+"|BarsMD="+(string)InpMaxBarsMssToDisplacement+"|DispMult="+DoubleToString(InpDisplacementRangeMult,8)+"|BarsMR="+(string)InpMaxBarsMssToRetest+"|M5="+(InpConfirmarM5QuandoM1?"1":"0")+"|MicroOp="+(InpAtivarMicroContinuacaoOperacional?"1":"0")+"|";
+   s += "BarsSM="+(string)InpMaxBarsSweepToMSS+"|MSSMode="+(string)(int)InpModoMSS+"|MSSMaxDist="+DoubleToString(InpMSSMaxDistanciaATR,8)+"|BarsMD="+(string)InpMaxBarsMssToDisplacement+"|DispMult="+DoubleToString(InpDisplacementRangeMult,8)+"|BarsMR="+(string)InpMaxBarsMssToRetest+"|M5="+(InpConfirmarM5QuandoM1?"1":"0")+"|MicroOp="+(InpAtivarMicroContinuacaoOperacional?"1":"0")+"|MicroTrans="+(InpMicroAutoridadeEmTransicao?"1":"0")+"|CtxPre="+(InpFiltrarContextoAntesDoSetup?"1":"0")+"|";
    if(InpAtivarFiltroDeSessao)
       s += "SessionFilter=1|Lon="+(InpOperarLondon?"1":"0")+InpInicioLondonNY+InpFimLondonNY+"|NY="+(InpOperarNewYork?"1":"0")+InpInicioNewYorkNY+InpFimNewYorkNY+"|";
    else

@@ -200,6 +200,18 @@ void Vegar_CaptureClosedBarApproachCandidate(const SVegarZoneEventSnapshot &snap
 bool Vegar_StartOpportunityFromSnapshot(const SVegarZoneEventSnapshot &snap)
   {
    if(!snap.valid || !snap.approach_observed || !snap.sweep_observed || gVegarOpportunity.active || Vegar_HasOwnedPosition()) return false;
+   // RC9: o ContextGate e' avaliado so no fim do pipeline. Um setup que ele
+   // certamente vai reprovar ocupava a vaga unica por varias velas e ainda
+   // impedia a promocao da familia micro (exige !gVegarOpportunity.active).
+   if(InpFiltrarContextoAntesDoSetup)
+     {
+      ENUM_VEGAR_REASON_CODE ctxReason=VEGAR_REASON_NONE;
+      if(!Vegar_ContextAllowsDirection(snap.bias,ctxReason))
+        {
+         Vegar_WriteDiagnostic("SETUP_SKIPPED_CONTEXT","SKIPPED",Vegar_ReasonText(ctxReason),"","ZoneID="+snap.zone_id);
+         return false;
+        }
+     }
    Vegar_ResetOpportunity();
    gVegarOpportunity.active=true;
    gVegarOpportunity.candidate_id=(gVegarApproachLatch.active && gVegarApproachLatch.zone_id==snap.zone_id ? gVegarApproachLatch.candidate_id : Vegar_NextID("CAND"));

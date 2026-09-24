@@ -643,12 +643,21 @@ void Vegar_RC8ConfirmMarkerDeal(const ulong deal)
 
 bool Vegar_RC8MicroAlignedWithM15(const ENUM_VEGAR_BIAS direction)
   {
+   // RC9: em TRANSICAO o M15 nao aponta contra nenhum lado; com RC8 a familia
+   // micro ficava sem autoridade em ~22% do tempo por esse motivo.
+   if(InpMicroAutoridadeEmTransicao && gVegarM15Context==VEGAR_M15_TRANSITION &&
+      (direction==VEGAR_BIAS_BUYER || direction==VEGAR_BIAS_SELLER)) return true;
    if(direction==VEGAR_BIAS_BUYER) return (gVegarM15Context==VEGAR_M15_TREND_UP);
    if(direction==VEGAR_BIAS_SELLER) return (gVegarM15Context==VEGAR_M15_TREND_DOWN);
    return false;
   }
 
-int Vegar_RC8ObservationBestZone(const MqlRates &bar,double &distance)
+bool Vegar_RC8ObservationZoneAuthorized(const SVegarZone &z)
+  {
+   return (InpAtivarMicroContinuacaoOperacional && Vegar_RC8MicroAlignedWithM15(z.operational_bias) && z.strength_score>=InpForcaMinimaZona);
+  }
+
+int Vegar_RC8ObservationBestZone(const MqlRates &bar,double &distance,const bool authorized_only=false)
   {
    distance=DBL_MAX; int best=-1; double bestStrength=-1.0; datetime bestRecent=0;
    for(int i=0;i<ArraySize(gVegarObservationZones);i++)
@@ -657,6 +666,7 @@ int Vegar_RC8ObservationBestZone(const MqlRates &bar,double &distance)
       if(!z.valid || z.symbol!=_Symbol || z.role!=VEGAR_ZONE_ROLE_OBSERVATION) continue;
       if(z.state==VEGAR_ZONE_INVALIDATED || z.state==VEGAR_ZONE_EXPIRED || z.state==VEGAR_ZONE_SWEPT) continue;
       if(z.strength_score<InpForcaMinimaZona) continue;
+      if(authorized_only && !Vegar_RC8ObservationZoneAuthorized(z)) continue;
       // RC8: micro zones remain observable even when not aligned; M15 alignment grants operational authority later.
       double d=999.0; if(!Vegar_ClosedBarApproachForRole(z,bar,VEGAR_ZONE_ROLE_OBSERVATION,d)) continue;
       bool better=(d<distance-1e-12 || (MathAbs(d-distance)<=1e-12 &&
@@ -675,7 +685,7 @@ void Vegar_RC8ObservationStart(const int zi,const MqlRates &bar)
    gVegarObservationCandidate.active=true;
    gVegarObservationCandidate.candidate_id=Vegar_NextID("OBSCAND");
    gVegarObservationCandidate.candidate_state=VEGAR_CANDIDATE_APPROACH;
-   bool microOperational=(InpAtivarMicroContinuacaoOperacional && Vegar_RC8MicroAlignedWithM15(z.operational_bias) && z.strength_score>=InpForcaMinimaZona);
+   bool microOperational=Vegar_RC8ObservationZoneAuthorized(z);
    gVegarObservationCandidate.setup_family=(microOperational?VEGAR_SETUP_FAMILY_MICRO_CONTINUATION:VEGAR_SETUP_FAMILY_MICRO_CONTINUATION_OBSERVATION);
    gVegarObservationCandidate.symbol=_Symbol;
    gVegarObservationCandidate.execution_tf=Vegar_ExecutionTF();
@@ -899,9 +909,26 @@ void Vegar_RC8ObserveClosedBar(const MqlRates &bar)
   {
    // Independent M1/M5 family. When aligned to M15 it is operational MICRO_CONTINUATION;
    // otherwise it remains observational telemetry only.
+   // RC9: ha uma unica vaga de candidato micro. Um candidato sem autoridade
+   // (so observacao) ainda antes do sweep cede a vaga para uma zona com
+   // autoridade operacional; com RC8 ele bloqueava o candidato valido.
+   if(gVegarObservationCandidate.active &&
+      gVegarObservationCandidate.setup_family!=VEGAR_SETUP_FAMILY_MICRO_CONTINUATION &&
+      gVegarObservationCandidate.state==VEGAR_SETUP_LIQUIDITY_APPROACH)
+     {
+      double dAuth=999.0; int ziAuth=Vegar_RC8ObservationBestZone(bar,dAuth,true);
+      if(ziAuth>=0 && gVegarObservationZones[ziAuth].id!=gVegarObservationCandidate.zone_id)
+        {
+         Vegar_WriteDiagnostic("OBSERVATION_SLOT_PREEMPTED","REPLACED","NONE","",
+                               "Old="+gVegarObservationCandidate.zone_id+"|New="+gVegarObservationZones[ziAuth].id);
+         Vegar_RC8ResetObservationCandidate();
+        }
+     }
    if(!gVegarObservationCandidate.active)
      {
-      double d=999.0; int zi=Vegar_RC8ObservationBestZone(bar,d); if(zi<0)return; Vegar_RC8ObservationStart(zi,bar);
+      double d=999.0; int zi=Vegar_RC8ObservationBestZone(bar,d,true);
+      if(zi<0) zi=Vegar_RC8ObservationBestZone(bar,d,false);
+      if(zi<0)return; Vegar_RC8ObservationStart(zi,bar);
       if(gVegarObservationCandidate.setup_family==VEGAR_SETUP_FAMILY_MICRO_CONTINUATION)
          Vegar_RC8ObservationTelemetry("OPPORTUNITY_STARTED",VEGAR_SETUP_LIQUIDITY_APPROACH,VEGAR_REASON_NONE);
      }
