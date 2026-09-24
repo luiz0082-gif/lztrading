@@ -1,5 +1,8 @@
 //+------------------------------------------------------------------+
 //|                                       WallStreetBreaker_USD.mq5  |
+//|   v2.5: diagnóstico de "não abre ordens" (permissões, retcode,   |
+//|         motivo por candle na aba Experts, varredura de sinais)   |
+//|         + desvio configurável (15 pts no ouro = requote)         |
 //|   v2.4: correções de segurança sobre a v2.3                      |
 //|                                                                  |
 //|   A LÓGICA DE ENTRADA E DE SAÍDA NÃO MUDOU (breakout + ATR + ADX,|
@@ -24,8 +27,8 @@
 //|   9. Preços normalizados pelo tick size; removido #property      |
 //|      strict (é de MQL4).                                         |
 //+------------------------------------------------------------------+
-#property copyright "WSB v2.4"
-#property version   "2.40"
+#property copyright "WSB v2.5"
+#property version   "2.50"
 
 #include <Trade\Trade.mqh>
 #include <Trade\PositionInfo.mqh>
@@ -80,6 +83,11 @@ input int    InpHeartbeatSec      = 60;
 input group "=== EXTRAS ==="
 input int    InpMagicNumber       = 20250101;
 input string InpComment           = "WSB2";
+input int    InpDeviationPts      = 50;    // [v2.5] desvio máx. em pontos (15 no ouro = requote em conta real)
+
+input group "=== DIAGNOSTICO ==="
+input bool   InpVerbose           = true;  // [v2.5] escreve na aba Experts o motivo de cada candle
+input int    InpScanDays          = 30;    // [v2.5] ao iniciar, conta quantos sinais houve nos últimos N dias
 
 //==================== GLOBAIS ====================
 int      hAtr, hAdx;
@@ -89,6 +97,7 @@ double   gDayStartEquity = 0;
 int      gDayTrades = 0;
 int      gCurrentDay = -1;
 bool     gDailyLossHit = false;
+bool     gScanDone     = false;
 
 //--- telemetria
 ulong    gSeq = 0;
@@ -224,10 +233,77 @@ double EmergencySL(int dir, double entry, double vol)
 }
 
 //+------------------------------------------------------------------+
+//| [v2.5] Permissões: o motivo nº 1 de "backtest opera, real não"   |
+//+------------------------------------------------------------------+
+bool TradingAllowed(string &why)
+{
+   if(MQLInfoInteger(MQL_TESTER)) { why = "tester"; return true; }
+   if(!TerminalInfoInteger(TERMINAL_CONNECTED))
+   { why = "terminal DESCONECTADO da corretora"; return false; }
+   if(!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED))
+   { why = "botão 'Algo Trading' DESLIGADO na barra de ferramentas do MT5"; return false; }
+   if(!MQLInfoInteger(MQL_TRADE_ALLOWED))
+   { why = "'Permitir Algo Trading' desmarcado nas propriedades do EA (F7 no gráfico > aba Comum)"; return false; }
+   if(!AccountInfoInteger(ACCOUNT_TRADE_ALLOWED))
+   { why = "conta sem permissão de negociar (logado com senha de INVESTIDOR?)"; return false; }
+   if(!AccountInfoInteger(ACCOUNT_TRADE_EXPERT))
+   { why = "a corretora não permite robôs nesta conta"; return false; }
+   long mode = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_MODE);
+   if(mode == SYMBOL_TRADE_MODE_DISABLED || mode == SYMBOL_TRADE_MODE_CLOSEONLY)
+   { why = "negociação de " + _Symbol + " bloqueada pela corretora (use o símbolo certo, ex.: com sufixo)"; return false; }
+   why = "ok";
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| [v2.5] Quantos sinais houve nos últimos N dias (uma vez só)      |
+//| Se der ~0, o EA não está quebrado: o sinal é que não aconteceu.  |
+//+------------------------------------------------------------------+
+void SignalScan()
+{
+   if(gScanDone || InpScanDays <= 0) return;
+   int n    = InpScanDays * 96;                 // candles M15 por dia
+   int need = n + InpRangeBars + 3;
+   if(BarsCalculated(hAtr) < need || BarsCalculated(hAdx) < need) return;   // tenta no próximo tick
+
+   double a[], x[];
+   MqlRates r[];
+   ArraySetAsSeries(a, true);
+   ArraySetAsSeries(x, true);
+   ArraySetAsSeries(r, true);
+   if(CopyBuffer(hAtr, 0, 0, need, a) < need || CopyBuffer(hAdx, 0, 0, need, x) < need ||
+      CopyRates(_Symbol, PERIOD_M15, 0, need, r) < need) return;
+   gScanDone = true;
+
+   int cAdx = 0, cAtr = 0, cBrk = 0, cAll = 0;
+   datetime last = 0;
+   for(int i = 1; i <= n; i++)
+   {
+      MqlDateTime t; TimeToStruct(r[i].time, t);
+      bool sess = !InpUseSessionFilter || (t.hour >= InpStartHour && t.hour < InpEndHour);
+      double hi = -DBL_MAX, lo = DBL_MAX;
+      for(int j = i + 1; j <= i + InpRangeBars; j++) { hi = MathMax(hi, r[j].high); lo = MathMin(lo, r[j].low); }
+      bool brk   = (r[i].close > hi || r[i].close < lo);
+      bool okAdx = (x[i] >= InpMinAdx);
+      bool okAtr = (a[i] >= a[i+1] * InpBreakoutMult);
+      if(okAdx) cAdx++;
+      if(okAtr) cAtr++;
+      if(brk)   cBrk++;
+      if(okAdx && okAtr && brk && sess) { cAll++; if(last == 0) last = r[i].time; }
+   }
+   string msg = StringFormat("Últimos %d dias (%d candles M15): ADX ok em %d, ATR ok em %d, rompimento em %d  =>  "
+                             "SINAIS COMPLETOS: %d (último: %s)",
+                             InpScanDays, n, cAdx, cAtr, cBrk, cAll,
+                             last > 0 ? TimeToString(last, TIME_DATE|TIME_MINUTES) : "nenhum");
+   PrintFormat("WSB2 SCAN | %s", msg);
+   TEvent("SIGNAL_SCAN", "OK", msg);
+}
+
+//+------------------------------------------------------------------+
 int OnInit()
 {
    trade.SetExpertMagicNumber(InpMagicNumber);
-   trade.SetDeviationInPoints(15);
+   trade.SetDeviationInPoints(InpDeviationPts);   // [v2.5] era 15 fixo
    trade.SetTypeFillingBySymbol(_Symbol);
    trade.SetMarginMode();
 
@@ -243,10 +319,20 @@ int OnInit()
 
    TEvent("INIT", "OK", "EA inicializada",
           0, 0, 0, 0,
-          StringFormat("v2.4 lot=%.2f tp=%.2f act=%.2f dist=%.2f emerg=%.2f srv=%d basket=%.2f mult=%.2f adx=%d bars=%d sess=%d-%d",
+          StringFormat("v2.5 lot=%.2f tp=%.2f act=%.2f dist=%.2f emerg=%.2f srv=%d basket=%.2f mult=%.2f adx=%d bars=%d sess=%d-%d",
                        InpFixedLot, InpTakeProfitUsd, InpTrailActivateUsd, InpTrailDistanceUsd,
                        InpEmergencyStopUsd, (int)InpEmergencyOnServer, InpMaxBasketLossUsd,
                        InpBreakoutMult, InpMinAdx, InpRangeBars, InpStartHour, InpEndHour));
+   // [v2.5] diagnóstico visível na aba Experts
+   string why;
+   bool perm = TradingAllowed(why);
+   PrintFormat("WSB2 v2.5 | %s | servidor %s | permissão: %s | lote %.2f (mín %.2f) | sessão %s %d-%dh | stop lvl %d pts",
+               _Symbol, TimeToString(TimeCurrent(), TIME_DATE|TIME_MINUTES), perm ? "OK" : "BLOQUEADO -> " + why,
+               InpFixedLot, SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN),
+               InpUseSessionFilter ? "ligada" : "desligada", InpStartHour, InpEndHour,
+               (int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL));
+   if(!perm)
+      Alert("WSB2: não vai abrir ordens -> " + why);
    return INIT_SUCCEEDED;
 }
 
@@ -675,6 +761,7 @@ void OnTick()
    double atr = gAtrBuffer[1];
    if(atr <= 0) return;
 
+   SignalScan();             // [v2.5] roda uma vez quando os indicadores estiverem prontos
    AccountGuards();          // [v2.4]
    ManagePositions();
    TryPyramid(atr);
@@ -706,8 +793,11 @@ void OnTick()
 
    string decision = "PASS";
    string reason   = sigReason;
+   string permWhy  = "";
+   bool   permOk   = TradingAllowed(permWhy);   // [v2.5]
 
-   if(!cbOk)               { decision = "BLOCK"; reason = "circuit: " + cbReason + " | " + sigReason; }
+   if(!permOk)             { decision = "BLOCK"; reason = "permissao: " + permWhy + " | " + sigReason; }
+   else if(!cbOk)               { decision = "BLOCK"; reason = "circuit: " + cbReason + " | " + sigReason; }
    else if(gDailyLossHit)  { decision = "BLOCK"; reason = "daily_loss_hit | " + sigReason; }
    else if(FridayCutoff()) { decision = "BLOCK"; reason = "friday_cutoff | " + sigReason; }
    else if(!sesOk)         { decision = "BLOCK"; reason = "session: " + sessReason + " | " + sigReason; }
@@ -721,6 +811,10 @@ void OnTick()
         0, 0, 0, 0,
         StringFormat("cb=%s sess=%s", cbReason, sessReason));
 
+   // [v2.5] motivo de cada candle na aba Experts (sem precisar abrir o CSV)
+   if(InpVerbose)
+      PrintFormat("WSB2 %s %s | %s", TimeToString(iTime(_Symbol, PERIOD_M15, 1), TIME_MINUTES), decision, reason);
+
    if(decision != "PASS") return;
 
    double lot = FloorLot(InpFixedLot);
@@ -732,6 +826,10 @@ void OnTick()
    bool ok = false;
    if(sig==1)       ok = trade.Buy (lot, _Symbol, 0, sl, 0, InpComment);
    else if(sig==-1) ok = trade.Sell(lot, _Symbol, 0, sl, 0, InpComment);
+
+   // [v2.5] OrderSend pode "passar" e a corretora recusar: confere o retcode
+   uint rc = trade.ResultRetcode();
+   ok = ok && (rc == TRADE_RETCODE_DONE || rc == TRADE_RETCODE_DONE_PARTIAL || rc == TRADE_RETCODE_PLACED);
 
    if(ok)
    {
@@ -753,6 +851,7 @@ void OnTick()
            0, 0, lot, 0,
            StringFormat("retcode=%d comment=%s",
                         trade.ResultRetcode(), trade.ResultComment()));
+      PrintFormat("WSB2 ORDEM RECUSADA: retcode %d = %s", trade.ResultRetcode(), trade.ResultRetcodeDescription());
    }
 }
 //+------------------------------------------------------------------+

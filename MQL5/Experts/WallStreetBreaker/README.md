@@ -16,3 +16,13 @@ A **lógica de entrada e saída não mudou**: rompimento de 12 candles M15 com f
 | 10 | `#property strict` (é de MQL4) e preços sem normalizar pelo tick size. | Removido e normalizado. | Não. |
 
 **Rode o backtest de novo com a v2.4** antes de qualquer outra coisa. Os resultados vão mudar um pouco (itens 2 a 5).
+
+# v2.5: diagnóstico de "não abre ordens"
+
+| O que mostra | Onde aparece |
+|---|---|
+| **Permissões**, ao iniciar e em todo candle: botão Algo Trading, "Permitir Algo Trading" nas propriedades do EA, login com senha de investidor, conta que não aceita robôs, símbolo bloqueado. | Aba **Experts** (e um Alert, se estiver bloqueado) |
+| **Varredura dos últimos 30 dias:** quantas vezes ADX, ATR e rompimento passaram, e quantos **sinais completos** houve. Se der ~0, o EA não está quebrado: o sinal é que não aconteceu. | Aba Experts: `WSB2 SCAN` |
+| **Motivo de cada candle M15** (PASS / BLOCK e por quê). | Aba Experts (`InpVerbose`) |
+| **Ordem recusada pela corretora**, com o código e a descrição. | Aba Experts: `WSB2 ORDEM RECUSADA` |
+| Desvio máximo agora configurável (`InpDeviationPts = 50`). Os 15 pontos fixos da v2.3 equivalem a US$ 0,15 no ouro, o que gera requote em conta real com execução instantânea. No testador isso nunca acontece. | Input |
