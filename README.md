@@ -34,6 +34,10 @@ docs/            arquitetura, estratégia, telemetria e validação
 
 O operador não opera com Stop Loss. Todo EA/estratégia deve trazer o SL implementado, mas **desativado por padrão**. Detalhes em `CLAUDE.md` (seção "Perfil do operador").
 
+## Organização dos inputs
+
+Parâmetros em menus numerados (`input group`), um setor por responsabilidade. Profit/Alvo nunca fica junto com Gestão de Risco. Ver `docs/INPUTS.md`.
+
 ## Regra central
 
 Código de trading deve ser tratado como software de produção e como experimento quantitativo ao mesmo tempo.

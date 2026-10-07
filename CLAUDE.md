@@ -25,6 +25,15 @@ O operador **NÃO opera com Stop Loss**. Ao criar ou modificar qualquer EA, estr
 - documentar no EA e na estratégia o risco real de operar sem SL (exposição aberta, gap, margem), sem esconder o risco;
 - a invalidação da tese continua obrigatória (ver "Invalidação antes de entrada"); apenas não é executada por ordem de stop.
 
+## Organização dos inputs (obrigatório)
+
+Os parâmetros de configuração de todo EA/indicador/script são organizados em menus (setores) detalhados e numerados, via `input group`.
+
+- Cada setor tem uma única responsabilidade e seu próprio menu.
+- **Nunca colocar o setor de Profit/Alvo junto com Gestão de Risco.** São menus separados, sem inputs compartilhados.
+- Stop Loss tem menu próprio, desativado por padrão.
+- Seguir a ordem, as convenções e o checklist de `docs/INPUTS.md`.
+
 ## Áreas cobertas
 
 - Expert Advisors;

@@ -15,6 +15,7 @@ Read `CLAUDE.md` and `docs/ARQUITETURA.md` first.
 - Check trade permissions, symbol mode, filling, stops level, margin and trade retcodes.
 - Distinguish tester behavior from live execution.
 - Never hide broker rejection.
+- Inputs: organize every parameter in numbered `input group` menus per docs/INPUTS.md. NEVER put Profit/Target inputs in the same group as Risk Management; Stop Loss gets its own group.
 - Operator profile: the user does NOT trade with Stop Loss. Always implement the SL input but keep it disabled by default (`InpUseStopLoss=false`); never enable it by default. Compensate with monetary limits, daily limit, circuit breaker and exposure telemetry.
 
 ## EA flow

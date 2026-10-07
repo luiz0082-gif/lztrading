@@ -15,6 +15,8 @@ Antes de codificar, responder:
 
 > **Perfil do operador:** não usa Stop Loss. Todo EA nasce com SL configurável porém **desativado** por padrão; o risco é controlado por limites monetários, circuit breaker e lote. Ver `CLAUDE.md`.
 
+> **Inputs:** organizar em menus por setor, com Profit separado de Risco. Ver `docs/INPUTS.md`.
+
 ## 2. Especificação
 
 Escrever:
