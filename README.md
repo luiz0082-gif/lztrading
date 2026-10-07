@@ -30,6 +30,10 @@ docs/            arquitetura, estratégia, telemetria e validação
 .claude/         instruções e Skills para desenvolvimento assistido por IA
 ```
 
+## Perfil do operador
+
+O operador não opera com Stop Loss. Todo EA/estratégia deve trazer o SL implementado, mas **desativado por padrão**. Detalhes em `CLAUDE.md` (seção "Perfil do operador").
+
 ## Regra central
 
 Código de trading deve ser tratado como software de produção e como experimento quantitativo ao mesmo tempo.

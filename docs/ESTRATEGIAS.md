@@ -71,6 +71,8 @@ Toda regra deve responder:
 
 Evitar termos subjetivos como "forte", "bonito", "bom movimento" sem uma definição matemática.
 
+> **Perfil do operador:** sem Stop Loss. A regra operacional deve prever saída por alvo, gerenciamento, tempo ou invalidação lógica; o SL, se existir, fica implementado e desativado por padrão.
+
 ## 5. Invalidação
 
 A estratégia precisa ter uma condição clara que diga:
@@ -206,3 +208,9 @@ Cada estratégia importante deve ter um README dentro de seu diretório com:
 - resultados;
 - limitações;
 - data da última revisão.
+
+## Registro de estratégias
+
+| EA | Tese | Status |
+|---|---|---|
+| ChainScalper (`MQL5/Experts/ChainScalper/`) | Rompimento em M1 a favor da tendência → corrente de 4–8 posições (STOPs pré-programados) com trailing escalonado por posição | v1.00 compilada; sem backtest |

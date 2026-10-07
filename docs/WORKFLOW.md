@@ -13,6 +13,8 @@ Antes de codificar, responder:
 - o que invalida?
 - como será validado?
 
+> **Perfil do operador:** não usa Stop Loss. Todo EA nasce com SL configurável porém **desativado** por padrão; o risco é controlado por limites monetários, circuit breaker e lote. Ver `CLAUDE.md`.
+
 ## 2. Especificação
 
 Escrever:

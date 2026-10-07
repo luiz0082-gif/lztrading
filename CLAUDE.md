@@ -14,6 +14,17 @@ O objetivo não é produzir código apenas porque compila. O objetivo é produzi
 - honestamente validados;
 - fáceis de evoluir sem destruir a lógica anterior.
 
+## Perfil do operador (obrigatório)
+
+O operador **NÃO opera com Stop Loss**. Ao criar ou modificar qualquer EA, estratégia ou indicador:
+
+- manter o parâmetro de Stop Loss **configurado e implementado, porém DESATIVADO por padrão** (`InpUseStopLoss = false`, ou equivalente);
+- nunca ativar SL por padrão nem como "melhoria" sem pedido explícito;
+- a ausência de SL **não** elimina o controle de risco: usar limites monetários, limite diário, circuit breaker, tamanho de lote conservador e telemetria de exposição aberta;
+- indicadores e estratégias devem ser desenhados assumindo saída por alvo, gerenciamento, tempo ou invalidação lógica — não por stop fixo;
+- documentar no EA e na estratégia o risco real de operar sem SL (exposição aberta, gap, margem), sem esconder o risco;
+- a invalidação da tese continua obrigatória (ver "Invalidação antes de entrada"); apenas não é executada por ordem de stop.
+
 ## Áreas cobertas
 
 - Expert Advisors;
