@@ -1,0 +1,3 @@
+symbol,timeframe,start_time,end_time,tick_count,up_ticks,down_ticks,unchanged_ticks,up_ratio,down_ratio,bid_min,bid_max,ask_min,ask_max,last_min,last_max,spread_min_points,spread_max_points,spread_avg_points,avg_tick_interval_ms,tick_density_per_minute,source
+BTCUSD,MN1,2026.08.01 00:00:00,2026.08.31 23:59:59,17462562,8746153,8706916,9492,0.500852,0.498605,62184.09,81486.27,62196.09,81546.27,62190.09,81516.27,100.00,10000.00,704.35,153.22,391.1864,BACKFILL_SERVER
+BTCUSD,MN1,2026.09.01 00:00:00,2026.09.30 23:59:59,38099286,18974164,19118828,6293,0.498019,0.501816,74884.66,87406.79,74889.66,87430.31,74887.16,87410.74,100.00,10000.00,572.01,68.03,881.9279,LIVE_CAPTURE

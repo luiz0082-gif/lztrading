@@ -1,0 +1,16 @@
+run_id,time,symbol,where,detail,last_error
+LIVE_BTCUSD_2026.10.14 00:21:35,2026.10.14 00:21:35,BTCUSD,INFO:CalendarBackfill,rows_written=5385 days=1095,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:25,BTCUSD,INFO:CalendarBackfill,rows_written=0 days=1095,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:25,BTCUSD,INFO:CalendarBackfill,rows_written=0 days=1095,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:25,BTCUSD,INFO:CalendarBackfill,rows_written=0 days=1095,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,M1 first_bar=2024.01.18 00:46:00 requested_days=1000 bars_local=1558319 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,M5 first_bar=2025.05.12 02:15:00 requested_days=520 bars_local=208166 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,M15 first_bar=2024.01.18 06:00:00 requested_days=1000 bars_local=295494 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,M30 first_bar=2024.01.18 11:30:00 requested_days=1000 bars_local=52287 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,H1 first_bar=2021.04.23 23:00:00 requested_days=2000 bars_local=75306 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,H4 first_bar=2016.11.16 00:00:00 requested_days=3650 bars_local=20137 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,W1 first_bar=2017.03.26 00:00:00 requested_days=3650 bars_local=812 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:23:25,2026.10.14 00:23:29,BTCUSD,INFO:BackfillStart,MN1 first_bar=2018.09.01 00:00:00 requested_days=3650 bars_local=188 max_bars_in_chart=2000000 server_first=2011.03.24 00:00:00 limited_by_max_bars=FALSE timeout=FALSE,0
+LIVE_BTCUSD_2026.10.14 00:26:11,2026.10.14 00:26:11,BTCUSD,INFO:CalendarBackfill,rows_written=0 days=1095,0
+LIVE_BTCUSD_2026.10.14 01:01:51,2026.10.14 01:01:53,BTCUSD,INFO:CalendarBackfill,rows_written=0 days=1095,0
+LIVE_BTCUSD_2026.10.14 06:21:30,2026.10.14 06:21:32,BTCUSD,INFO:CalendarBackfill,rows_written=0 days=1095,0
