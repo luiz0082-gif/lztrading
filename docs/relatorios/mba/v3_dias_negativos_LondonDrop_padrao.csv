@@ -1,0 +1,59 @@
+date,dow,mes,entry,pnl_pts,usd,mfe,mae,how,exit_slot,dias_desde_perda_anterior,dias_operados_entre,neg_no_M1,porque,eventos_alta_apos_entrada
+2025-06-05,Thu,2025-06,3379.3,-121.8,-1.2,150.0,2419.0,TRAIL,15:55,,,n/d,ativou trailing (MFE 150) mas fechou negativo (TRAIL 15:55),15:30 Pedidos Iniciais de Su
+2025-06-13,Fri,2025-06,3422.4,-53.4,-0.5,201.0,63.0,TRAIL,12:25,8.0,5.0,n/d,ativou trailing (MFE 201) mas fechou negativo (TRAIL 12:25),
+2025-06-17,Tue,2025-06,3380.6,-68.6,-0.7,151.0,387.0,TRAIL,12:35,4.0,1.0,n/d,ativou trailing (MFE 151) mas fechou negativo (TRAIL 12:35),15:30 Vendas no Varejo (Mens; 15:30 Núcleo do Índice de Ve
+2025-07-08,Tue,2025-07,3323.9,-166.7,-1.7,213.0,285.0,TRAIL,12:35,21.0,14.0,n/d,ativou trailing (MFE 213) mas fechou negativo (TRAIL 12:35),
+2025-07-11,Fri,2025-07,3334.7,-1976.5,-19.8,119.0,3407.0,23:30,23:25,3.0,2.0,n/d,subiu contra (MAE 3407) e nunca andou +150: dia de alta; saiu 23:30 (-1967 pts no dia),
+2025-07-29,Tue,2025-07,3322.7,-43.4,-0.4,178.0,32.0,TRAIL,12:25,18.0,11.0,n/d,ativou trailing (MFE 178) mas fechou negativo (TRAIL 12:25),17:00 EUA - Confiança do Con; 17:00 Ofertas de Emprego JOL
+2025-08-18,Mon,2025-08,3349.4,-48.7,-0.5,155.0,76.0,TRAIL,12:35,20.0,13.0,n/d,ativou trailing (MFE 155) mas fechou negativo (TRAIL 12:35),
+2025-08-19,Tue,2025-08,3338.0,-84.9,-0.8,194.0,726.0,TRAIL,15:20,1.0,0.0,n/d,ativou trailing (MFE 194) mas fechou negativo (TRAIL 15:20),
+2025-08-25,Mon,2025-08,3362.6,-251.5,-2.5,63.0,1365.0,23:30,23:25,6.0,3.0,n/d,subiu contra (MAE 1365) e nunca andou +150: dia de alta; saiu 23:30 (-242 pts no dia),17:00 Venda de Casas Novas
+2025-09-10,Wed,2025-09,3645.8,-451.6,-4.5,319.0,1178.0,TRAIL,15:40,16.0,11.0,n/d,ativou trailing (MFE 319) mas fechou negativo (TRAIL 15:40),15:30 Índice de Preços ao Pr; 17:30 EIA: Estoques de Petró; 20:00 Leilão Note a 10 anos
+2025-10-10,Fri,2025-10,3992.3,-366.4,-3.7,175.0,345.0,TRAIL,12:25,30.0,21.0,n/d,ativou trailing (MFE 175) mas fechou negativo (TRAIL 12:25),
+2025-10-21,Tue,2025-10,4265.0,-326.4,-3.3,283.0,448.0,TRAIL,12:25,11.0,6.0,n/d,ativou trailing (MFE 283) mas fechou negativo (TRAIL 12:25),
+2025-10-27,Mon,2025-10,4038.5,-375.4,-3.8,161.0,397.0,TRAIL,12:25,6.0,3.0,n/d,ativou trailing (MFE 161) mas fechou negativo (TRAIL 12:25),
+2025-11-20,Thu,2025-11,4060.6,-128.4,-1.3,244.0,215.0,TRAIL,12:25,24.0,17.0,n/d,ativou trailing (MFE 244) mas fechou negativo (TRAIL 12:25),15:30 Taxa de Desemprego; 15:30 Relatório de Emprego (; 15:30 Ganho Médio por Hora T; 16:3
+2025-12-02,Tue,2025-12,4185.4,-239.4,-2.4,281.0,234.0,TRAIL,12:25,12.0,7.0,n/d,ativou trailing (MFE 281) mas fechou negativo (TRAIL 12:25),
+2025-12-03,Wed,2025-12,4198.0,-295.3,-3.0,213.0,4368.0,TRAIL,19:00,1.0,0.0,n/d,ativou trailing (MFE 213) mas fechou negativo (TRAIL 19:00),16:15 Variação de Empregos P; 17:45 Índice de Gerentes de ; 18:00 Índice de gerentes de ; 
+2025-12-05,Fri,2025-12,4224.1,-55.8,-0.6,155.0,348.0,TRAIL,12:55,2.0,1.0,n/d,ativou trailing (MFE 155) mas fechou negativo (TRAIL 12:55),18:00 Núcleo do Índice de Pr; 18:00 Núcleo do Índice de Pr
+2025-12-19,Fri,2025-12,4330.0,-21.4,-0.2,171.0,12.0,TRAIL,12:25,14.0,9.0,n/d,ativou trailing (MFE 171) mas fechou negativo (TRAIL 12:25),18:00 Vendas de Casas Usadas
+2026-01-08,Thu,2026-01,4424.4,-51.4,-0.5,211.0,1039.0,TRAIL,13:50,20.0,11.0,n/d,ativou trailing (MFE 211) mas fechou negativo (TRAIL 13:50),16:30 Pedidos Iniciais de Su
+2026-01-23,Fri,2026-01,4925.2,-112.4,-1.1,187.0,126.0,TRAIL,12:25,15.0,10.0,n/d,ativou trailing (MFE 187) mas fechou negativo (TRAIL 12:25),
+2026-01-29,Thu,2026-01,5513.9,-89.4,-0.9,831.0,151.0,TRAIL,12:25,6.0,3.0,n/d,ativou trailing (MFE 831) mas fechou negativo (TRAIL 12:25),16:30 Pedidos Iniciais de Su
+2026-01-30,Fri,2026-01,5059.1,-483.4,-4.8,1137.0,1146.0,TRAIL,12:25,1.0,0.0,n/d,ativou trailing (MFE 1137) mas fechou negativo (TRAIL 12:25),16:30 Índice de Preços ao Pr; 17:45 Barômetro de Negócios 
+2026-02-03,Tue,2026-02,4916.1,-73.4,-0.7,158.0,310.0,TRAIL,12:25,4.0,1.0,n/d,ativou trailing (MFE 158) mas fechou negativo (TRAIL 12:25),
+2026-02-10,Tue,2026-02,5041.4,-776.4,-7.8,245.0,777.0,TRAIL,12:25,7.0,4.0,n/d,ativou trailing (MFE 245) mas fechou negativo (TRAIL 12:25),16:30 Vendas no Varejo (Mens; 16:30 Núcleo do Índice de Ve
+2026-02-16,Mon,2026-02,5007.9,-221.4,-2.2,303.0,214.0,TRAIL,12:25,6.0,3.0,n/d,ativou trailing (MFE 303) mas fechou negativo (TRAIL 12:25),
+2026-02-18,Wed,2026-02,4919.6,-312.4,-3.1,158.0,498.0,TRAIL,12:25,2.0,1.0,n/d,ativou trailing (MFE 158) mas fechou negativo (TRAIL 12:25),16:30 Pedidos de Bens Duráve
+2026-02-23,Mon,2026-02,5153.0,-109.4,-1.1,221.0,365.0,TRAIL,12:25,5.0,2.0,n/d,ativou trailing (MFE 221) mas fechou negativo (TRAIL 12:25),
+2026-02-26,Thu,2026-02,5182.8,-73.4,-0.7,155.0,179.0,TRAIL,12:25,3.0,2.0,n/d,ativou trailing (MFE 155) mas fechou negativo (TRAIL 12:25),16:30 Pedidos Iniciais de Su
+2026-03-03,Tue,2026-03,5269.2,-0.6,-0.0,376.0,1199.0,TRAIL,12:35,5.0,2.0,n/d,ativou trailing (MFE 376) mas fechou negativo (TRAIL 12:35),
+2026-03-05,Thu,2026-03,5154.1,-20.4,-0.2,244.0,97.0,TRAIL,12:25,2.0,1.0,n/d,ativou trailing (MFE 244) mas fechou negativo (TRAIL 12:25),16:30 Pedidos Iniciais de Su
+2026-03-06,Fri,2026-03,5082.4,-257.4,-2.6,252.0,368.0,TRAIL,12:25,1.0,0.0,n/d,ativou trailing (MFE 252) mas fechou negativo (TRAIL 12:25),16:30 Taxa de Desemprego; 16:30 Relatório de Emprego (; 16:30 Ganho Médio por Hora T; 16:3
+2026-03-09,Mon,2026-03,5117.5,-109.4,-1.1,266.0,512.0,TRAIL,12:25,3.0,0.0,n/d,ativou trailing (MFE 266) mas fechou negativo (TRAIL 12:25),
+2026-03-16,Mon,2026-03,4987.6,-168.0,-1.7,365.0,318.0,TRAIL,12:30,7.0,4.0,n/d,ativou trailing (MFE 365) mas fechou negativo (TRAIL 12:30),
+2026-03-17,Tue,2026-03,5014.6,-42.0,-0.4,190.0,523.0,TRAIL,12:40,1.0,0.0,n/d,ativou trailing (MFE 190) mas fechou negativo (TRAIL 12:40),
+2026-03-18,Wed,2026-03,4988.5,-121.7,-1.2,183.0,719.0,TRAIL,13:20,1.0,0.0,n/d,ativou trailing (MFE 183) mas fechou negativo (TRAIL 13:20),15:30 Índice de Preços ao Pr; 17:30 EIA: Estoques de Petró; 21:00 Taxa-alvo de Fundos da; 
+2026-03-31,Tue,2026-03,4567.5,-3.4,-0.0,218.0,176.0,TRAIL,12:25,13.0,8.0,nao,ativou trailing (MFE 218) mas fechou negativo (TRAIL 12:25),16:45 Barômetro de Negócios ; 17:00 EUA - Confiança do Con; 17:00 Ofertas de Emprego JOL
+2026-04-01,Wed,2026-04,4717.2,-392.4,-3.9,317.0,388.0,TRAIL,12:25,1.0,0.0,nao,ativou trailing (MFE 317) mas fechou negativo (TRAIL 12:25),15:15 Variação de Empregos P; 15:30 Vendas no Varejo (Mens; 15:30 Núcleo do Índice de Ve; 
+2026-04-06,Mon,2026-04,4700.4,-118.4,-1.2,304.0,242.0,TRAIL,12:25,5.0,1.0,nao,ativou trailing (MFE 304) mas fechou negativo (TRAIL 12:25),
+2026-04-08,Wed,2026-04,4797.3,-495.4,-5.0,219.0,621.0,TRAIL,12:25,2.0,1.0,nao,ativou trailing (MFE 219) mas fechou negativo (TRAIL 12:25),17:30 EIA: Estoques de Petró; 20:00 Leilão Note a 10 anos
+2026-04-13,Mon,2026-04,4720.1,-85.4,-0.9,309.0,133.0,TRAIL,12:25,5.0,2.0,nao,ativou trailing (MFE 309) mas fechou negativo (TRAIL 12:25),17:00 Vendas de Casas Usadas
+2026-04-14,Tue,2026-04,4785.3,-181.4,-1.8,206.0,405.0,TRAIL,12:25,1.0,0.0,sim,ativou trailing (MFE 206) mas fechou negativo (TRAIL 12:25),15:30 Índice de Preços ao Pr
+2026-04-30,Thu,2026-04,4616.8,-173.0,-1.7,317.0,3002.0,TRAIL,16:50,16.0,11.0,sim,ativou trailing (MFE 317) mas fechou negativo (TRAIL 16:50),15:30 Núcleo do Índice de Pr; 15:30 Núcleo do Índice de Pr; 15:30 PIB (Trimestral); 15:30 
+2026-05-07,Thu,2026-05,4735.7,-138.4,-1.4,190.0,219.0,TRAIL,12:25,7.0,4.0,nao,ativou trailing (MFE 190) mas fechou negativo (TRAIL 12:25),15:30 Pedidos Iniciais de Su
+2026-05-15,Fri,2026-05,4546.7,-520.4,-5.2,196.0,594.0,TRAIL,12:25,8.0,5.0,sim,ativou trailing (MFE 196) mas fechou negativo (TRAIL 12:25),
+2026-06-04,Thu,2026-06,4466.1,-15.4,-0.2,257.0,145.0,TRAIL,12:25,20.0,13.0,nao,ativou trailing (MFE 257) mas fechou negativo (TRAIL 12:25),15:30 Pedidos Iniciais de Su
+2026-06-17,Wed,2026-06,4326.8,-4.0,-0.0,173.0,890.0,TRAIL,14:40,13.0,7.0,nao,ativou trailing (MFE 173) mas fechou negativo (TRAIL 14:40),15:30 Vendas no Varejo (Mens; 15:30 Núcleo do Índice de Ve; 17:30 EIA: Estoques de Petró; 
+2026-06-19,Fri,2026-06,4164.7,-285.4,-2.9,184.0,357.0,TRAIL,12:25,2.0,1.0,nao,ativou trailing (MFE 184) mas fechou negativo (TRAIL 12:25),
+2026-06-23,Tue,2026-06,4111.4,-82.9,-0.8,327.0,2209.0,TRAIL,16:05,4.0,1.0,nao,ativou trailing (MFE 327) mas fechou negativo (TRAIL 16:05),
+2026-06-25,Thu,2026-06,3991.1,-105.0,-1.1,496.0,656.0,TRAIL,12:40,2.0,1.0,nao,ativou trailing (MFE 496) mas fechou negativo (TRAIL 12:40),15:30 Pedidos de Bens Duráve; 15:30 Núcleo do Índice de Pr; 15:30 Núcleo do Índice de Pr; 
+2026-06-26,Fri,2026-06,4046.4,-179.4,-1.8,335.0,251.0,TRAIL,12:25,1.0,0.0,nao,ativou trailing (MFE 335) mas fechou negativo (TRAIL 12:25),
+2026-07-10,Fri,2026-07,4101.5,-87.4,-0.9,155.0,77.0,TRAIL,12:25,14.0,9.0,nao,ativou trailing (MFE 155) mas fechou negativo (TRAIL 12:25),
+2026-08-06,Thu,2026-08,4282.7,-110.4,-1.1,203.0,207.0,TRAIL,12:25,27.0,18.0,nao,ativou trailing (MFE 203) mas fechou negativo (TRAIL 12:25),15:30 Pedidos Iniciais de Su
+2026-08-12,Wed,2026-08,4415.6,-827.4,-8.3,214.0,877.0,TRAIL,12:25,6.0,3.0,nao,ativou trailing (MFE 214) mas fechou negativo (TRAIL 12:25),15:30 Núcleo do Índice de Pr; 15:30 Núcleo do Índice de Pr; 15:30 Núcleo do Índice de Pr; 
+2026-08-19,Wed,2026-08,4355.3,-83.4,-0.8,186.0,187.0,TRAIL,12:25,7.0,4.0,nao,ativou trailing (MFE 186) mas fechou negativo (TRAIL 12:25),17:30 EIA: Estoques de Petró
+2026-08-27,Thu,2026-08,4595.5,-237.0,-2.4,177.0,384.0,TRAIL,12:30,8.0,5.0,sim,ativou trailing (MFE 177) mas fechou negativo (TRAIL 12:30),15:30 Pedidos Iniciais de Su
+2026-09-15,Tue,2026-09,4262.6,-3193.5,-31.9,38.0,4810.0,23:30,23:25,19.0,12.0,sim,subiu contra (MAE 4810) e nunca andou +150: dia de alta; saiu 23:30 (-3184 pts no dia),
+2026-09-24,Thu,2026-09,4262.9,-51.4,-0.5,187.0,220.0,TRAIL,12:25,9.0,6.0,nao,ativou trailing (MFE 187) mas fechou negativo (TRAIL 12:25),15:30 Pedidos Iniciais de Su; 17:00 Venda de Casas Novas
+2026-10-01,Thu,2026-10,4160.0,-100.4,-1.0,158.0,273.0,TRAIL,12:25,7.0,4.0,nao,ativou trailing (MFE 158) mas fechou negativo (TRAIL 12:25),15:30 Pedidos Iniciais de Su; 16:45 Índice de Gerentes de ; 17:00 Índice de Gestores de ; 

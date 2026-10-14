@@ -60,6 +60,35 @@ python tools/mba/mba_dedupe.py --root "<Common>/Files/MarketBehaviorAnalyzer" --
 
 Na primeira execução (sem CSV v2 para aquele timeframe) o EA monta `InpInitialBackfillDays` dias (padrão 30; 0 desliga) a partir do histórico do servidor e depois segue ao vivo. O trabalho é feito em lotes de até `InpBackfillBudgetMs` (700 ms) por segundo, um candle por timeframe por vez, então o gráfico não trava; M1 de 30 dias leva alguns minutos ou mais. Linhas ficam com `source=BACKFILL_SERVER`; `tick_data_ok=FALSE` quando o servidor não tem ticks daquele período. Mais de 30 dias: aumentar o input (limitado pelo histórico que a corretora guarda) ou usar o script `MarketBehaviorAnalyzer_History` (pasta `HISTORY\<run>`, nunca misturada com `LIVE`).
 
+## Histórico do calendário (v1.11)
+
+Ao iniciar, se `InpInitialBackfillDays` > 0, o EA grava no CSV de notícias os valores do calendário dos últimos `InpInitialBackfillDays + 2` dias (moeda `InpNewsCurrencies`, importância >= `InpNewsMinImportance`) com `source=CALENDAR_BACKFILL`. Isso permite estudar surpresa (actual x forecast) e a reação do preço.
+
+- Chave de deduplicação: `calendar_value_id | revision | actual_value` (exatamente como gravado). Reiniciar não repete linhas; uma revisão ou um actual novo gera linha nova. A v1.10 comparava o actual bruto com o texto do CSV e **não deduplicava entre reinícios**; corrigido.
+- `CALENDAR_BACKFILL` = valores como o servidor os tem **agora** (podem incluir revisões posteriores à divulgação). `CALENDAR` = capturado ao vivo.
+- Cada execução registra uma linha `INFO:CalendarBackfill` em `LOGS/errors` com quantas linhas foram gravadas (não é erro).
+- Candles e ticks só são reconstruídos do servidor numa **primeira** execução (sem CSV v2). Se já existe CSV, o EA só preenche lacunas até o presente. Para ampliar o histórico de candles, use outra pasta de saída ou o script `MarketBehaviorAnalyzer_History`.
+
+## v1.20 - historico maximo (padrao do EA, sem preset)
+
+Padrao: `InpBackfillMaxHistory=true`. Na primeira execucao (sem CSV v2) o EA procura, por timeframe, o candle mais antigo que o terminal consegue fornecer: limitado pela primeira data do servidor, pelo `Max bars in chart` do terminal e por `InpBackfillMaxDays` (3650). Espera ate `InpBackfillSyncWaitSec` (120 s) o terminal baixar o historico e registra em `LOGS/errors` uma linha `INFO:BackfillStart` por timeframe (primeiro candle, barras locais, `max_bars_in_chart`, `limited_by_max_bars`).
+
+- **Limite do M1:** `Max bars in chart` = 100000 nos dois terminais (FP e IC) = ~72 pregoes de M1. Para M1 mais antigo: Ferramentas > Opcoes > Graficos > Maximo de barras no grafico = Ilimitado e reiniciar o terminal. M5 chega a ~1 ano, M15 a ~3 anos com 100000.
+- **Ticks:** so sao reconstruidos (tick_count, spread, imbalance) para candles de ate `InpTickHistoryDays` (120) dias; mais antigos saem com `tick_data_ok=FALSE`. Evita baixar anos de ticks.
+- **Calendario:** `InpNewsHistoryDays` (1095) dias.
+- **Disco:** estimativa ~700 MB por ano de M1 por feed (forward M1 e o maior). Candles/events/forward de timeframes maiores sao pequenos.
+- Com CSV ja existente o EA nao volta mais no tempo: arquive a pasta `LIVE` e reinicie.
+
+### v1.21 - profundidade por timeframe
+
+`InpDaysM1` 1000 (~jan/2024), `InpDaysM5` 520, `InpDaysM15` 1000, `InpDaysM30` 1000, `InpDaysH1` 2000, `InpDaysH4/W1/MN1` 3650 (todos limitados por `InpBackfillMaxDays` e pelo `Max bars in chart` do terminal). Para M1 de 1000 dias o terminal precisa de `Max bars in chart` >= ~1.000.000 (Ilimitado). Estimativa: ~1 milhao de candles M1 por feed, ~2,7 GB por feed com events/forward/ticks.
+
+## v1.12 - retomada sem regravar candles
+
+Bug da 1.10/1.11: ao iniciar com a serie do terminal ainda desatualizada (apos o terminal ficar offline), o EA ignorava o ultimo candle gravado e retomava do candle desatualizado, regravando candles ja existentes (FP, run de 06/10: 1.275 candles M1 duplicados, 1,4%). Corrigido: a retomada usa sempre o ultimo candle do CSV; so avanca quando o terminal tem candle mais novo.
+
+Dados limpos (originais intactos): `Common\Files\MarketBehaviorAnalyzer_CLEAN\<corretora>\<simbolo>\LIVE` via `tools/mba/mba_dedupe.py`. Duplicatas de noticias (87 FP / 65 IC) eram todas `CALENDAR` x `CALENDAR` de reinicios da v1.10; o backfill da 1.11 nao duplicou. Noticias limpas: 416 linhas, 248 com actual e forecast (12 semanas).
+
 ## Presets
 
 No projeto: `MQL5/Experts/MarketBehaviorAnalyzer/presets/MarketBehaviorAnalyzer_EA.set` e `MQL5/Scripts/MarketBehaviorAnalyzer/presets/MarketBehaviorAnalyzer_History.set`.

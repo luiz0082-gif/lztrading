@@ -213,4 +213,5 @@ Cada estratégia importante deve ter um README dentro de seu diretório com:
 
 | EA | Tese | Status |
 |---|---|---|
-| ChainScalper (`MQL5/Experts/ChainScalper/`) | Rompimento em M1 a favor da tendência → corrente de 4–8 posições (STOPs pré-programados) com trailing escalonado por posição | v1.00 compilada; sem backtest |
+| ChainScalper (`MQL5/Experts/ChainScalper/`) | Rompimento em M1 a favor da tendência → corrente de 4–8 posições (STOPs pré-programados) com saída escalonada por posição | v1.04 compilada; sem backtest |
+| AccelChain (`MQL5/Experts/AccelChain/`) | Aceleração (estrutura M1 + ticks: velocidade, eficiência, pressão, atividade) → corrente de 4–8 pernas com escada de lucro; sem indicadores clássicos | v1.00 compilada; sem backtest |
