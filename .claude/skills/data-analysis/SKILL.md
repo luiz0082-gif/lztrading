@@ -1,8 +1,10 @@
 ---
 name: data-analysis
-description: Use when analyzing MT5 logs, CSV telemetry, trade histories, backtest reports, optimization outputs, market-behavior datasets, or comparing EA runs.
+description: Use for MT5 logs, CSV telemetry, trade histories, backtest reports, optimization outputs, and comparing EA runs outside a dedicated MarketBehaviorAnalyzer (MBA) research task. For MBA datasets, pattern discovery, clock-time scans, or point-reachability studies, use mba-research instead.
 ---
 # Trading Data Analysis
+
+For any MarketBehaviorAnalyzer-specific investigation, defer to .claude/skills/mba-research/SKILL.md and do not use this generic workflow as the sole analysis protocol.
 
 Read `docs/ANALISE-DADOS.md` and `docs/TELEMETRIA.md`.
 
