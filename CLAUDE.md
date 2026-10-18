@@ -34,6 +34,18 @@ Os parâmetros de configuração de todo EA/indicador/script são organizados em
 - Stop Loss tem menu próprio, desativado por padrão.
 - Seguir a ordem, as convenções e o checklist de `docs/INPUTS.md`.
 
+## Roteamento obrigatório para skills
+
+Antes de executar uma tarefa, identifique o domínio e carregue a skill especializada correspondente. As skills complementam este arquivo; não substituem as regras gerais acima.
+
+- **Qualquer tarefa de pesquisa do MarketBehaviorAnalyzer (MBA):** quando envolver o MBA, seus CSVs/relatórios, qualidade ou cobertura da coleta, histórico de candles/ticks, padrões e repetições, horários exatos, minuto da hora, alcances por pontos, BUY/SELL, MFE/MAE, horizontes futuros, comparação de feeds ou descoberta quantitativa, leia obrigatoriamente **.claude/skills/mba-research/SKILL.md** antes de analisar. Consulte também docs/MBA.md, docs/CSV.md e docs/ANALISE-DADOS.md conforme o escopo.
+- **Manutenção ou depuração do coletor MBA em MQL5:** use mba-research para os requisitos de pesquisa/aceitação e combine com a skill mql5-engineering para a implementação técnica. Leia o código EA/Core/History relevante; não deduza o funcionamento apenas pela documentação.
+- **Transformar um padrão do MBA em estratégia:** use mba-research para estabelecer a evidência e strategy-lab para formalizar a hipótese operacional, custos, invalidação, risco e validação.
+- **Logs/CSV de outros EAs, sem foco específico no MBA:** use a skill data-analysis.
+- **Desenvolvimento ou revisão MQL5 geral:** use mql5-engineering e as skills específicas de painel/observabilidade quando aplicáveis.
+
+O roteamento para mba-research tem precedência sobre data-analysis em qualquer investigação específica do MBA. Não use apenas a skill genérica para responder a uma pergunta de padrões de mercado. Se a skill especializada não puder ser carregada, informe a limitação e siga explicitamente seu checklist a partir de docs/MBA.md, sem fingir que a skill foi executada.
+
 ## Áreas cobertas
 
 - Expert Advisors;
