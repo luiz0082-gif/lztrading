@@ -30,10 +30,10 @@
     "semantic_hash": "b836900f1447e7cc72f382e396f194af"
   },
   ".claude/skills/mql5-engineering/SKILL.md": {
-    "mtime": 1791225496.3260446,
-    "seen": 1791254942.007111,
-    "ast_hash": "777e5d5c458f2cadf93134876161dae4",
-    "semantic_hash": "777e5d5c458f2cadf93134876161dae4"
+    "mtime": 1791373405.2560554,
+    "seen": 1792435059.5770054,
+    "ast_hash": "b3b5e9a85b49522dd071121d57e894b3",
+    "semantic_hash": "b3b5e9a85b49522dd071121d57e894b3"
   },
   ".claude/skills/strategy-lab/SKILL.md": {
     "mtime": 1791225496.327056,
@@ -42,10 +42,10 @@
     "semantic_hash": "09d5e72e154b951513b6211193d6b70a"
   },
   "CLAUDE.md": {
-    "mtime": 1791225496.327056,
-    "seen": 1791254942.0071137,
-    "ast_hash": "7a1d50c54f992db94a7a4c0e11ea6d1b",
-    "semantic_hash": "7a1d50c54f992db94a7a4c0e11ea6d1b"
+    "mtime": 1791373405.2390068,
+    "seen": 1792435059.5770078,
+    "ast_hash": "0e5e9ce01dc44b48ef22d91b55484c54",
+    "semantic_hash": "0e5e9ce01dc44b48ef22d91b55484c54"
   },
   "MQL5/Experts/DolarFix/README.md": {
     "mtime": 1791225496.330106,
@@ -60,10 +60,10 @@
     "semantic_hash": "77a2495949462c480efd1c59e890e2df"
   },
   "MQL5/Experts/MicroMomentum/README.md": {
-    "mtime": 1791236634.1740794,
-    "seen": 1791254942.0071175,
-    "ast_hash": "8a3289f38483601e08938d58ebf8be70",
-    "semantic_hash": "8a3289f38483601e08938d58ebf8be70"
+    "mtime": 1791326599.401184,
+    "seen": 1792435059.5770175,
+    "ast_hash": "f3cef1bd503553d34d37183daafce58d",
+    "semantic_hash": "f3cef1bd503553d34d37183daafce58d"
   },
   "MQL5/Experts/OuroAbertura/README.md": {
     "mtime": 1791225496.3336782,
@@ -84,10 +84,10 @@
     "semantic_hash": "867e5aed84c4069aaa577599c40f9623"
   },
   "README.md": {
-    "mtime": 1791225496.3397367,
-    "seen": 1791254942.0071228,
-    "ast_hash": "e47c01444790625d35b100e2c8db1443",
-    "semantic_hash": "e47c01444790625d35b100e2c8db1443"
+    "mtime": 1791373405.2460566,
+    "seen": 1792435059.5770264,
+    "ast_hash": "a5041ccab5984df64ca3ee0dbaa85dbd",
+    "semantic_hash": "a5041ccab5984df64ca3ee0dbaa85dbd"
   },
   "docs/ANALISE-DADOS.md": {
     "mtime": 1791225496.3402417,
@@ -108,16 +108,16 @@
     "semantic_hash": "57fcaceb486ebf292ebfdaf2338579db"
   },
   "docs/CSV.md": {
-    "mtime": 1791225496.3422587,
-    "seen": 1791254942.0071273,
-    "ast_hash": "a8d9d1aac94c8eafa610014d549f8607",
-    "semantic_hash": "a8d9d1aac94c8eafa610014d549f8607"
+    "mtime": 1792433087.7493165,
+    "seen": 1792435059.5770326,
+    "ast_hash": "8850bcaaeccd1bdf617538078e882e62",
+    "semantic_hash": "8850bcaaeccd1bdf617538078e882e62"
   },
   "docs/ESTRATEGIAS.md": {
-    "mtime": 1791225496.3422587,
-    "seen": 1791254942.0071287,
-    "ast_hash": "c1dc7a4bf9888bcd283c227424c7f022",
-    "semantic_hash": "c1dc7a4bf9888bcd283c227424c7f022"
+    "mtime": 1791374582.4268272,
+    "seen": 1792435059.5770338,
+    "ast_hash": "e3863dd0e89a5f813200555dd2b60cd3",
+    "semantic_hash": "e3863dd0e89a5f813200555dd2b60cd3"
   },
   "docs/PAINEL.md": {
     "mtime": 1791225496.3432646,
@@ -132,15 +132,1065 @@
     "semantic_hash": "ef90b2a1451337ad9a5ae65584a540d9"
   },
   "docs/WORKFLOW.md": {
-    "mtime": 1791225496.3432646,
-    "seen": 1791254942.007133,
-    "ast_hash": "ca26949b5dc110753c3ddcc2e52a3078",
-    "semantic_hash": "ca26949b5dc110753c3ddcc2e52a3078"
+    "mtime": 1791373405.2550561,
+    "seen": 1792435059.5770423,
+    "ast_hash": "3ab8180edb264f14d4fd12c26fbd254a",
+    "semantic_hash": "3ab8180edb264f14d4fd12c26fbd254a"
   },
   "docs/relatorios/RELATORIO-MICROMOMENTUM-2026-10-05.md": {
     "mtime": 1791235572.4750574,
     "seen": 1791254942.0071342,
     "ast_hash": "1ea80d1e4cddff54d385e83539a185b5",
     "semantic_hash": "1ea80d1e4cddff54d385e83539a185b5"
+  },
+  "docs/relatorios/mba/reach/AUDUSD/resumo.json": {
+    "mtime": 1792289887.8401496,
+    "seen": 1792435059.5768938,
+    "ast_hash": "64b7dec8424755c6afaae6bf52c64789",
+    "semantic_hash": "64b7dec8424755c6afaae6bf52c64789"
+  },
+  "docs/relatorios/mba/reach/AUDUSD/resumo_estrutural.json": {
+    "mtime": 1792289060.1896503,
+    "seen": 1792435059.5768983,
+    "ast_hash": "075ad686bac33c1caf1a8e6054551c4c",
+    "semantic_hash": "075ad686bac33c1caf1a8e6054551c4c"
+  },
+  "docs/relatorios/mba/reach/DXY_Z6/resumo.json": {
+    "mtime": 1792289701.26484,
+    "seen": 1792435059.5769002,
+    "ast_hash": "e32fd76357b3ec86bf40136cd30a95f0",
+    "semantic_hash": "e32fd76357b3ec86bf40136cd30a95f0"
+  },
+  "docs/relatorios/mba/reach/DXY_Z6/resumo_estrutural.json": {
+    "mtime": 1792288905.8887558,
+    "seen": 1792435059.576902,
+    "ast_hash": "3e736619fcfb6ed1df65b8613ec1d9d0",
+    "semantic_hash": "3e736619fcfb6ed1df65b8613ec1d9d0"
+  },
+  "docs/relatorios/mba/reach/EURJPY/resumo.json": {
+    "mtime": 1792290110.1870775,
+    "seen": 1792435059.5769033,
+    "ast_hash": "908ed86a5a40d706fabcbe1fbb558f8a",
+    "semantic_hash": "908ed86a5a40d706fabcbe1fbb558f8a"
+  },
+  "docs/relatorios/mba/reach/EURJPY/resumo_estrutural.json": {
+    "mtime": 1792288965.107589,
+    "seen": 1792435059.5769048,
+    "ast_hash": "5bf8ec77596380cdd699313509db7c2f",
+    "semantic_hash": "5bf8ec77596380cdd699313509db7c2f"
+  },
+  "docs/relatorios/mba/reach/GBPJPY/resumo.json": {
+    "mtime": 1792290174.2747667,
+    "seen": 1792435059.576906,
+    "ast_hash": "25c213e0c7ca99481eb7abd0fa8ae335",
+    "semantic_hash": "25c213e0c7ca99481eb7abd0fa8ae335"
+  },
+  "docs/relatorios/mba/reach/GBPJPY/resumo_estrutural.json": {
+    "mtime": 1792288992.8618758,
+    "seen": 1792435059.5769072,
+    "ast_hash": "d9f2d22d363d55c9eb6cc8ecb33eea3d",
+    "semantic_hash": "d9f2d22d363d55c9eb6cc8ecb33eea3d"
+  },
+  "docs/relatorios/mba/reach/NZDUSD_r/resumo.json": {
+    "mtime": 1792289898.115935,
+    "seen": 1792435059.5769086,
+    "ast_hash": "507ba186c13316af36d722ad6fc308b7",
+    "semantic_hash": "507ba186c13316af36d722ad6fc308b7"
+  },
+  "docs/relatorios/mba/reach/NZDUSD_r/resumo_estrutural.json": {
+    "mtime": 1792289079.3093383,
+    "seen": 1792435059.5769098,
+    "ast_hash": "86cd859583319d75b3d00d095f7b46ee",
+    "semantic_hash": "86cd859583319d75b3d00d095f7b46ee"
+  },
+  "docs/relatorios/mba/reach/US30/resumo.json": {
+    "mtime": 1792290226.919712,
+    "seen": 1792435059.5769114,
+    "ast_hash": "a6b1002e2bfd3c09cd47a8f0db4abb74",
+    "semantic_hash": "a6b1002e2bfd3c09cd47a8f0db4abb74"
+  },
+  "docs/relatorios/mba/reach/US30/resumo_estrutural.json": {
+    "mtime": 1792290086.6201935,
+    "seen": 1792435059.5769126,
+    "ast_hash": "07fbcab9a03988db0742f50b40a6bb53",
+    "semantic_hash": "07fbcab9a03988db0742f50b40a6bb53"
+  },
+  "docs/relatorios/mba/reach/USDCHF/resumo.json": {
+    "mtime": 1792289844.3359313,
+    "seen": 1792435059.5769138,
+    "ast_hash": "68a8f591a72e6816007c1199c1b3863a",
+    "semantic_hash": "68a8f591a72e6816007c1199c1b3863a"
+  },
+  "docs/relatorios/mba/reach/USDCHF/resumo_estrutural.json": {
+    "mtime": 1792289020.4540093,
+    "seen": 1792435059.5769153,
+    "ast_hash": "24a2c9ef72cb0ca865b83f6748851d16",
+    "semantic_hash": "24a2c9ef72cb0ca865b83f6748851d16"
+  },
+  "docs/relatorios/mba/reach/USDJPY/resumo.json": {
+    "mtime": 1792289741.6164296,
+    "seen": 1792435059.5769162,
+    "ast_hash": "3d0f2ccd3d6d416fd0edcedf7bbf70cb",
+    "semantic_hash": "3d0f2ccd3d6d416fd0edcedf7bbf70cb"
+  },
+  "docs/relatorios/mba/reach/USDJPY/resumo_estrutural.json": {
+    "mtime": 1792288929.691275,
+    "seen": 1792435059.5769174,
+    "ast_hash": "14054883d3d23b393f4519d4453d4c03",
+    "semantic_hash": "14054883d3d23b393f4519d4453d4c03"
+  },
+  "docs/relatorios/mba/reach/XAGUSD/resumo.json": {
+    "mtime": 1792289987.926747,
+    "seen": 1792435059.5769188,
+    "ast_hash": "8f3532b7dc34fa6e1854e4655460dc25",
+    "semantic_hash": "8f3532b7dc34fa6e1854e4655460dc25"
+  },
+  "docs/relatorios/mba/reach/XAGUSD/resumo_estrutural.json": {
+    "mtime": 1792288861.6865048,
+    "seen": 1792435059.57692,
+    "ast_hash": "d2041c3a26242ab97f961597cf256f8f",
+    "semantic_hash": "d2041c3a26242ab97f961597cf256f8f"
+  },
+  "docs/relatorios/mba/reach/XAUUSD/resumo.json": {
+    "mtime": 1792289552.0041904,
+    "seen": 1792435059.576921,
+    "ast_hash": "4bcb2368afcc00b8b603bd6d1966773b",
+    "semantic_hash": "4bcb2368afcc00b8b603bd6d1966773b"
+  },
+  "docs/relatorios/mba/reach/XAUUSD/resumo_estrutural.json": {
+    "mtime": 1792288839.925757,
+    "seen": 1792435059.5769234,
+    "ast_hash": "086e71c42079b353ea385fa45b734044",
+    "semantic_hash": "086e71c42079b353ea385fa45b734044"
+  },
+  "docs/relatorios/mba/reach/symbol_specs.json": {
+    "mtime": 1792288166.7764285,
+    "seen": 1792435059.5769243,
+    "ast_hash": "95784a312330a7f8eed26a8b8473e082",
+    "semantic_hash": "95784a312330a7f8eed26a8b8473e082"
+  },
+  "docs/relatorios/mba/scan_all/DE40_resumo.json": {
+    "mtime": 1792373220.6604774,
+    "seen": 1792435059.5769258,
+    "ast_hash": "7f5169691ab0540e1762b828d2bd9551",
+    "semantic_hash": "7f5169691ab0540e1762b828d2bd9551"
+  },
+  "docs/relatorios/mba/scan_all/US500_resumo.json": {
+    "mtime": 1792372845.6144705,
+    "seen": 1792435059.576927,
+    "ast_hash": "0c2384639bb160539956ccd3ef21fb32",
+    "semantic_hash": "0c2384639bb160539956ccd3ef21fb32"
+  },
+  "docs/relatorios/mba/scan_all/USTEC_resumo.json": {
+    "mtime": 1792372439.5372515,
+    "seen": 1792435059.5769281,
+    "ast_hash": "2f070851bd52c1d6c6a5fe0090809dd2",
+    "semantic_hash": "2f070851bd52c1d6c6a5fe0090809dd2"
+  },
+  "docs/relatorios/mba/scan_all/XAGUSD_resumo.json": {
+    "mtime": 1792371832.4711373,
+    "seen": 1792435059.5769296,
+    "ast_hash": "88f7f4495aa82023a5267d638c3064df",
+    "semantic_hash": "88f7f4495aa82023a5267d638c3064df"
+  },
+  "docs/relatorios/mba/scan_all/XTIUSD_resumo.json": {
+    "mtime": 1792371432.506467,
+    "seen": 1792435059.5769308,
+    "ast_hash": "e4e93200ed1ab4d5753ccbf0cd493673",
+    "semantic_hash": "e4e93200ed1ab4d5753ccbf0cd493673"
+  },
+  "tools/fluxmatrix/analyze.py": {
+    "mtime": 1791598566.0041225,
+    "seen": 1792435059.576932,
+    "ast_hash": "15542dd2bafba7c2b628818bb99c041b",
+    "semantic_hash": "15542dd2bafba7c2b628818bb99c041b"
+  },
+  "tools/mba/mba_audit.py": {
+    "mtime": 1792181709.0990918,
+    "seen": 1792435059.5769331,
+    "ast_hash": "a7adfbb3d10f5cfe77bc0ecb1a7bb744",
+    "semantic_hash": "a7adfbb3d10f5cfe77bc0ecb1a7bb744"
+  },
+  "tools/mba/mba_chainscalper_fit.py": {
+    "mtime": 1792430409.115058,
+    "seen": 1792435059.5769343,
+    "ast_hash": "235a00a0ac80d190f9ae13e5c897a480",
+    "semantic_hash": "235a00a0ac80d190f9ae13e5c897a480"
+  },
+  "tools/mba/mba_consolidate.py": {
+    "mtime": 1792215608.5485518,
+    "seen": 1792435059.5769355,
+    "ast_hash": "3d6570315ed30f2b93598ae55c450a23",
+    "semantic_hash": "3d6570315ed30f2b93598ae55c450a23"
+  },
+  "tools/mba/mba_day.py": {
+    "mtime": 1792317708.18656,
+    "seen": 1792435059.5769365,
+    "ast_hash": "a108d275328d9079e367e4f05694b3b2",
+    "semantic_hash": "a108d275328d9079e367e4f05694b3b2"
+  },
+  "tools/mba/mba_day_report.py": {
+    "mtime": 1792318297.544864,
+    "seen": 1792435059.5769374,
+    "ast_hash": "a38581735247928731192d0ede880cce",
+    "semantic_hash": "a38581735247928731192d0ede880cce"
+  },
+  "tools/mba/mba_dedupe.py": {
+    "mtime": 1791312586.1094227,
+    "seen": 1792435059.5769384,
+    "ast_hash": "7f14e21ffa4ad5963fa74a8229c1b1a9",
+    "semantic_hash": "7f14e21ffa4ad5963fa74a8229c1b1a9"
+  },
+  "tools/mba/mba_docx.py": {
+    "mtime": 1792325240.4761746,
+    "seen": 1792435059.5769398,
+    "ast_hash": "939662bc547b1042642671c938423dd0",
+    "semantic_hash": "939662bc547b1042642671c938423dd0"
+  },
+  "tools/mba/mba_hft_hours.py": {
+    "mtime": 1792375137.0428283,
+    "seen": 1792435059.5769408,
+    "ast_hash": "c315a5d9a3578e103cc47e65240b5f2b",
+    "semantic_hash": "c315a5d9a3578e103cc47e65240b5f2b"
+  },
+  "tools/mba/mba_hftretail_fit.py": {
+    "mtime": 1792434133.41731,
+    "seen": 1792435059.5769417,
+    "ast_hash": "f5b94e3b4b36a1294191b1c56589dc8b",
+    "semantic_hash": "f5b94e3b4b36a1294191b1c56589dc8b"
+  },
+  "tools/mba/mba_hold_scan.py": {
+    "mtime": 1792294227.2030723,
+    "seen": 1792435059.5769432,
+    "ast_hash": "f7e985dfc2cafb00f686ec7b421a5b75",
+    "semantic_hash": "f7e985dfc2cafb00f686ec7b421a5b75"
+  },
+  "tools/mba/mba_intraday_scan.py": {
+    "mtime": 1792292023.385287,
+    "seen": 1792435059.576944,
+    "ast_hash": "7724dc64dcd56367de3324092761d9f0",
+    "semantic_hash": "7724dc64dcd56367de3324092761d9f0"
+  },
+  "tools/mba/mba_ldn_intraday.py": {
+    "mtime": 1792291914.1814253,
+    "seen": 1792435059.5769453,
+    "ast_hash": "255962055f22fea5789441559c819cda",
+    "semantic_hash": "255962055f22fea5789441559c819cda"
+  },
+  "tools/mba/mba_mine.py": {
+    "mtime": 1792250216.8851683,
+    "seen": 1792435059.5769465,
+    "ast_hash": "0e06ec8563cf4cebb1c7b1c4ef3a6f9a",
+    "semantic_hash": "0e06ec8563cf4cebb1c7b1c4ef3a6f9a"
+  },
+  "tools/mba/mba_reach.py": {
+    "mtime": 1792288954.2330835,
+    "seen": 1792435059.5769475,
+    "ast_hash": "17b2011e39c287bba922f21cd2c08c7b",
+    "semantic_hash": "17b2011e39c287bba922f21cd2c08c7b"
+  },
+  "tools/mba/mba_reach_analyze.py": {
+    "mtime": 1792288787.8463652,
+    "seen": 1792435059.5769484,
+    "ast_hash": "8b60241a9692d8a03c9662dd96a142dd",
+    "semantic_hash": "8b60241a9692d8a03c9662dd96a142dd"
+  },
+  "tools/mba/mba_reach_load.py": {
+    "mtime": 1792288165.875544,
+    "seen": 1792435059.5769498,
+    "ast_hash": "185003bca21fc91803ddda1890430df7",
+    "semantic_hash": "185003bca21fc91803ddda1890430df7"
+  },
+  "tools/mba/mba_reach_report.py": {
+    "mtime": 1792290367.7831147,
+    "seen": 1792435059.5769508,
+    "ast_hash": "c92ce9d5dd46c7ae6164e1acd49082f9",
+    "semantic_hash": "c92ce9d5dd46c7ae6164e1acd49082f9"
+  },
+  "tools/mba/mba_reach_struct.py": {
+    "mtime": 1792288507.4485414,
+    "seen": 1792435059.576952,
+    "ast_hash": "e583aaebb7e2e97dce81ccea1f3f2133",
+    "semantic_hash": "e583aaebb7e2e97dce81ccea1f3f2133"
+  },
+  "tools/mba/mba_reach_summary.py": {
+    "mtime": 1792288884.0081308,
+    "seen": 1792435059.5769534,
+    "ast_hash": "3fd97f44b15430e6cad3e8d175677b2e",
+    "semantic_hash": "3fd97f44b15430e6cad3e8d175677b2e"
+  },
+  "tools/mba/mba_report.py": {
+    "mtime": 1792317695.3941147,
+    "seen": 1792435059.5769544,
+    "ast_hash": "ae5116f8d436cc82b0c63bb59edf02f2",
+    "semantic_hash": "ae5116f8d436cc82b0c63bb59edf02f2"
+  },
+  "tools/mba/mba_scan_all.py": {
+    "mtime": 1792373200.6439674,
+    "seen": 1792435059.5769553,
+    "ast_hash": "04f07275c1492f2157ab19d78f5171b7",
+    "semantic_hash": "04f07275c1492f2157ab19d78f5171b7"
+  },
+  "tools/mba/mba_scan_docx.py": {
+    "mtime": 1792373200.6449664,
+    "seen": 1792435059.5769567,
+    "ast_hash": "3fe46fd3937d65ee718b232b2b7edf54",
+    "semantic_hash": "3fe46fd3937d65ee718b232b2b7edf54"
+  },
+  "tools/mba/mba_slots.py": {
+    "mtime": 1792320746.9758525,
+    "seen": 1792435059.5769577,
+    "ast_hash": "91b941c18f49c3924a465f481e011d6d",
+    "semantic_hash": "91b941c18f49c3924a465f481e011d6d"
+  },
+  "tools/mba/mba_slots_report.py": {
+    "mtime": 1792249330.9479258,
+    "seen": 1792435059.576959,
+    "ast_hash": "b83674b6c4f3af245c32f96b2b379236",
+    "semantic_hash": "b83674b6c4f3af245c32f96b2b379236"
+  },
+  "tools/mba/mba_summary_table.py": {
+    "mtime": 1792295483.5464237,
+    "seen": 1792435059.57696,
+    "ast_hash": "78ed0525e6b33bbc7bfb1c099caafb51",
+    "semantic_hash": "78ed0525e6b33bbc7bfb1c099caafb51"
+  },
+  "tools/mba/mba_xau_carry.py": {
+    "mtime": 1792364199.8166034,
+    "seen": 1792435059.576961,
+    "ast_hash": "e61841c246ba3b3450bf5549b6426350",
+    "semantic_hash": "e61841c246ba3b3450bf5549b6426350"
+  },
+  "tools/mba/mba_xau_carry_docx.py": {
+    "mtime": 1792369720.241542,
+    "seen": 1792435059.5769622,
+    "ast_hash": "0ed70b706c533376ceb52b44a3af5108",
+    "semantic_hash": "0ed70b706c533376ceb52b44a3af5108"
+  },
+  "tools/mba/mba_xau_docx.py": {
+    "mtime": 1792361791.6668122,
+    "seen": 1792435059.5769634,
+    "ast_hash": "72c24a8f973c99151597963003ec09b8",
+    "semantic_hash": "72c24a8f973c99151597963003ec09b8"
+  },
+  "tools/mba/mba_xau_falhas.py": {
+    "mtime": 1792363644.1215699,
+    "seen": 1792435059.5769646,
+    "ast_hash": "3daecad9649b711f89790558fe087a72",
+    "semantic_hash": "3daecad9649b711f89790558fe087a72"
+  },
+  "tools/mba/mba_xau_falhas_docx.py": {
+    "mtime": 1792363734.484202,
+    "seen": 1792435059.5769658,
+    "ast_hash": "664a82ce61b983e1accd2140cc368def",
+    "semantic_hash": "664a82ce61b983e1accd2140cc368def"
+  },
+  "tools/mba/mba_xau_scan.py": {
+    "mtime": 1792360566.3451035,
+    "seen": 1792435059.576967,
+    "ast_hash": "7b086a395cd1c5826a756a4eb637c182",
+    "semantic_hash": "7b086a395cd1c5826a756a4eb637c182"
+  },
+  "tools/mba/mba_xau_why.py": {
+    "mtime": 1792362309.586352,
+    "seen": 1792435059.5769682,
+    "ast_hash": "4dbbdc3a708cd5302cbaeb60c81ed3ac",
+    "semantic_hash": "4dbbdc3a708cd5302cbaeb60c81ed3ac"
+  },
+  "tools/mba/mba_xbr80_docx.py": {
+    "mtime": 1792370992.101589,
+    "seen": 1792435059.5769694,
+    "ast_hash": "3f6eeb1adadc696b61fe6ba12e585b78",
+    "semantic_hash": "3f6eeb1adadc696b61fe6ba12e585b78"
+  },
+  "tools/mba/mba_xbr_docx.py": {
+    "mtime": 1792370329.599404,
+    "seen": 1792435059.5769706,
+    "ast_hash": "0d41337bc2c92237c018d4053fd92d65",
+    "semantic_hash": "0d41337bc2c92237c018d4053fd92d65"
+  },
+  "tools/micromomentum/add_preset_key.py": {
+    "mtime": 1791332291.5952957,
+    "seen": 1792435059.5769718,
+    "ast_hash": "10a67d8e30261a90fa1f4c80af264e02",
+    "semantic_hash": "10a67d8e30261a90fa1f4c80af264e02"
+  },
+  "tools/micromomentum/flip_sim.py": {
+    "mtime": 1791331633.4050398,
+    "seen": 1792435059.5769784,
+    "ast_hash": "758ef14cf30d98007a20e1d6a8d92955",
+    "semantic_hash": "758ef14cf30d98007a20e1d6a8d92955"
+  },
+  "tools/micromomentum/htf_filter_sim.py": {
+    "mtime": 1791331995.535472,
+    "seen": 1792435059.5769799,
+    "ast_hash": "d11e381160904c74ca58de154aa52358",
+    "semantic_hash": "d11e381160904c74ca58de154aa52358"
+  },
+  "tools/micromomentum/make_preset_real.py": {
+    "mtime": 1791333344.0881176,
+    "seen": 1792435059.5769813,
+    "ast_hash": "314890b3f66337669456b9bda1871619",
+    "semantic_hash": "314890b3f66337669456b9bda1871619"
+  },
+  "tools/micromomentum/make_presets_estilo200.py": {
+    "mtime": 1791328373.8008559,
+    "seen": 1792435059.5769825,
+    "ast_hash": "d3be9cc4ff13f3b584fe96052ba9d223",
+    "semantic_hash": "d3be9cc4ff13f3b584fe96052ba9d223"
+  },
+  "tools/micromomentum/make_presets_janelas.py": {
+    "mtime": 1791554822.8980875,
+    "seen": 1792435059.5769837,
+    "ast_hash": "884df75f02beea95a3a5b0a1f11199ef",
+    "semantic_hash": "884df75f02beea95a3a5b0a1f11199ef"
+  },
+  "tools/micromomentum/make_presets_protegido.py": {
+    "mtime": 1791549021.0643733,
+    "seen": 1792435059.5769851,
+    "ast_hash": "2380c6de2146cfbb263bcd8bb182b673",
+    "semantic_hash": "2380c6de2146cfbb263bcd8bb182b673"
+  },
+  "tools/micromomentum/make_presets_v240_ic.py": {
+    "mtime": 1791330972.3361547,
+    "seen": 1792435059.576986,
+    "ast_hash": "4c3433c6e34c596f9805b0d789b74525",
+    "semantic_hash": "4c3433c6e34c596f9805b0d789b74525"
+  },
+  "tools/micromomentum/make_presets_windows.py": {
+    "mtime": 1791905129.3025982,
+    "seen": 1792435059.5769875,
+    "ast_hash": "2878507d6721cb91c54777e0d48b9b09",
+    "semantic_hash": "2878507d6721cb91c54777e0d48b9b09"
+  },
+  "tools/micromomentum/make_v230.py": {
+    "mtime": 1791326475.8609908,
+    "seen": 1792435059.5769916,
+    "ast_hash": "92c9851583c1caefea8b443f26b6fb00",
+    "semantic_hash": "92c9851583c1caefea8b443f26b6fb00"
+  },
+  "tools/micromomentum/make_v240.py": {
+    "mtime": 1791918387.8710082,
+    "seen": 1792435059.5769925,
+    "ast_hash": "0f4344044efb18250ac6d66bea0b2df7",
+    "semantic_hash": "0f4344044efb18250ac6d66bea0b2df7"
+  },
+  "tools/micromomentum/make_windows.py": {
+    "mtime": 1791905063.605545,
+    "seen": 1792435059.576994,
+    "ast_hash": "71630cdbe860e964b47b5f8d0914375d",
+    "semantic_hash": "71630cdbe860e964b47b5f8d0914375d"
+  },
+  "tools/micromomentum/opp_signal_sim.py": {
+    "mtime": 1791331667.5744882,
+    "seen": 1792435059.5769954,
+    "ast_hash": "866ec3565106d79f633a70559eedd9a9",
+    "semantic_hash": "866ec3565106d79f633a70559eedd9a9"
+  },
+  "tools/micromomentum/replay_v230.py": {
+    "mtime": 1791867925.1379402,
+    "seen": 1792435059.5769966,
+    "ast_hash": "936c79a36f546278b0da1d0d09221036",
+    "semantic_hash": "936c79a36f546278b0da1d0d09221036"
+  },
+  "tools/micromomentum/stall_exit_sim.py": {
+    "mtime": 1791332764.7763333,
+    "seen": 1792435059.5769975,
+    "ast_hash": "52827fe5230fd52be957aec34acf7750",
+    "semantic_hash": "52827fe5230fd52be957aec34acf7750"
+  },
+  "MQL5/Experts/AccelChain/README.md": {
+    "mtime": 1791374574.197367,
+    "seen": 1792435059.5770092,
+    "ast_hash": "2bb4289a5a8178b35343c9aadf8c60bc",
+    "semantic_hash": "2bb4289a5a8178b35343c9aadf8c60bc"
+  },
+  "MQL5/Experts/ChainScalper/README.md": {
+    "mtime": 1792433723.6268437,
+    "seen": 1792435059.5770104,
+    "ast_hash": "840a728df7cdb31daf7360b29f8f7505",
+    "semantic_hash": "840a728df7cdb31daf7360b29f8f7505"
+  },
+  "MQL5/Experts/HFTRetail/README.md": {
+    "mtime": 1792434785.4820335,
+    "seen": 1792435059.577015,
+    "ast_hash": "89fd673559d413b4885feca63020a2c0",
+    "semantic_hash": "89fd673559d413b4885feca63020a2c0"
+  },
+  "MQL5/Experts/LondonDrop/README.md": {
+    "mtime": 1791921364.0912185,
+    "seen": 1792435059.5770164,
+    "ast_hash": "c5a30751faef77fa23d53703b659269c",
+    "semantic_hash": "c5a30751faef77fa23d53703b659269c"
+  },
+  "MQL5/Experts/NexusGuardPro/README.md": {
+    "mtime": 1791308297.0915868,
+    "seen": 1792435059.577019,
+    "ast_hash": "69adc95b9e768ef445385549bad2c0cc",
+    "semantic_hash": "69adc95b9e768ef445385549bad2c0cc"
+  },
+  "MQL5/Experts/PieceTrend/README.md": {
+    "mtime": 1791256342.56056,
+    "seen": 1792435059.5770233,
+    "ast_hash": "206a37769f8d23a2f9db0b0c72054770",
+    "semantic_hash": "206a37769f8d23a2f9db0b0c72054770"
+  },
+  "docs/INPUTS.md": {
+    "mtime": 1791373405.0677547,
+    "seen": 1792435059.5770347,
+    "ast_hash": "a3f619d15adc6123134bfee35ea5a729",
+    "semantic_hash": "a3f619d15adc6123134bfee35ea5a729"
+  },
+  "docs/LondonDrop.md": {
+    "mtime": 1791921364.0902197,
+    "seen": 1792435059.5770361,
+    "ast_hash": "d192cb5020eff5b04b03f4ec89eef839",
+    "semantic_hash": "d192cb5020eff5b04b03f4ec89eef839"
+  },
+  "docs/MBA.md": {
+    "mtime": 1792290568.42284,
+    "seen": 1792435059.5770373,
+    "ast_hash": "a4508a4891eba13df07417e02b39c91d",
+    "semantic_hash": "a4508a4891eba13df07417e02b39c91d"
+  },
+  "docs/PAINEL_DS.md": {
+    "mtime": 1791342539.6202197,
+    "seen": 1792435059.57704,
+    "ast_hash": "2fbfb0e55ada4f466d07f5b9a8535e00",
+    "semantic_hash": "2fbfb0e55ada4f466d07f5b9a8535e00"
+  },
+  "docs/relatorios/DIAGNOSTICO-MICROMOMENTUM-2026-10-06.md": {
+    "mtime": 1791326599.3732347,
+    "seen": 1792435059.5770438,
+    "ast_hash": "c07e25c4aa2eaf441218050aa33666c8",
+    "semantic_hash": "c07e25c4aa2eaf441218050aa33666c8"
+  },
+  "docs/relatorios/HORARIOS-INTRADAY-0100-2330-MBA-2026-10-17.md": {
+    "mtime": 1792292198.493943,
+    "seen": 1792435059.5770478,
+    "ast_hash": "175bf08eefceea070e7883fde9338355",
+    "semantic_hash": "175bf08eefceea070e7883fde9338355"
+  },
+  "docs/relatorios/INVESTIGACAO-ALCANCE-HORARIO-MBA-2026-10-17.md": {
+    "mtime": 1792290545.5957544,
+    "seen": 1792435059.577049,
+    "ast_hash": "314e125bfd7ba56fb61b9cb5d7b038ad",
+    "semantic_hash": "314e125bfd7ba56fb61b9cb5d7b038ad"
+  },
+  "docs/relatorios/PADROES-HORARIOS-MBA-2026-10-17.md": {
+    "mtime": 1792249332.884717,
+    "seen": 1792435059.5770504,
+    "ast_hash": "ce51cdd2ad3ab24a904cb03750466e85",
+    "semantic_hash": "ce51cdd2ad3ab24a904cb03750466e85"
+  },
+  "docs/relatorios/PADROES-INTRADAY-ATE-2330-MBA-2026-10-17.md": {
+    "mtime": 1792250453.9667711,
+    "seen": 1792435059.5770514,
+    "ast_hash": "7cece5408118048c92e9098639b62fad",
+    "semantic_hash": "7cece5408118048c92e9098639b62fad"
+  },
+  "docs/relatorios/PADROES-INTRADAY-INDICES-PETROLEO-2026-10-18.md": {
+    "mtime": 1792295146.5823767,
+    "seen": 1792435059.5770526,
+    "ast_hash": "67e3e3bf47c63660fca6d68f2545905e",
+    "semantic_hash": "67e3e3bf47c63660fca6d68f2545905e"
+  },
+  "docs/relatorios/PADROES-INTRADAY-M1-2026-10-18.md": {
+    "mtime": 1792321827.4059882,
+    "seen": 1792435059.577054,
+    "ast_hash": "a77bf8492d541ba2c6b4cd6d92b8020f",
+    "semantic_hash": "a77bf8492d541ba2c6b4cd6d92b8020f"
+  },
+  "docs/relatorios/PADROES-INTRADAY-NOVOS-PARES-2026-10-17.md": {
+    "mtime": 1792287147.4063127,
+    "seen": 1792435059.5770552,
+    "ast_hash": "5bdd20f1f5574a9007ded2352d51fa8b",
+    "semantic_hash": "5bdd20f1f5574a9007ded2352d51fa8b"
+  },
+  "docs/relatorios/PADROES-INTRADAY-PARES-ATE-2330-MBA-2026-10-17.md": {
+    "mtime": 1792252099.86226,
+    "seen": 1792435059.5770564,
+    "ast_hash": "ebf4de61b97c5d99edcbe2ba7ed3fef0",
+    "semantic_hash": "ebf4de61b97c5d99edcbe2ba7ed3fef0"
+  },
+  "docs/relatorios/RELATORIO-FLUXMATRIX-2026-10-09.md": {
+    "mtime": 1791678747.4686553,
+    "seen": 1792435059.5770578,
+    "ast_hash": "a8f426d3a72b25ced9726cfa5d405c6e",
+    "semantic_hash": "a8f426d3a72b25ced9726cfa5d405c6e"
+  },
+  "docs/relatorios/RELATORIO-MBA-8-PARES-2026-10-16.md": {
+    "mtime": 1792215612.292287,
+    "seen": 1792435059.577059,
+    "ast_hash": "65b6120eef5df5c0281f269e8c093575",
+    "semantic_hash": "65b6120eef5df5c0281f269e8c093575"
+  },
+  "docs/relatorios/RELATORIO-MBA-ANALISE-COMPLETA-2026-10-13.md": {
+    "mtime": 1791861802.4167552,
+    "seen": 1792435059.5770605,
+    "ast_hash": "2e32b0794dd8e80b7effac9f61cebf03",
+    "semantic_hash": "2e32b0794dd8e80b7effac9f61cebf03"
+  },
+  "docs/relatorios/RELATORIO-MBA-BTCUSD-2026-10-16.md": {
+    "mtime": 1792171451.1236947,
+    "seen": 1792435059.5770617,
+    "ast_hash": "d27d3c8da2c588f67f202bed3d64d31b",
+    "semantic_hash": "d27d3c8da2c588f67f202bed3d64d31b"
+  },
+  "docs/relatorios/RELATORIO-MBA-DESCOBERTAS-2026-10-06.md": {
+    "mtime": 1791322132.051598,
+    "seen": 1792435059.5770628,
+    "ast_hash": "a397f8bcf16953f14c1e1c26b135131c",
+    "semantic_hash": "a397f8bcf16953f14c1e1c26b135131c"
+  },
+  "docs/relatorios/RELATORIO-MBA-XAUUSD-2026-10-06.md": {
+    "mtime": 1791310351.246126,
+    "seen": 1792435059.5770645,
+    "ast_hash": "08f1122f22669ed185fa30886b5d5e74",
+    "semantic_hash": "08f1122f22669ed185fa30886b5d5e74"
+  },
+  "docs/relatorios/RELATORIO-NEXUS-2026-10-06.md": {
+    "mtime": 1791296512.9579265,
+    "seen": 1792435059.5770674,
+    "ast_hash": "dea2516d4c53376aaf32bdaadc47fe52",
+    "semantic_hash": "dea2516d4c53376aaf32bdaadc47fe52"
+  },
+  "docs/relatorios/RELATORIO-PIECETREND-2026-10-06.md": {
+    "mtime": 1791255440.1203809,
+    "seen": 1792435059.5770688,
+    "ast_hash": "923d6d391ae1d56c3be1defd7f36f97c",
+    "semantic_hash": "923d6d391ae1d56c3be1defd7f36f97c"
+  },
+  "docs/relatorios/RELATORIO-REPLAY-V230-2026-10-13.md": {
+    "mtime": 1791868034.4127462,
+    "seen": 1792435059.5770698,
+    "ast_hash": "c96e60fe9544a25a9df1c69ba647e42d",
+    "semantic_hash": "c96e60fe9544a25a9df1c69ba647e42d"
+  },
+  "docs/relatorios/RELATORIO-VEGAR-2026-10-09.md": {
+    "mtime": 1791599742.7333024,
+    "seen": 1792435059.5770712,
+    "ast_hash": "f15d7ce64ea48ed1c9ef44021eb891b8",
+    "semantic_hash": "f15d7ce64ea48ed1c9ef44021eb891b8"
+  },
+  "docs/relatorios/TABELA-RESUMO-ATIVOS-MBA-2026-10-18.md": {
+    "mtime": 1792295562.0136433,
+    "seen": 1792435059.5770724,
+    "ast_hash": "16ad05067299006968fcffcf12ed3d6d",
+    "semantic_hash": "16ad05067299006968fcffcf12ed3d6d"
+  },
+  "docs/relatorios/mba/ativos/AUDUSD/AUDUSD.md": {
+    "mtime": 1792213606.5808604,
+    "seen": 1792435059.5770736,
+    "ast_hash": "09a9a0069cb7c054b4ddaef49a47d3c6",
+    "semantic_hash": "09a9a0069cb7c054b4ddaef49a47d3c6"
+  },
+  "docs/relatorios/mba/ativos/AUDUSD/AUDUSD_open.md": {
+    "mtime": 1792215342.387292,
+    "seen": 1792435059.577075,
+    "ast_hash": "e5923161b42e07c253ab4468517edcfc",
+    "semantic_hash": "e5923161b42e07c253ab4468517edcfc"
+  },
+  "docs/relatorios/mba/ativos/BTCUSD/BTCUSD.md": {
+    "mtime": 1792214358.1395087,
+    "seen": 1792435059.577076,
+    "ast_hash": "f5376a9b20cbec3bf837d572f1a6bd24",
+    "semantic_hash": "f5376a9b20cbec3bf837d572f1a6bd24"
+  },
+  "docs/relatorios/mba/ativos/BTCUSD/BTCUSD_open.md": {
+    "mtime": 1792215018.7952626,
+    "seen": 1792435059.5770772,
+    "ast_hash": "7b03f445656a9993bcf4c620d7c0a2b0",
+    "semantic_hash": "7b03f445656a9993bcf4c620d7c0a2b0"
+  },
+  "docs/relatorios/mba/ativos/DXY/DXY.md": {
+    "mtime": 1792214491.8113427,
+    "seen": 1792435059.5770783,
+    "ast_hash": "7976097573ae3999bebc719397a5a52a",
+    "semantic_hash": "7976097573ae3999bebc719397a5a52a"
+  },
+  "docs/relatorios/mba/ativos/DXY/DXY_open.md": {
+    "mtime": 1792215163.1810994,
+    "seen": 1792435059.5770795,
+    "ast_hash": "3f7277ff8e1ad549da4f3c9d3978ac20",
+    "semantic_hash": "3f7277ff8e1ad549da4f3c9d3978ac20"
+  },
+  "docs/relatorios/mba/ativos/NZDUSD/NZDUSD.md": {
+    "mtime": 1792213604.1295037,
+    "seen": 1792435059.5770807,
+    "ast_hash": "e954edd035f51ccff61462f31cd9e173",
+    "semantic_hash": "e954edd035f51ccff61462f31cd9e173"
+  },
+  "docs/relatorios/mba/ativos/NZDUSD/NZDUSD_open.md": {
+    "mtime": 1792215316.7256365,
+    "seen": 1792435059.577082,
+    "ast_hash": "6ea3b2bdcac93c059c5d9604cd978b57",
+    "semantic_hash": "6ea3b2bdcac93c059c5d9604cd978b57"
+  },
+  "docs/relatorios/mba/ativos/US30/US30.md": {
+    "mtime": 1792214696.3941772,
+    "seen": 1792435059.577083,
+    "ast_hash": "ee2ed99b807a04f8d2eb24ba0ca54c64",
+    "semantic_hash": "ee2ed99b807a04f8d2eb24ba0ca54c64"
+  },
+  "docs/relatorios/mba/ativos/US30/US30_open.md": {
+    "mtime": 1792215145.5805585,
+    "seen": 1792435059.5770843,
+    "ast_hash": "0494cc232c94b51dbdb271d2edf6ebbb",
+    "semantic_hash": "0494cc232c94b51dbdb271d2edf6ebbb"
+  },
+  "docs/relatorios/mba/ativos/USDCHF/USDCHF.md": {
+    "mtime": 1792214633.69587,
+    "seen": 1792435059.5770855,
+    "ast_hash": "31be9fe0429a18cc397e1acaec7c4837",
+    "semantic_hash": "31be9fe0429a18cc397e1acaec7c4837"
+  },
+  "docs/relatorios/mba/ativos/USDCHF/USDCHF_open.md": {
+    "mtime": 1792215497.9809453,
+    "seen": 1792435059.5770867,
+    "ast_hash": "79fbe513047309c61935ce6864cd699d",
+    "semantic_hash": "79fbe513047309c61935ce6864cd699d"
+  },
+  "docs/relatorios/mba/ativos/USDJPY/USDJPY.md": {
+    "mtime": 1792213873.0866668,
+    "seen": 1792435059.5770898,
+    "ast_hash": "22d1ab139696b1a493ad79fd640c9b3c",
+    "semantic_hash": "22d1ab139696b1a493ad79fd640c9b3c"
+  },
+  "docs/relatorios/mba/ativos/USDJPY/USDJPY_open.md": {
+    "mtime": 1792215227.152093,
+    "seen": 1792435059.577091,
+    "ast_hash": "407ed2782260f8ba346cf7580ca72f6d",
+    "semantic_hash": "407ed2782260f8ba346cf7580ca72f6d"
+  },
+  "docs/relatorios/mba/ativos/XAUUSD/XAUUSD.md": {
+    "mtime": 1792213073.3348403,
+    "seen": 1792435059.5770924,
+    "ast_hash": "bc600b26d834634b867d36e612de1ba4",
+    "semantic_hash": "bc600b26d834634b867d36e612de1ba4"
+  },
+  "docs/relatorios/mba/ativos/XAUUSD/XAUUSD_open.md": {
+    "mtime": 1792215074.227031,
+    "seen": 1792435059.5770934,
+    "ast_hash": "2d8f2a23f7bddbc4aa53286af1f7e9cf",
+    "semantic_hash": "2d8f2a23f7bddbc4aa53286af1f7e9cf"
+  },
+  "docs/relatorios/mba/mine_DXY_2026-10-16.md": {
+    "mtime": 1792197245.9739695,
+    "seen": 1792435059.5770948,
+    "ast_hash": "914e536a1832614b99359994fbe3d598",
+    "semantic_hash": "914e536a1832614b99359994fbe3d598"
+  },
+  "docs/relatorios/mba/padroes/AUDUSD.md": {
+    "mtime": 1792249253.5146313,
+    "seen": 1792435059.577096,
+    "ast_hash": "fb5e33ca59aeb574e4321b9918e0b8cc",
+    "semantic_hash": "fb5e33ca59aeb574e4321b9918e0b8cc"
+  },
+  "docs/relatorios/mba/padroes/DE40.md": {
+    "mtime": 1792295104.8430243,
+    "seen": 1792435059.5770972,
+    "ast_hash": "555b7b43e2865e3ff2d0f5a110e0a86a",
+    "semantic_hash": "555b7b43e2865e3ff2d0f5a110e0a86a"
+  },
+  "docs/relatorios/mba/padroes/DXY.md": {
+    "mtime": 1792249239.644245,
+    "seen": 1792435059.5770986,
+    "ast_hash": "8546254b613c17c8fe924efa14a0f88f",
+    "semantic_hash": "8546254b613c17c8fe924efa14a0f88f"
+  },
+  "docs/relatorios/mba/padroes/EURJPY.md": {
+    "mtime": 1792287133.9199812,
+    "seen": 1792435059.5770996,
+    "ast_hash": "fa78c5e7e26bc07dfdc701ee8a54ca6c",
+    "semantic_hash": "fa78c5e7e26bc07dfdc701ee8a54ca6c"
+  },
+  "docs/relatorios/mba/padroes/GBPJPY.md": {
+    "mtime": 1792287133.1204965,
+    "seen": 1792435059.5771008,
+    "ast_hash": "d47bc2ad6f516280a7d57544762e4efb",
+    "semantic_hash": "d47bc2ad6f516280a7d57544762e4efb"
+  },
+  "docs/relatorios/mba/padroes/NZDUSD.md": {
+    "mtime": 1792249253.8922467,
+    "seen": 1792435059.5771022,
+    "ast_hash": "f2c1303c33267359ce35c7ee9c69f56d",
+    "semantic_hash": "f2c1303c33267359ce35c7ee9c69f56d"
+  },
+  "docs/relatorios/mba/padroes/US30.md": {
+    "mtime": 1792249249.5319636,
+    "seen": 1792435059.5771031,
+    "ast_hash": "7d3312d95d6d4993f392d716e568e24c",
+    "semantic_hash": "7d3312d95d6d4993f392d716e568e24c"
+  },
+  "docs/relatorios/mba/padroes/US500.md": {
+    "mtime": 1792295031.993455,
+    "seen": 1792435059.5771043,
+    "ast_hash": "4d0902e83818aae3f0626d6a82b5de01",
+    "semantic_hash": "4d0902e83818aae3f0626d6a82b5de01"
+  },
+  "docs/relatorios/mba/padroes/USDCHF.md": {
+    "mtime": 1792249252.3384545,
+    "seen": 1792435059.5771058,
+    "ast_hash": "c8e9aef1d9c687120b9186ce2b7bd8b5",
+    "semantic_hash": "c8e9aef1d9c687120b9186ce2b7bd8b5"
+  },
+  "docs/relatorios/mba/padroes/USDJPY.md": {
+    "mtime": 1792249252.9392247,
+    "seen": 1792435059.5771067,
+    "ast_hash": "5a69b4707722c8d51c8b15e797fd0682",
+    "semantic_hash": "5a69b4707722c8d51c8b15e797fd0682"
+  },
+  "docs/relatorios/mba/padroes/USTEC.md": {
+    "mtime": 1792295031.9244864,
+    "seen": 1792435059.577108,
+    "ast_hash": "c8f9504a79b8bb299c325d0dea591b48",
+    "semantic_hash": "c8f9504a79b8bb299c325d0dea591b48"
+  },
+  "docs/relatorios/mba/padroes/XAGUSD.md": {
+    "mtime": 1792287126.9791567,
+    "seen": 1792435059.5771093,
+    "ast_hash": "84b51bbf71393c49e376e89a005ff7a0",
+    "semantic_hash": "84b51bbf71393c49e376e89a005ff7a0"
+  },
+  "docs/relatorios/mba/padroes/XAUUSD.md": {
+    "mtime": 1792249249.0342286,
+    "seen": 1792435059.5771105,
+    "ast_hash": "f9609136ec007b279a8de3ff1cec67cc",
+    "semantic_hash": "f9609136ec007b279a8de3ff1cec67cc"
+  },
+  "docs/relatorios/mba/padroes/XBRUSD.md": {
+    "mtime": 1792295031.569208,
+    "seen": 1792435059.5771115,
+    "ast_hash": "eaf72b75a5430fc3dd9dfade2c593b8b",
+    "semantic_hash": "eaf72b75a5430fc3dd9dfade2c593b8b"
+  },
+  "docs/relatorios/mba/padroes/XTIUSD.md": {
+    "mtime": 1792295104.8232346,
+    "seen": 1792435059.577113,
+    "ast_hash": "29afab76a76347273216ddf2d77e665a",
+    "semantic_hash": "29afab76a76347273216ddf2d77e665a"
+  },
+  "docs/relatorios/mba/padroes_dia/AUDUSD.md": {
+    "mtime": 1792252053.0490863,
+    "seen": 1792435059.577114,
+    "ast_hash": "4489d54c362f0dabccd826a7cbbe0ae8",
+    "semantic_hash": "4489d54c362f0dabccd826a7cbbe0ae8"
+  },
+  "docs/relatorios/mba/padroes_dia/DE40.md": {
+    "mtime": 1792294983.1501386,
+    "seen": 1792435059.577115,
+    "ast_hash": "34363a48b20cc9c25200c3bd6d96668b",
+    "semantic_hash": "34363a48b20cc9c25200c3bd6d96668b"
+  },
+  "docs/relatorios/mba/padroes_dia/DXY.md": {
+    "mtime": 1792252024.5286086,
+    "seen": 1792435059.5771165,
+    "ast_hash": "16fdf1c6cac7bfe4c44385aa084447b2",
+    "semantic_hash": "16fdf1c6cac7bfe4c44385aa084447b2"
+  },
+  "docs/relatorios/mba/padroes_dia/EURJPY.md": {
+    "mtime": 1792287075.5523455,
+    "seen": 1792435059.5771174,
+    "ast_hash": "a4ac2e097b6397426414f2afa089a391",
+    "semantic_hash": "a4ac2e097b6397426414f2afa089a391"
+  },
+  "docs/relatorios/mba/padroes_dia/GBPJPY.md": {
+    "mtime": 1792287076.2977352,
+    "seen": 1792435059.5771186,
+    "ast_hash": "809ab7b408fef1b9ec1d8f124ee47cb2",
+    "semantic_hash": "809ab7b408fef1b9ec1d8f124ee47cb2"
+  },
+  "docs/relatorios/mba/padroes_dia/NZDUSD.md": {
+    "mtime": 1792252055.0610688,
+    "seen": 1792435059.57712,
+    "ast_hash": "fe9361ee6074f68a18f74749cde1a88a",
+    "semantic_hash": "fe9361ee6074f68a18f74749cde1a88a"
+  },
+  "docs/relatorios/mba/padroes_dia/US30.md": {
+    "mtime": 1792252049.011927,
+    "seen": 1792435059.577121,
+    "ast_hash": "7830f8354004f9f67979ff4ec415dcdc",
+    "semantic_hash": "7830f8354004f9f67979ff4ec415dcdc"
+  },
+  "docs/relatorios/mba/padroes_dia/US500.md": {
+    "mtime": 1792294964.215144,
+    "seen": 1792435059.5771222,
+    "ast_hash": "4f24412f36cc973cb2d3917dda346f8e",
+    "semantic_hash": "4f24412f36cc973cb2d3917dda346f8e"
+  },
+  "docs/relatorios/mba/padroes_dia/USDCHF.md": {
+    "mtime": 1792252055.4935029,
+    "seen": 1792435059.5771236,
+    "ast_hash": "04d7d33099d1629c91ffa5071cd7ee71",
+    "semantic_hash": "04d7d33099d1629c91ffa5071cd7ee71"
+  },
+  "docs/relatorios/mba/padroes_dia/USDJPY.md": {
+    "mtime": 1792252058.1695895,
+    "seen": 1792435059.5771294,
+    "ast_hash": "9de352bad23cc8be31107ea9ac93be4f",
+    "semantic_hash": "9de352bad23cc8be31107ea9ac93be4f"
+  },
+  "docs/relatorios/mba/padroes_dia/USTEC.md": {
+    "mtime": 1792294968.51201,
+    "seen": 1792435059.5771308,
+    "ast_hash": "7ec8218eef5a4db5a0d60382f4e55dbc",
+    "semantic_hash": "7ec8218eef5a4db5a0d60382f4e55dbc"
+  },
+  "docs/relatorios/mba/padroes_dia/XAGUSD.md": {
+    "mtime": 1792287059.0433488,
+    "seen": 1792435059.577132,
+    "ast_hash": "31cdfab5c3601c62e927d9581387155a",
+    "semantic_hash": "31cdfab5c3601c62e927d9581387155a"
+  },
+  "docs/relatorios/mba/padroes_dia/XAUUSD.md": {
+    "mtime": 1792250402.711895,
+    "seen": 1792435059.5771334,
+    "ast_hash": "a14775239f9643caa916357d6158423b",
+    "semantic_hash": "a14775239f9643caa916357d6158423b"
+  },
+  "docs/relatorios/mba/padroes_dia/XBRUSD.md": {
+    "mtime": 1792294970.2122388,
+    "seen": 1792435059.5771346,
+    "ast_hash": "29b28a0e0c7b7f31c5e467b94dbdb7d9",
+    "semantic_hash": "29b28a0e0c7b7f31c5e467b94dbdb7d9"
+  },
+  "docs/relatorios/mba/padroes_dia/XTIUSD.md": {
+    "mtime": 1792294981.2602723,
+    "seen": 1792435059.5771358,
+    "ast_hash": "cfc4aed8ee25281b4521aff6ce8e654c",
+    "semantic_hash": "cfc4aed8ee25281b4521aff6ce8e654c"
+  },
+  "docs/relatorios/mba/padroes_m1/DE40.md": {
+    "mtime": 1792321079.1891797,
+    "seen": 1792435059.577137,
+    "ast_hash": "623fb8410bd7d0d9b930d57221c73358",
+    "semantic_hash": "623fb8410bd7d0d9b930d57221c73358"
+  },
+  "docs/relatorios/mba/padroes_m1/DE40_m1.md": {
+    "mtime": 1792319473.8663027,
+    "seen": 1792435059.5771382,
+    "ast_hash": "7285e942ec8d03aed9c7ad7a218472bf",
+    "semantic_hash": "7285e942ec8d03aed9c7ad7a218472bf"
+  },
+  "docs/relatorios/mba/padroes_m1/US500.md": {
+    "mtime": 1792321456.2553244,
+    "seen": 1792435059.5771394,
+    "ast_hash": "825777d6161f092f0be4502a74bb2f10",
+    "semantic_hash": "825777d6161f092f0be4502a74bb2f10"
+  },
+  "docs/relatorios/mba/padroes_m1/US500_m1.md": {
+    "mtime": 1792319514.833951,
+    "seen": 1792435059.5771406,
+    "ast_hash": "572750cdc51ca6924ec60005f5b46369",
+    "semantic_hash": "572750cdc51ca6924ec60005f5b46369"
+  },
+  "docs/relatorios/mba/padroes_m1/USTEC.md": {
+    "mtime": 1792321456.280854,
+    "seen": 1792435059.5771418,
+    "ast_hash": "1682d14a2f3e2431e6512f2510e314b7",
+    "semantic_hash": "1682d14a2f3e2431e6512f2510e314b7"
+  },
+  "docs/relatorios/mba/padroes_m1/USTEC_m1.md": {
+    "mtime": 1792319517.1022923,
+    "seen": 1792435059.577143,
+    "ast_hash": "541fa816cf4910eff747fa15cdcc90ae",
+    "semantic_hash": "541fa816cf4910eff747fa15cdcc90ae"
+  },
+  "docs/relatorios/mba/padroes_m1/XAGUSD.md": {
+    "mtime": 1792321456.397218,
+    "seen": 1792435059.5771444,
+    "ast_hash": "a9e7e1018d7e359a11e54cab4faf9179",
+    "semantic_hash": "a9e7e1018d7e359a11e54cab4faf9179"
+  },
+  "docs/relatorios/mba/padroes_m1/XAGUSD_m1.md": {
+    "mtime": 1792320675.12226,
+    "seen": 1792435059.5771456,
+    "ast_hash": "14be50a09638fba318a3c2854970a75d",
+    "semantic_hash": "14be50a09638fba318a3c2854970a75d"
+  },
+  "docs/relatorios/mba/padroes_m1/XBRUSD.md": {
+    "mtime": 1792321779.6625905,
+    "seen": 1792435059.5771465,
+    "ast_hash": "a36bcfb59634e2820ffd46ffa6bafb4f",
+    "semantic_hash": "a36bcfb59634e2820ffd46ffa6bafb4f"
+  },
+  "docs/relatorios/mba/padroes_m1/XBRUSD_m1.md": {
+    "mtime": 1792320619.950129,
+    "seen": 1792435059.577148,
+    "ast_hash": "ac413220962ce3d2cd39c82a5a5c4eab",
+    "semantic_hash": "ac413220962ce3d2cd39c82a5a5c4eab"
+  },
+  "docs/relatorios/mba/padroes_m1/XTIUSD.md": {
+    "mtime": 1792321798.4900022,
+    "seen": 1792435059.5771492,
+    "ast_hash": "6f0a1ac9ded797a8e9b6b51c72dc7f6d",
+    "semantic_hash": "6f0a1ac9ded797a8e9b6b51c72dc7f6d"
+  },
+  "docs/relatorios/mba/padroes_m1/XTIUSD_m1.md": {
+    "mtime": 1792320710.4670327,
+    "seen": 1792435059.57715,
+    "ast_hash": "e2456c0c4b2e76498582dc4a5bcfb83e",
+    "semantic_hash": "e2456c0c4b2e76498582dc4a5bcfb83e"
+  },
+  "docs/relatorios/mba/reach/AUDUSD/RELATORIO.md": {
+    "mtime": 1792290371.0695922,
+    "seen": 1792435059.5771515,
+    "ast_hash": "c5eb0417351cd83bdcd320fabff4955f",
+    "semantic_hash": "c5eb0417351cd83bdcd320fabff4955f"
+  },
+  "docs/relatorios/mba/reach/DXY_Z6/RELATORIO.md": {
+    "mtime": 1792290369.6166086,
+    "seen": 1792435059.5771527,
+    "ast_hash": "e8950c9a9b4920b303c6cbcefed84a25",
+    "semantic_hash": "e8950c9a9b4920b303c6cbcefed84a25"
+  },
+  "docs/relatorios/mba/reach/EURJPY/RELATORIO.md": {
+    "mtime": 1792290370.1961234,
+    "seen": 1792435059.5771537,
+    "ast_hash": "e6e9ebd9ed70e9d7939f0d94d260ca9f",
+    "semantic_hash": "e6e9ebd9ed70e9d7939f0d94d260ca9f"
+  },
+  "docs/relatorios/mba/reach/GBPJPY/RELATORIO.md": {
+    "mtime": 1792290370.5010815,
+    "seen": 1792435059.577155,
+    "ast_hash": "344505901bc1d4410a45bc53f0a316f2",
+    "semantic_hash": "344505901bc1d4410a45bc53f0a316f2"
+  },
+  "docs/relatorios/mba/reach/NZDUSD_r/RELATORIO.md": {
+    "mtime": 1792290371.3358872,
+    "seen": 1792435059.5771563,
+    "ast_hash": "eca0bfb5978ef9dc1b4327e33c9cf5a3",
+    "semantic_hash": "eca0bfb5978ef9dc1b4327e33c9cf5a3"
+  },
+  "docs/relatorios/mba/reach/US30/RELATORIO.md": {
+    "mtime": 1792290369.4631622,
+    "seen": 1792435059.5771573,
+    "ast_hash": "463b611d5897d7b44638c73debe4e136",
+    "semantic_hash": "463b611d5897d7b44638c73debe4e136"
+  },
+  "docs/relatorios/mba/reach/USDCHF/RELATORIO.md": {
+    "mtime": 1792290370.826119,
+    "seen": 1792435059.5771587,
+    "ast_hash": "ebbfe49b610bfd30e56b9cdcb3186198",
+    "semantic_hash": "ebbfe49b610bfd30e56b9cdcb3186198"
+  },
+  "docs/relatorios/mba/reach/USDJPY/RELATORIO.md": {
+    "mtime": 1792290369.9065378,
+    "seen": 1792435059.5771596,
+    "ast_hash": "11fa780b432f9244cbc7b0d75643269c",
+    "semantic_hash": "11fa780b432f9244cbc7b0d75643269c"
+  },
+  "docs/relatorios/mba/reach/XAGUSD/RELATORIO.md": {
+    "mtime": 1792290369.2329729,
+    "seen": 1792435059.5771613,
+    "ast_hash": "f15c087a032a2b796a8a39cba22e8713",
+    "semantic_hash": "f15c087a032a2b796a8a39cba22e8713"
+  },
+  "docs/relatorios/mba/reach/XAUUSD/RELATORIO.md": {
+    "mtime": 1792290368.9886582,
+    "seen": 1792435059.5771625,
+    "ast_hash": "220ab1fccc1b06a12d31da7a4c18c2a9",
+    "semantic_hash": "220ab1fccc1b06a12d31da7a4c18c2a9"
   }
 }
