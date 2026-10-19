@@ -3,7 +3,7 @@
 //| Historical reconstruction + statistics + discovery engine         |
 //+------------------------------------------------------------------+
 #property strict
-#property version   "1.22"
+#property version   "1.23"
 #property description "Historical market behavior research processor. Non-trading."
 
 #include "MBA_Core.mqh"
@@ -28,7 +28,21 @@ input int    InpDiscoveryMaxGroups       = 60000;
 input int    InpFlushEveryRows           = 5000;
 // ---- v1.10
 input bool   InpBrokerFolder             = true;       // root\<broker>\<symbol>\HISTORY\<run>
-input int    InpUtcRule                  = 0;          // 0 = fixed InpAnalysisTimezoneOffset; 1 = NY-close server (UTC+2 winter / UTC+3 US-DST summer)
+enum MBA_DST_INPUT
+  {
+   MBA_DSTIN_AUTO=0,           // AUTO (NY-close rule when the broker follows it)
+   MBA_DSTIN_US_NY_CLOSE=1,    // NY-close server: UTC+2 winter / UTC+3 US daylight saving
+   MBA_DSTIN_FIXED_CURRENT=2,  // current offset for all history
+   MBA_DSTIN_FIXED_INPUT=3     // InpAnalysisTimezoneOffset
+  };
+input MBA_DST_INPUT InpDstMode           = MBA_DSTIN_AUTO;
+input double InpOhlcTolerancePoints      = 1.0;
+input bool   InpWriteTimeForward         = true;       // FORWARD_TIME: horizons in minutes on M1 bars (events up to InpTimeFwdMaxTFSec)
+input string InpTimeHorizonsMin          = "1,3,5,10,15,30,60,120,240";
+input int    InpTimeFwdMaxTFSec          = 14400;
+input double InpTimeFwdTargetP1          = 100;
+input double InpTimeFwdTargetP2          = 200;
+input double InpTimeFwdTargetP3          = 300;
 input string InpNewsCurrencies           = "USD";
 input int    InpNewsMinImportance        = 2;
 input double InpCommissionPerLotDeclared = 0.0;
@@ -36,6 +50,7 @@ input double InpCommissionPerLotDeclared = 0.0;
 CMBAWriter g_candles[MBA_TF_COUNT];
 CMBAWriter g_events[MBA_TF_COUNT];
 CMBAWriter g_forward[MBA_TF_COUNT];
+CMBAWriter g_tfwd[MBA_TF_COUNT];
 CMBAWriter g_tickagg[MBA_TF_COUNT];
 CMBAWriter g_rawticks;
 CMBAWriter g_runs;
@@ -50,6 +65,10 @@ CMBAWriter g_spec;
 CMBANews   g_cal;
 string g_broker="";
 string g_server="";
+int g_dst=MBA_DST_FIXED_CURRENT;
+int g_hz[];
+double g_ptgt[3];
+double g_comm_points=0;
 
 string g_run_id="";
 string g_root="";
@@ -78,6 +97,9 @@ double g_disc_vol[];
 ulong g_disc_hash[];
 int g_disc_capacity=0;
 int g_disc_used=0;
+
+datetime AnalysisAt(datetime server_t)
+  { return server_t-(datetime)MBA_OffsetAt(server_t,g_dst,-InpAnalysisTimezoneOffset*3600); }
 
 string BuildEventId(ENUM_TIMEFRAMES tf,datetime t)
   { return StringFormat("%s-%s-%s",MBA_SafeName(_Symbol),MBA_TFName(tf),TimeToString(t,TIME_DATE|TIME_MINUTES)); }
@@ -141,7 +163,7 @@ void UpdateDiscovery(string key,double body,double range,double vol_ratio,int fo
 void WriteTickAggregateRow(ENUM_TIMEFRAMES tf,datetime from_time,datetime to_time,MBA_TickAgg &a,string source)
   {
    int idx=MBA_TFIndex(tf);if(idx<0)return;
-   string f[];MBA_Add(f,_Symbol);MBA_Add(f,MBA_TFName(tf));MBA_Add(f,MBA_DT(from_time,true));MBA_Add(f,MBA_DT(to_time,true));MBA_AddL(f,a.tick_count);MBA_AddL(f,a.up_ticks);MBA_AddL(f,a.down_ticks);MBA_AddL(f,a.unchanged_ticks);long den=MathMax(1,a.up_ticks+a.down_ticks+a.unchanged_ticks);MBA_AddD(f,MBA_SafeRatio((double)a.up_ticks,(double)den),6);MBA_AddD(f,MBA_SafeRatio((double)a.down_ticks,(double)den),6);MBA_AddD(f,a.bid_min==DBL_MAX?0:a.bid_min,MBA_Digits());MBA_AddD(f,a.bid_max==-DBL_MAX?0:a.bid_max,MBA_Digits());MBA_AddD(f,a.ask_min==DBL_MAX?0:a.ask_min,MBA_Digits());MBA_AddD(f,a.ask_max==-DBL_MAX?0:a.ask_max,MBA_Digits());MBA_AddD(f,a.last_min==DBL_MAX?0:a.last_min,MBA_Digits());MBA_AddD(f,a.last_max==-DBL_MAX?0:a.last_max,MBA_Digits());MBA_AddD(f,a.spread_min==DBL_MAX?0:a.spread_min,2);MBA_AddD(f,a.spread_max==-DBL_MAX?0:a.spread_max,2);MBA_AddD(f,MBA_SafeRatio(a.spread_sum,(double)MathMax(1,a.tick_count)),2);MBA_AddD(f,MBA_SafeRatio(a.tick_interval_sum_ms,(double)MathMax(1,a.tick_interval_count)),2);double minutes=MathMax(1.0,(double)((to_time-from_time)+1)/60.0);MBA_AddD(f,(double)a.tick_count/minutes,4);MBA_Add(f,source);g_tickagg[idx].WriteFields(f);
+   string f[];MBA_FillTickAggRow(f,_Symbol,MBA_TFName(tf),from_time,to_time,a,source);g_tickagg[idx].WriteFields(f);
   }
 
 int FindIndexAtOrBefore(const MqlRates &rates[],datetime t)
@@ -163,7 +185,7 @@ void LogError(string where,string detail)
 
 void FlushAll()
   {
-   for(int i=0;i<MBA_TF_COUNT;i++){g_candles[i].Flush();g_events[i].Flush();g_forward[i].Flush();g_tickagg[i].Flush();}
+   for(int i=0;i<MBA_TF_COUNT;i++){g_candles[i].Flush();g_events[i].Flush();g_forward[i].Flush();g_tfwd[i].Flush();g_tickagg[i].Flush();}
    g_rawticks.Flush();g_runs.Flush();g_errors.Flush();g_hourly.Flush();g_dayhour.Flush();g_patterns.Flush();g_discovery.Flush();g_integrity.Flush();g_news.Flush();g_spec.Flush();g_rows_since_flush=0;
   }
 
@@ -176,6 +198,7 @@ bool InitWriters()
       g_candles[i].Init(g_root+"\\CANDLES","candles_"+MBA_TFNames[i],MBA_CandleHeader(),mb,InpUseCommonFolder);
       g_events[i].Init(g_root+"\\EVENTS","events_"+MBA_TFNames[i],MBA_EventHeader(),mb,InpUseCommonFolder);
       g_forward[i].Init(g_root+"\\FORWARD","forward_"+MBA_TFNames[i],MBA_ForwardHeader(),mb,InpUseCommonFolder);
+      g_tfwd[i].Init(g_root+"\\FORWARD_TIME","forward_time_"+MBA_TFNames[i],MBA_TimeFwdHeader(),mb,InpUseCommonFolder);
       g_tickagg[i].Init(g_root+"\\TICKS","tick_aggregate_"+MBA_TFNames[i],MBA_TickAggHeader(),mb,InpUseCommonFolder);
      }
    g_rawticks.Init(g_root+"\\RAW_TICKS","raw_ticks","run_id,symbol,time_msc,time,bid,ask,last,volume,volume_real,flags,spread_points,tick_direction,source",mb,InpUseCommonFolder);
@@ -194,7 +217,7 @@ bool InitWriters()
 void WriteRun(datetime from_dt,datetime to_dt)
   {
    string f[];MBA_Add(f,g_run_id);MBA_Add(f,"HISTORY");MBA_Add(f,_Symbol);MBA_Add(f,MBA_DT(TimeCurrent(),true));MBA_Add(f,MBA_DT(from_dt,true));MBA_Add(f,MBA_DT(to_dt,true));MBA_AddL(f,InpAnalysisTimezoneOffset);MBA_AddL(f,InpPartSizeMB);MBA_Add(f,"FALSE");MBA_Add(f,MBA_Bool(InpWriteTickAggregates));MBA_Add(f,MBA_VERSION);g_runs.WriteFields(f);g_runs.Flush();
-   string sf[];MBA_FillSpecRow(sf,g_run_id,InpCommissionPerLotDeclared,StringFormat("utcRule=%d;lookback=%d;atr=%d;fwd=%d;news=%s/%d",InpUtcRule,InpFeatureLookback,InpATRPeriod,InpForwardMaxBars,InpNewsCurrencies,InpNewsMinImportance));g_spec.WriteFields(sf);
+   string sf[];MBA_FillSpecRow(sf,g_run_id,InpCommissionPerLotDeclared,StringFormat("dstMode=%s;lookback=%d;atr=%d;fwd=%d;news=%s/%d",MBA_DstBasisName(g_dst),InpFeatureLookback,InpATRPeriod,InpForwardMaxBars,InpNewsCurrencies,InpNewsMinImportance));g_spec.WriteFields(sf);
   }
 
 bool GetRange(datetime &from_dt,datetime &to_dt)
@@ -251,23 +274,12 @@ void WriteRawTicksRange(datetime from_dt,datetime to_dt)
 
 void WriteForwardForBar(int tfIndex,const MqlRates &rates[],int idx,double atr,string source)
   {
-   if(idx<0)return;ENUM_TIMEFRAMES tf=MBA_TFs[tfIndex];int n=ArraySize(rates);double event_close=rates[idx].close;int dir=MBA_Direction(rates[idx]);
-   double cumulative_high=-DBL_MAX,cumulative_low=DBL_MAX;double best_mfe=-DBL_MAX,best_mae=DBL_MAX;int best_mfe_h=-1,best_mae_h=-1;
+   if(idx<0)return;ENUM_TIMEFRAMES tf=MBA_TFs[tfIndex];int n=ArraySize(rates);
    string ekey=BuildEventKey(tf,rates[idx].time);
    for(int h=1;h<=InpForwardMaxBars;h++)
      {
-      int fi=idx+h;if(fi>=n)break;
-      cumulative_high=MathMax(cumulative_high,rates[fi].high);cumulative_low=MathMin(cumulative_low,rates[fi].low);
-      double fav=0,adv=0;
-      if(dir>0){fav=(cumulative_high-event_close)/_Point;adv=(cumulative_low-event_close)/_Point;}
-      else if(dir<0){fav=(event_close-cumulative_low)/_Point;adv=(event_close-cumulative_high)/_Point;}
-      else {fav=MathMax(MathAbs(cumulative_high-event_close),MathAbs(cumulative_low-event_close))/_Point;adv=0;}
-      if(fav>best_mfe){best_mfe=fav;best_mfe_h=h;}
-      if(adv<best_mae){best_mae=adv;best_mae_h=h;}
-      double fc=rates[fi].close;double ret=(fc-event_close)/_Point;int d=fc>event_close?1:(fc<event_close?-1:0);double retatr=atr>0?(fc-event_close)/atr:0;double mfe=MathMax(0,best_mfe);double mae=(best_mae==DBL_MAX?0:best_mae);
-      string f[];MBA_Add(f,g_run_id);MBA_Add(f,ekey+"|"+IntegerToString(h));MBA_Add(f,ekey);MBA_Add(f,BuildEventId(tf,rates[idx].time));MBA_Add(f,g_broker);MBA_Add(f,g_server);MBA_Add(f,_Symbol);MBA_Add(f,MBA_TFName(tf));MBA_Add(f,"HISTORY");
-      MBA_Add(f,MBA_DT(rates[idx].time,true));MBA_AddL(f,h);MBA_Add(f,MBA_DT(rates[fi].time,true));MBA_AddD(f,fc,MBA_Digits());MBA_AddD(f,ret,2);MBA_AddD(f,retatr,6);MBA_AddD(f,cumulative_high,MBA_Digits());MBA_AddD(f,cumulative_low,MBA_Digits());
-      MBA_AddD(f,mfe,2);MBA_AddD(f,mae,2);MBA_AddD(f,atr>0?mfe*_Point/atr:0,6);MBA_AddD(f,atr>0?mae*_Point/atr:0,6);MBA_AddL(f,best_mfe_h);MBA_AddL(f,best_mae_h);MBA_Add(f,MBA_Dir(d));MBA_Add(f,"EVENT_CANDLE_DIRECTION");MBA_Add(f,source);MBA_Add(f,MBA_SCHEMA_VERSION);
+      if(idx+h>=n)break;
+      string f[];MBA_FillForwardRow(f,g_run_id,ekey,BuildEventId(tf,rates[idx].time),g_broker,g_server,"HISTORY",MBA_TFName(tf),rates,idx,h,atr,source);
       g_forward[tfIndex].WriteFields(f);g_rows_since_flush++;
      }
   }
@@ -277,7 +289,7 @@ void UpdateStats(int tfIndex,const MqlRates &rates[],int idx,double vol_ratio,do
    int d=MBA_Direction(rates[idx]);
    double range=MBA_Range(rates[idx]);
    double body=MBA_Body(rates[idx]);
-   datetime at=MBA_AnalysisTime(rates[idx].time,InpAnalysisTimezoneOffset);
+   datetime at=AnalysisAt(rates[idx].time);
    int minute=MBA_MinuteOfDay(at);
    int day=MBA_DayOfWeek(at);
 
@@ -317,7 +329,7 @@ void UpdateStats(int tfIndex,const MqlRates &rates[],int idx,double vol_ratio,do
 
 void UpdatePatternStats(int tfIndex,const MqlRates &rates[],int idx,string patterns,double mfe5,double mae5,bool forward_up)
   {
-   if(StringLen(patterns)==0)return;string p[];int n=StringSplit(patterns,StringGetCharacter("|",0),p);datetime at=MBA_AnalysisTime(rates[idx].time,InpAnalysisTimezoneOffset);int minute=MBA_MinuteOfDay(at);
+   if(StringLen(patterns)==0)return;string p[];int n=StringSplit(patterns,StringGetCharacter("|",0),p);datetime at=AnalysisAt(rates[idx].time);int minute=MBA_MinuteOfDay(at);
    for(int k=0;k<n;k++)
      {
       int pid=-1;for(int j=0;j<ArraySize(g_pattern_names);j++)if(p[k]==g_pattern_names[j]){pid=j;break;}if(pid<0)continue;
@@ -333,7 +345,7 @@ void UpdatePatternStats(int tfIndex,const MqlRates &rates[],int idx,string patte
 
 void DiscoverForEvent(int tfIndex,const MqlRates &rates[],int idx,double atr,double vol_ratio,double tick_ratio,string structure,string m15,string h1,double mfe5,double mae5,bool forward_up)
   {
-   datetime at=MBA_AnalysisTime(rates[idx].time,InpAnalysisTimezoneOffset);string tf=MBA_TFNames[tfIndex];string dir=MBA_Dir(MBA_Direction(rates[idx]));string minute=IntegerToString(MBA_MinuteOfDay(at));string day=IntegerToString(MBA_DayOfWeek(at));string bb=MBA_BucketPct(MBA_SafeRatio(MBA_Body(rates[idx]),MBA_Range(rates[idx])));string rb=MBA_BucketRatio(MBA_SafeRatio(MBA_Range(rates[idx]),atr));string vb=MBA_BucketVolume(vol_ratio);
+   datetime at=AnalysisAt(rates[idx].time);string tf=MBA_TFNames[tfIndex];string dir=MBA_Dir(MBA_Direction(rates[idx]));string minute=IntegerToString(MBA_MinuteOfDay(at));string day=IntegerToString(MBA_DayOfWeek(at));string bb=MBA_BucketPct(MBA_SafeRatio(MBA_Body(rates[idx]),MBA_Range(rates[idx])));string rb=MBA_BucketRatio(MBA_SafeRatio(MBA_Range(rates[idx]),atr));string vb=MBA_BucketVolume(vol_ratio);
    string keys[6];int kc=0;
    keys[kc++]=tf+"|MIN="+minute+"|DIR="+dir;
    keys[kc++]=keys[0]+"|BODY="+bb;
@@ -411,7 +423,7 @@ void WriteHistoricalNews(datetime from_dt,datetime to_dt)
             name=ev.name;etype=(int)ev.type;sector=(int)ev.sector;
             MqlCalendarCountry cc;if(CalendarCountryById(ev.country_id,cc))code=cc.code;
            }
-         int off=(InpUtcRule==1)?MBA_ServerOffsetUSDST(v[i].time):-InpAnalysisTimezoneOffset*3600;
+         int off=MBA_OffsetAt(v[i].time,g_dst,-InpAnalysisTimezoneOffset*3600);
          string f[];MBA_Add(f,g_run_id);MBA_Add(f,MBA_UD(v[i].event_id));MBA_Add(f,MBA_UD(v[i].id));MBA_Add(f,MBA_DT(v[i].time,true));MBA_Add(f,MBA_DT(v[i].time-off,true));MBA_Add(f,MBA_DT(v[i].period,true));MBA_AddL(f,(long)v[i].revision);
          MBA_Add(f,v[i].HasActualValue()?DoubleToString(v[i].GetActualValue(),6):"");
          MBA_Add(f,v[i].HasPreviousValue()?DoubleToString(v[i].GetPreviousValue(),6):"");
@@ -455,8 +467,8 @@ void ProcessTF(ENUM_TIMEFRAMES tf,datetime from_dt,datetime to_dt)
       MBA_BarCtx c;
       c.run_id=g_run_id;c.symbol=_Symbol;c.tf_name=MBA_TFName(tf);c.source="HISTORICAL_SERVER";c.broker=g_broker;c.server=g_server;c.data_source="HISTORY";
       c.bar=rates[i];c.server_time=t;c.event_id=BuildEventId(tf,t);c.event_key=BuildEventKey(tf,t);
-      int off=(InpUtcRule==1)?MBA_ServerOffsetUSDST(t):-InpAnalysisTimezoneOffset*3600;
-      c.utc_basis=(InpUtcRule==1)?"RULE_NY_CLOSE_US_DST":"FIXED_INPUT";
+      int off=MBA_OffsetAt(t,g_dst,-InpAnalysisTimezoneOffset*3600);
+      c.utc_basis=MBA_DstBasisName(g_dst);c.bar_spread=(double)rates[i].spread;
       c.utc_offset_sec=off;c.utc_time=t-(datetime)off;c.analysis_time=c.utc_time;
       c.range=MBA_Range(rates[i]);c.body=MBA_Body(rates[i]);c.uw=MBA_UpperWick(rates[i]);c.lw=MBA_LowerWick(rates[i]);
       double prev_close=rates[i-1].close;c.true_range=MathMax(c.range,MathMax(MathAbs(rates[i].high-prev_close),MathAbs(rates[i].low-prev_close)));
@@ -469,6 +481,7 @@ void ProcessTF(ENUM_TIMEFRAMES tf,datetime from_dt,datetime to_dt)
          tok=MBA_CopyTickAggregate(_Symbol,t,end,ta);
          if(tok)WriteTickAggregateRow(tf,t,end,ta,"HISTORICAL_SERVER");else tick_missing++;
         }
+      MBA_OhlcCheck(rates[i],ta,tok,InpOhlcTolerancePoints,c.ohlc_status,c.ohlc_dev);
       c.tick_ok=tok;c.tick_count=tok?ta.tick_count:0;
       c.tick_density=tok?(double)ta.tick_count/MathMax(1.0,(double)MathMax(sec,60)/60.0):MBA_NaN();
       double mtc=0;if(tccnt>=3){double ss=0;for(int q=0;q<tccnt;q++)ss+=(double)tcbuf[q];mtc=ss/tccnt;}
@@ -492,7 +505,7 @@ void ProcessTF(ENUM_TIMEFRAMES tf,datetime from_dt,datetime to_dt)
          double shi=0,slo=0;if(t>sess_start_server&&MBA_SessionLevels(cM1,sess_start_server,t,shi,slo)){c.sess_high_atr=MBA_DistATR(px,shi,c.atr);c.sess_low_atr=MBA_DistATR(px,slo,c.atr);}
         }
       c.mtf[0]=MBA_StateClosedAt(cM1,PERIOD_M1,t,InpFeatureLookback);c.mtf[1]=MBA_StateClosedAt(cM5,PERIOD_M5,t,InpFeatureLookback);c.mtf[2]=MBA_StateClosedAt(cM15,PERIOD_M15,t,InpFeatureLookback);c.mtf[3]=MBA_StateClosedAt(cM30,PERIOD_M30,t,InpFeatureLookback);
-      c.mtf[4]=MBA_StateClosedAt(cH1,PERIOD_H1,t,InpFeatureLookback);c.mtf[5]=MBA_StateClosedAt(cH4,PERIOD_H4,t,InpFeatureLookback);c.mtf[6]=MBA_StateClosedAt(cW1,PERIOD_W1,t,InpFeatureLookback);c.mtf[7]=MBA_StateClosedAt(cMN1,PERIOD_MN1,t,InpFeatureLookback);
+      c.mtf[4]=MBA_StateClosedAt(cH1,PERIOD_H1,t,InpFeatureLookback);c.mtf[5]=MBA_StateClosedAt(cH4,PERIOD_H4,t,InpFeatureLookback);c.mtf[6]=MBA_StateClosedAt(cD1,PERIOD_D1,t,InpFeatureLookback);c.mtf[7]=MBA_StateClosedAt(cW1,PERIOD_W1,t,InpFeatureLookback);c.mtf[8]=MBA_StateClosedAt(cMN1,PERIOD_MN1,t,InpFeatureLookback);
       c.news_n=0;c.news_high_n=0;c.news_min_next=MBA_NaN();c.news_min_since=MBA_NaN();
       if(!InpBuildNewsContext)c.news_state="DISABLED";
       else if(g_cal.Count()<=0)c.news_state="UNAVAILABLE";
@@ -501,9 +514,17 @@ void ProcessTF(ENUM_TIMEFRAMES tf,datetime from_dt,datetime to_dt)
       MBA_FillEventRow(f,c);g_events[tfIndex].WriteFields(f);
       double atr=c.atr,vr=c.vr,tick_density=(tok?c.tick_density:0),spread_avg=(tok?c.spread_avg:0),tick_density_ratio=(tok?(MathIsValidNumber(c.tick_density_ratio)?c.tick_density_ratio:0):0);
       string pattern=c.pattern,structure=c.structure_before;string m15=c.mtf[2],h1=c.mtf[4];
-      double mfe5=0,mae5=0;int fi=i+MathMin(5,InpForwardMaxBars);if(fi<n){double fc=rates[fi].close,fh=rates[fi].high,fl=rates[fi].low;if(MBA_Direction(rates[i])>0){mfe5=(fh-rates[i].close)/_Point;mae5=(fl-rates[i].close)/_Point;}else if(MBA_Direction(rates[i])<0){mfe5=(rates[i].close-fl)/_Point;mae5=(rates[i].close-fh)/_Point;}else{mfe5=MathMax((fh-rates[i].close)/_Point,(rates[i].close-fl)/_Point);mae5=MathMin((fl-rates[i].close)/_Point,(fh-rates[i].close)/_Point);}}
+      int fi=i+MathMin(5,InpForwardMaxBars);MBA_Exc x5;MBA_Excursion(rates,i,MathMin(5,InpForwardMaxBars),MBA_Direction(rates[i]),x5);
+      double mfe5=x5.mfe,mae5=x5.mae;
       bool forward_up=rates[fi].close>rates[i].close;
       WriteForwardForBar(tfIndex,rates,i,atr,"HISTORICAL_SERVER");
+      if(InpWriteTimeForward && ArraySize(g_hz)>0 && sec>0 && sec<=InpTimeFwdMaxTFSec)
+        {
+         MBA_TFwdEvent te;
+         te.run_id=g_run_id;te.event_key=c.event_key;te.event_id=c.event_id;te.broker=g_broker;te.server=g_server;te.symbol=_Symbol;te.tf_name=c.tf_name;te.data_source="HISTORY";te.source="TIME_FORWARD_HISTORY";
+         te.event_open=t;te.event_close=rates[i+1].time;te.ref=rates[i].close;te.atr=c.atr;te.spread_points=(double)rates[i].spread;te.commission_points=g_comm_points;te.dir=MBA_Direction(rates[i]);
+         MBA_WriteTimeForward(g_tfwd[tfIndex],te,cM1,g_hz,g_ptgt);
+        }
       UpdateStats(tfIndex,rates,i,vr,tick_density,spread_avg,mfe5,mae5,forward_up);
       UpdatePatternStats(tfIndex,rates,i,pattern,mfe5,mae5,forward_up);
       DiscoverForEvent(tfIndex,rates,i,atr,vr,tick_density_ratio,structure,m15,h1,mfe5,mae5,forward_up);
@@ -517,6 +538,9 @@ int OnStart()
    g_broker=MBA_SafeToken(AccountInfoString(ACCOUNT_COMPANY));g_server=MBA_SafeToken(AccountInfoString(ACCOUNT_SERVER));
    g_run_id=StringFormat("HIST_%s_%s",MBA_SafeName(_Symbol),TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    datetime from_dt,to_dt;if(!GetRange(from_dt,to_dt)){Print("MBA: invalid date range.");return 1;}
+   g_dst=MBA_ResolveDstMode((int)InpDstMode);
+   MBA_ParseHorizons(InpTimeHorizonsMin,g_hz);g_ptgt[0]=InpTimeFwdTargetP1;g_ptgt[1]=InpTimeFwdTargetP2;g_ptgt[2]=InpTimeFwdTargetP3;
+   {double tv=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE),tsz=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_SIZE);double vpp=(tsz>0?tv*_Point/tsz:0);g_comm_points=(InpCommissionPerLotDeclared>0&&vpp>0)?InpCommissionPerLotDeclared/vpp:0;}
    ResetStats();InitDiscoveryTable();if(!InitWriters())return 2;WriteRun(from_dt,to_dt);
    if(InpBuildNewsContext){g_cal.Load(from_dt-86400,to_dt+2*86400,InpNewsCurrencies,InpNewsMinImportance);WriteHistoricalNews(from_dt,to_dt);}
    for(int i=0;i<MBA_TF_COUNT;i++)ProcessTF(MBA_TFs[i],from_dt,to_dt);

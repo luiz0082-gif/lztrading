@@ -1,0 +1,8 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+150,EV_SELL_Ak,extreme,hour,extreme=extremo_baixa & hora=00h,292,35,51,-71.933,-5.885,-26.396,-1.586,-119.231,-73.107,0.000,False,False
+150,EV_BUY_Ak,ret4*extreme,sess,ret4=Q1(caiu+) & extreme=extremo_baixa & Tarde(20-24),193,46,26,64.582,4.492,18.465,0.852,54.137,9.465,0.000,True,False
+150,race,ret4*extreme,sess,ret4=Q1(caiu+) & extreme=extremo_baixa & Tarde(20-24),193,46,26,0.424,4.345,0.112,0.849,0.331,0.040,0.000,False,False
+150,EV_BUY_Ak,compress*extreme,sess,compress=expandido & extreme=extremo_baixa & Tarde(20-24),215,46,23,66.084,3.970,45.751,2.062,56.432,35.028,0.000,False,False
+150,race,compress*extreme,sess,compress=expandido & extreme=extremo_baixa & Tarde(20-24),215,46,23,0.435,3.952,0.291,2.065,0.345,0.211,0.000,False,False
+150,EV_SELL_Ak,ret4*extreme,sess,ret4=Q1(caiu+) & extreme=extremo_baixa & Tarde(20-24),193,46,26,-59.317,-3.889,-12.040,-0.535,-77.102,-29.144,0.000,False,False
+150,EV_SELL_Ak,ret4*dopen,sess,ret4=Q1(caiu+) & dopen=Q4 & Tarde(20-24),343,43,48,-57.508,-3.762,-1.793,-0.114,-72.769,-19.944,0.000,False,False

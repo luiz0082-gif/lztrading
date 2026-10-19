@@ -1,0 +1,10 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+100,EV_SELL_Ak,extreme*prevday,sess,extreme=extremo_baixa & prevday=dia_ant_alta & Asia(00-09),390,53,31,-36.990,-5.139,11.449,0.576,-68.085,-16.781,0.000,False,False
+150,EV_BUY_Ak,pdpos*extreme,sess,pdpos=abaixo_PDL & extreme=extremo_baixa & Londres(09-15),255,33,23,-66.795,-4.145,21.376,0.766,-89.825,-4.326,0.000,False,False
+100,race,extreme*prevday,sess,extreme=extremo_baixa & prevday=dia_ant_alta & Asia(00-09),390,53,31,0.305,3.965,-0.036,-0.184,0.311,-0.062,0.000,False,False
+100,EV_SELL_Ak,pdpos*extreme,sess,pdpos=abaixo_PDL & extreme=extremo_baixa & Londres(09-15),255,33,23,63.701,3.839,-19.957,-1.309,29.151,-53.764,0.000,False,False
+100,EV_SELL_Ak,pdpos*extreme,sess,pdpos=metade_sup & extreme=extremo_baixa & Asia(00-09),173,37,23,-33.895,-3.823,12.461,0.602,-66.894,-20.232,0.000,False,False
+150,race,pdpos*extreme,sess,pdpos=abaixo_PDL & extreme=extremo_baixa & Londres(09-15),255,33,23,-0.505,-3.783,0.199,1.256,-0.458,0.225,0.000,False,False
+150,EV_BUY_Ak,tickvol*weekday,sess,tickvol=baixo & weekday=SEX & Londres(09-15),2240,40,30,-42.420,-3.724,-9.878,-0.525,-67.929,-34.898,0.000,False,False
+150,EV_SELL_Ak,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=QUI & Asia(00-09),259,37,29,-37.425,-3.523,-9.630,-0.549,-74.007,-45.443,0.000,False,False
+100,EV_SELL_Ak,dopen*extreme,sess,dopen=Q1(bem abaixo) & extreme=extremo_baixa & Londres(09-15),384,46,38,56.227,3.501,-5.977,-0.426,22.155,-40.551,0.000,False,False

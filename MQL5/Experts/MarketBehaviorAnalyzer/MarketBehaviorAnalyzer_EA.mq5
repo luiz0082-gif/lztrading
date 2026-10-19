@@ -2,6 +2,18 @@
 //| MarketBehaviorAnalyzer_EA.mq5                                    |
 //| Multi-timeframe live market research collector (non-trading)     |
 //|                                                                  |
+//| v1.23 - integrity release (see docs/MBA.md):                     |
+//|  * A bar is only marked as processed after its candle row is     |
+//|    written; failures are retried and, after InpMaxBarRetries,    |
+//|    logged as CRITICAL:BarSkipped (v1.22 skipped silently).       |
+//|  * RAW_TICKS captured with CopyTicksRange + persistent cursor    |
+//|    (OnTick alone loses ticks) and back-filled on first run.      |
+//|  * Historical UTC uses the NY-close DST rule (v1.22 used the     |
+//|    current offset for all history = 1 h wrong in winter).        |
+//|  * MAE/MFE are positive distances; max_up/max_down added.        |
+//|  * Time-based forward (1..240 min) from M1 bars: FORWARD_TIME.   |
+//|  * D1 timeframe, bar spread, OHLC-vs-ticks audit per candle.     |
+//|  * META/data_quality snapshots (expected vs written, gaps...).   |
 //| v1.22 - history depth counted in days, not bars (1.22); per-timeframe history depth (1.21), maximum-history back-fill (1.20), research-pipeline fixes (1.11: calendar history back-fill, news de-dup key; 1.12: resume no longer rewrites bars when the terminal series is stale at start)                                  |
 //|  * One row per (event, horizon): FORWARD is written exactly once,|
 //|    when the horizon bar closes (v1.00 rewrote it every second).  |
@@ -18,16 +30,24 @@
 //|  * DOM throttled and OFF by default (feed volume is saturated).  |
 //+------------------------------------------------------------------+
 #property strict
-#property version   "1.22"
+#property version   "1.23"
 #property description "Non-trading multi-timeframe market behavior research collector."
 
 #include "MBA_Core.mqh"
+
+enum MBA_DST_INPUT
+  {
+   MBA_DSTIN_AUTO=0,           // AUTO (NY-close rule when the broker follows it)
+   MBA_DSTIN_US_NY_CLOSE=1,    // NY-close server: UTC+2 winter / UTC+3 US daylight saving
+   MBA_DSTIN_FIXED_CURRENT=2,  // current offset for all history (v1.22 behaviour)
+   MBA_DSTIN_FIXED_INPUT=3     // InpAnalysisTimezoneOffset
+  };
 
 input string InpRootFolder             = "MarketBehaviorAnalyzer";
 input bool   InpUseCommonFolder        = true;
 input int    InpAnalysisTimezoneOffset = -3;          // fallback only: server->UTC hours when InpUseDynamicUTC=false
 input int    InpPartSizeMB             = 25;
-input bool   InpWriteRawTicks          = true;
+input bool   InpWriteRawTicks          = true;        // RAW_TICKS via CopyTicksRange (complete), see InpRawTickBackfillDays
 input bool   InpWriteTickAggregates    = true;
 input bool   InpWriteEvents            = true;
 input bool   InpWriteForward           = true;
@@ -39,8 +59,9 @@ input bool   InpWriteDOM                = false;      // broker DOM volume was s
 input bool   InpWriteNewsContext        = true;
 // ---- v1.10
 input bool   InpUseDynamicUTC           = true;       // analysis_time = real UTC from server offset
+input MBA_DST_INPUT InpDstMode          = MBA_DSTIN_AUTO; // v1.23: how history is converted to UTC
 input bool   InpBrokerFolder            = true;       // root\<broker>\<symbol>\LIVE (avoids two terminals mixing the same symbol)
-input int    InpMaxCatchupBars          = 200000;     // sanity cap of bars back-filled per timeframe in one go
+input int    InpMaxCatchupBars          = 200000;     // (unused since v1.23.1 - it used to skip history, see CatchUpOne)
 input int    InpInitialBackfillDays     = 30;         // first run on this broker/symbol (no CSV yet): build this many days of history from the server; 0 = off
 input int    InpBackfillBudgetMs        = 700;        // max milliseconds per timer tick spent back-filling (keeps the chart responsive)
 input bool   InpBackfillMaxHistory      = true;       // first run: go back as far as the terminal/server allow (ignores InpInitialBackfillDays)
@@ -51,6 +72,7 @@ input int    InpDaysM15                 = 1000;
 input int    InpDaysM30                 = 1000;
 input int    InpDaysH1                  = 2000;
 input int    InpDaysH4                  = 3650;
+input int    InpDaysD1                  = 3650;
 input int    InpDaysW1                  = 3650;
 input int    InpDaysMN1                 = 3650;
 input int    InpBackfillSyncWaitSec     = 120;        // max seconds to wait per timeframe for the terminal to download history
@@ -62,12 +84,30 @@ input string InpNewsCurrencies          = "USD";      // calendar currencies, co
 input int    InpNewsMinImportance       = 2;          // 0 none,1 low,2 moderate,3 high
 input int    InpNewsPollSec             = 30;
 input double InpCommissionPerLotDeclared = 0.0;       // round-turn commission per lot declared by the user (0 = unknown)
+// ---- v1.23 integrity
+input int    InpMaxBarRetries           = 5;          // consecutive failures on the same bar before it is logged as CRITICAL:BarSkipped
+input int    InpRetryDelayMs            = 2000;       // wait between retries of a failed bar
+input double InpOhlcTolerancePoints     = 1.0;        // server candle vs candle rebuilt from ticks (bid): max accepted deviation
+input int    InpQualityIntervalSec      = 300;        // META/data_quality snapshot period
+// ---- v1.23 raw ticks
+input int    InpRawTickBackfillDays     = 14;         // first run (no RAW_TICKS yet): ticks from the server this many days back (0 = from now)
+input int    InpRawTickChunkSec         = 3600;       // size of each CopyTicksRange request while catching up
+input int    InpRawTickBudgetMs         = 400;        // max milliseconds per call spent writing ticks
+// ---- v1.23 time-based forward (FORWARD_TIME)
+input bool   InpWriteTimeForward        = true;       // horizons in minutes, measured on M1 bars, for events of timeframes up to InpTimeFwdMaxTFSec
+input string InpTimeHorizonsMin         = "1,3,5,10,15,30,60,120,240"; // up to 16 horizons, 1..1440 minutes
+input int    InpTimeFwdMaxTFSec         = 14400;      // events of timeframes with period <= this (14400 = up to H4)
+input double InpTimeFwdTargetP1         = 100;        // absolute target 1 (points) for hit_*_p1_min; <=0 disables
+input double InpTimeFwdTargetP2         = 200;
+input double InpTimeFwdTargetP3         = 300;
+input int    InpTimeFwdCacheMin         = 20000;      // M1 bars kept in memory while computing FORWARD_TIME
 
 #define MBA_TC_MAX 40
 
 CMBAWriter g_candles[MBA_TF_COUNT];
 CMBAWriter g_events[MBA_TF_COUNT];
 CMBAWriter g_forward[MBA_TF_COUNT];
+CMBAWriter g_tfwd[MBA_TF_COUNT];
 CMBAWriter g_tickagg[MBA_TF_COUNT];
 CMBAWriter g_rawticks;
 CMBAWriter g_runs;
@@ -76,6 +116,7 @@ CMBAWriter g_news;
 CMBAWriter g_dom_levels;
 CMBAWriter g_dom_snapshots;
 CMBAWriter g_spec;
+CMBAWriter g_quality;
 CMBANews   g_cal;
 
 string g_run_id="";
@@ -103,6 +144,42 @@ datetime g_last_news_poll=0;
 ulong    g_last_dom_ms=0;
 datetime g_last_err_time=0;
 
+// ---- v1.23 state
+int      g_dst_mode=MBA_DST_FIXED_CURRENT;     // resolved
+int      g_fail_n[MBA_TF_COUNT];               // consecutive failures on the pending bar
+ulong    g_retry_at[MBA_TF_COUNT];
+// data-quality counters (this run)
+datetime g_dq_first[MBA_TF_COUNT];
+datetime g_dq_last[MBA_TF_COUNT];
+long     g_dq_cndl[MBA_TF_COUNT],g_dq_evt[MBA_TF_COUNT],g_dq_fwd[MBA_TF_COUNT],g_dq_tagg[MBA_TF_COUNT],g_dq_tfwd[MBA_TF_COUNT],g_dq_tfwd_skip[MBA_TF_COUNT];
+long     g_dq_retry[MBA_TF_COUNT],g_dq_skipped[MBA_TF_COUNT],g_dq_tickok[MBA_TF_COUNT],g_dq_tickmiss[MBA_TF_COUNT];
+long     g_dq_ohlc_chk[MBA_TF_COUNT],g_dq_ohlc_diff[MBA_TF_COUNT],g_dq_gap_ev[MBA_TF_COUNT],g_dq_dst_mm[MBA_TF_COUNT];
+double   g_dq_ohlc_dev[MBA_TF_COUNT];
+int      g_dq_gap_max[MBA_TF_COUNT];
+datetime g_last_quality=0;
+// raw tick capture
+bool     g_rt_ready=false;
+ulong    g_rt_cursor=0;       // time_msc of the last tick written
+int      g_rt_dupe=0;         // ticks already written with time_msc == g_rt_cursor
+long     g_dq_raw=0;
+long     g_rt_err=0;
+long     g_rt_empty=0;
+long     g_rt_lag_ms=0;
+ulong    g_rt_last_call=0;
+// time-based forward
+int      g_hz[];
+double   g_ptgt[3];
+int      g_hmax=0;
+bool     g_tfwd_on[MBA_TF_COUNT];
+datetime g_tfwd_last[MBA_TF_COUNT];
+int      g_tfwd_fail[MBA_TF_COUNT];
+MqlRates g_m1c[];
+datetime g_m1c_from=0;
+datetime g_m1c_to=0;
+datetime g_m1_nd_from=0;   // window known to have no M1 data in this terminal (skipped without further requests)
+datetime g_m1_nd_to=0;
+double   g_comm_points=0;
+
 //+------------------------------------------------------------------+
 void LogError(string where,string detail)
   {
@@ -121,6 +198,11 @@ string BuildEventKey(ENUM_TIMEFRAMES tf,datetime t)
    return StringFormat("%s|%s|%s|%s|%s",g_broker,_Symbol,MBA_TFName(tf),TimeToString(t,TIME_DATE|TIME_MINUTES|TIME_SECONDS),"LIVE");
   }
 
+int FixedInputOffsetSec()
+  {
+   return -InpAnalysisTimezoneOffset*3600;
+  }
+
 void WriteRun()
   {
    string f[];MBA_Add(f,g_run_id);MBA_Add(f,"LIVE");MBA_Add(f,_Symbol);MBA_Add(f,MBA_DT(TimeCurrent(),true));MBA_Add(f,"0");MBA_Add(f,"0");
@@ -132,7 +214,7 @@ void WriteRun()
 void WriteSpec()
   {
    string f[];
-   string inputs=StringFormat("dynUTC=%s;lookback=%d;atr=%d;fwd=%d;rawticks=%s;dom=%s;news=%s/%d",MBA_Bool(InpUseDynamicUTC),InpFeatureLookback,InpATRPeriod,InpForwardMaxBars,MBA_Bool(InpWriteRawTicks),MBA_Bool(InpWriteDOM),InpNewsCurrencies,InpNewsMinImportance);
+   string inputs=StringFormat("dstMode=%s;lookback=%d;atr=%d;fwd=%d;tfwd=%s/%s;rawticks=%s/%dd;dom=%s;news=%s/%d;ohlcTol=%.1f",MBA_DstBasisName(g_dst_mode),InpFeatureLookback,InpATRPeriod,InpForwardMaxBars,MBA_Bool(InpWriteTimeForward),InpTimeHorizonsMin,MBA_Bool(InpWriteRawTicks),InpRawTickBackfillDays,MBA_Bool(InpWriteDOM),InpNewsCurrencies,InpNewsMinImportance,InpOhlcTolerancePoints);
    MBA_FillSpecRow(f,g_run_id,InpCommissionPerLotDeclared,inputs);
    g_spec.WriteFields(f);g_spec.Flush();
   }
@@ -143,45 +225,47 @@ bool InitWriters()
    if(InpBrokerFolder) base+="\\"+g_broker;
    g_root=base+"\\"+MBA_SafeName(_Symbol)+"\\LIVE";
    long mb=MathMax(1,InpPartSizeMB)*1024*1024;
+   bool ok=true;
    for(int i=0;i<MBA_TF_COUNT;i++)
      {
-      g_candles[i].Init(g_root+"\\CANDLES","candles_"+MBA_TFNames[i],MBA_CandleHeader(),mb,InpUseCommonFolder);
-      g_events[i].Init(g_root+"\\EVENTS","events_"+MBA_TFNames[i],MBA_EventHeader(),mb,InpUseCommonFolder);
-      g_forward[i].Init(g_root+"\\FORWARD","forward_"+MBA_TFNames[i],MBA_ForwardHeader(),mb,InpUseCommonFolder);
-      g_tickagg[i].Init(g_root+"\\TICKS","tick_aggregate_"+MBA_TFNames[i],MBA_TickAggHeader(),mb,InpUseCommonFolder);
+      ok&=g_candles[i].Init(g_root+"\\CANDLES","candles_"+MBA_TFNames[i],MBA_CandleHeader(),mb,InpUseCommonFolder);
+      ok&=g_events[i].Init(g_root+"\\EVENTS","events_"+MBA_TFNames[i],MBA_EventHeader(),mb,InpUseCommonFolder);
+      ok&=g_forward[i].Init(g_root+"\\FORWARD","forward_"+MBA_TFNames[i],MBA_ForwardHeader(),mb,InpUseCommonFolder);
+      ok&=g_tfwd[i].Init(g_root+"\\FORWARD_TIME","forward_time_"+MBA_TFNames[i],MBA_TimeFwdHeader(),mb,InpUseCommonFolder);
+      ok&=g_tickagg[i].Init(g_root+"\\TICKS","tick_aggregate_"+MBA_TFNames[i],MBA_TickAggHeader(),mb,InpUseCommonFolder);
       g_last_bar[i]=0;g_tc_cnt[i]=0;g_tc_seeded[i]=false;g_bf_first[i]=0;g_bf_wait[i]=false;g_bf_t0[i]=0;g_bf_total[i]=-1;g_bf_stable[i]=0;
+      g_fail_n[i]=0;g_retry_at[i]=0;
+      g_dq_first[i]=0;g_dq_last[i]=0;g_dq_cndl[i]=0;g_dq_evt[i]=0;g_dq_fwd[i]=0;g_dq_tagg[i]=0;g_dq_tfwd[i]=0;g_dq_tfwd_skip[i]=0;
+      g_dq_retry[i]=0;g_dq_skipped[i]=0;g_dq_tickok[i]=0;g_dq_tickmiss[i]=0;g_dq_ohlc_chk[i]=0;g_dq_ohlc_diff[i]=0;g_dq_gap_ev[i]=0;g_dq_dst_mm[i]=0;
+      g_dq_ohlc_dev[i]=0;g_dq_gap_max[i]=0;
+      g_tfwd_on[i]=false;g_tfwd_last[i]=0;g_tfwd_fail[i]=0;
      }
-   g_rawticks.Init(g_root+"\\RAW_TICKS","raw_ticks","run_id,symbol,time_msc,time,bid,ask,last,volume,volume_real,flags,spread_points,tick_direction,source",mb,InpUseCommonFolder);
-   g_runs.Init(g_root+"\\RUNS","runs",MBA_RunHeader(),mb,InpUseCommonFolder);
-   g_errors.Init(g_root+"\\LOGS","errors","run_id,time,symbol,where,detail,last_error",mb,InpUseCommonFolder);
-   g_news.Init(g_root+"\\NEWS","news",MBA_NewsHeader(),mb,InpUseCommonFolder);
-   g_dom_levels.Init(g_root+"\\DOM","dom_levels",MBA_DOMLevelHeader(),mb,InpUseCommonFolder);
-   g_dom_snapshots.Init(g_root+"\\DOM","dom_snapshots",MBA_DOMSnapshotHeader(),mb,InpUseCommonFolder);
-   g_spec.Init(g_root+"\\META","symbol_spec",MBA_SpecHeader(),mb,InpUseCommonFolder);
-   return true;
+   ok&=g_rawticks.Init(g_root+"\\RAW_TICKS","raw_ticks","run_id,symbol,time_msc,time,bid,ask,last,volume,volume_real,flags,spread_points,tick_direction,source",mb,InpUseCommonFolder);
+   ok&=g_runs.Init(g_root+"\\RUNS","runs",MBA_RunHeader(),mb,InpUseCommonFolder);
+   ok&=g_errors.Init(g_root+"\\LOGS","errors","run_id,time,symbol,where,detail,last_error",mb,InpUseCommonFolder);
+   ok&=g_news.Init(g_root+"\\NEWS","news",MBA_NewsHeader(),mb,InpUseCommonFolder);
+   ok&=g_dom_levels.Init(g_root+"\\DOM","dom_levels",MBA_DOMLevelHeader(),mb,InpUseCommonFolder);
+   ok&=g_dom_snapshots.Init(g_root+"\\DOM","dom_snapshots",MBA_DOMSnapshotHeader(),mb,InpUseCommonFolder);
+   ok&=g_spec.Init(g_root+"\\META","symbol_spec",MBA_SpecHeader(),mb,InpUseCommonFolder);
+   ok&=g_quality.Init(g_root+"\\META","data_quality",MBA_QualityHeader(),mb,InpUseCommonFolder);
+   return ok;
   }
 
 void FlushAll()
   {
-   for(int i=0;i<MBA_TF_COUNT;i++){g_candles[i].Flush();g_events[i].Flush();g_forward[i].Flush();g_tickagg[i].Flush();}
-   g_rawticks.Flush();g_runs.Flush();g_errors.Flush();g_news.Flush();g_dom_levels.Flush();g_dom_snapshots.Flush();g_spec.Flush();g_rows_since_flush=0;
+   for(int i=0;i<MBA_TF_COUNT;i++){g_candles[i].Flush();g_events[i].Flush();g_forward[i].Flush();g_tfwd[i].Flush();g_tickagg[i].Flush();}
+   g_rawticks.Flush();g_runs.Flush();g_errors.Flush();g_news.Flush();g_dom_levels.Flush();g_dom_snapshots.Flush();g_spec.Flush();g_quality.Flush();g_rows_since_flush=0;
   }
 
 //+------------------------------------------------------------------+
 //| Tick aggregates                                                  |
 //+------------------------------------------------------------------+
-void WriteTickAggregateRow(ENUM_TIMEFRAMES tf,datetime from_time,datetime to_time,MBA_TickAgg &a,string source)
+bool WriteTickAggregateRow(ENUM_TIMEFRAMES tf,datetime from_time,datetime to_time,MBA_TickAgg &a,string source)
   {
-   int idx=MBA_TFIndex(tf); if(idx<0) return;
-   long den=MathMax(1,a.up_ticks+a.down_ticks+a.unchanged_ticks);
-   string f[];MBA_Add(f,_Symbol);MBA_Add(f,MBA_TFName(tf));MBA_Add(f,MBA_DT(from_time,true));MBA_Add(f,MBA_DT(to_time,true));MBA_AddL(f,a.tick_count);MBA_AddL(f,a.up_ticks);MBA_AddL(f,a.down_ticks);MBA_AddL(f,a.unchanged_ticks);
-   MBA_AddD(f,MBA_SafeRatio((double)a.up_ticks,(double)den),6);MBA_AddD(f,MBA_SafeRatio((double)a.down_ticks,(double)den),6);
-   MBA_AddD(f,(a.bid_min==DBL_MAX?0:a.bid_min),MBA_Digits());MBA_AddD(f,(a.bid_max==-DBL_MAX?0:a.bid_max),MBA_Digits());MBA_AddD(f,(a.ask_min==DBL_MAX?0:a.ask_min),MBA_Digits());MBA_AddD(f,(a.ask_max==-DBL_MAX?0:a.ask_max),MBA_Digits());
-   MBA_AddD(f,(a.last_min==DBL_MAX?0:a.last_min),MBA_Digits());MBA_AddD(f,(a.last_max==-DBL_MAX?0:a.last_max),MBA_Digits());
-   MBA_AddD(f,(a.spread_min==DBL_MAX?0:a.spread_min),2);MBA_AddD(f,(a.spread_max==-DBL_MAX?0:a.spread_max),2);
-   MBA_AddD(f,MBA_SafeRatio(a.spread_sum,(double)MathMax(1,a.tick_count)),2);MBA_AddD(f,MBA_SafeRatio(a.tick_interval_sum_ms,(double)MathMax(1,a.tick_interval_count)),2);
-   double minutes=MathMax(1.0,(double)((to_time-from_time)+1)/60.0);MBA_AddD(f,(double)a.tick_count/minutes,4);MBA_Add(f,source);
-   g_tickagg[idx].WriteFields(f);
+   int idx=MBA_TFIndex(tf); if(idx<0) return false;
+   string f[];
+   MBA_FillTickAggRow(f,_Symbol,MBA_TFName(tf),from_time,to_time,a,source);
+   return g_tickagg[idx].WriteFields(f);
   }
 
 // Mean of the previous tick counts of a timeframe; seeds from server tick history for short timeframes.
@@ -254,11 +338,11 @@ void RefreshCalendarWindow()
 // Writes calendar values of [from,to] that are not in the CSV yet. Key = value_id|revision|actual_value (exactly as written in the file),
 // so the same value is never written twice, including across restarts; a revision or a newly released actual creates a new row.
 // source "CALENDAR" = live capture; "CALENDAR_BACKFILL" = values as the server holds them NOW (may include later revisions).
+// v1.23: event_time_utc uses the DST rule of the event date (not the current offset).
 int WriteCalendarRange(datetime from,datetime to,string source)
   {
    string cur[];int nc=0,written=0;
    if(StringLen(InpNewsCurrencies)>0) nc=StringSplit(InpNewsCurrencies,',',cur);
-   int off=InpUseDynamicUTC?MBA_ServerOffsetSec():-InpAnalysisTimezoneOffset*3600;
    for(int p=0;p<MathMax(1,nc);p++)
      {
       MqlCalendarValue v[];
@@ -277,6 +361,7 @@ int WriteCalendarRange(datetime from,datetime to,string source)
             name=ev.name;etype=(int)ev.type;sector=(int)ev.sector;
             MqlCalendarCountry cc;if(CalendarCountryById(ev.country_id,cc))code=cc.code;
            }
+         int off=MBA_OffsetAt(v[i].time,g_dst_mode,FixedInputOffsetSec());
          string f[];MBA_Add(f,g_run_id);MBA_Add(f,MBA_UD(v[i].event_id));MBA_Add(f,MBA_UD(v[i].id));MBA_Add(f,MBA_DT(v[i].time,true));MBA_Add(f,MBA_DT(v[i].time-off,true));MBA_Add(f,MBA_DT(v[i].period,true));MBA_AddL(f,(long)v[i].revision);
          MBA_Add(f,av);
          MBA_Add(f,v[i].HasPreviousValue()?DoubleToString(v[i].GetPreviousValue(),6):"");
@@ -337,86 +422,177 @@ void CaptureDOM(const string &symbol)
   }
 
 //+------------------------------------------------------------------+
-//| Raw ticks                                                        |
+//| Raw ticks (v1.23): CopyTicksRange + persistent cursor            |
+//| OnTick() is only a trigger; the terminal may merge NewTick       |
+//| events, so ticks are read as ranges from the stored cursor.      |
 //+------------------------------------------------------------------+
-void WriteRawTick(const MqlTick &tk)
+bool WriteRawTick(const MqlTick &tk,string source)
   {
    double price=tk.last>0?tk.last:((tk.bid>0&&tk.ask>0)?(tk.bid+tk.ask)/2.0:tk.bid);
    int td=0;
    if(g_has_prev_tick){if(price>g_prev_tick_price)td=1;else if(price<g_prev_tick_price)td=-1;}
    if(price>0){g_prev_tick_price=price;g_has_prev_tick=true;}
-   if(!InpWriteRawTicks) return;
    double spread=(tk.bid>0&&tk.ask>0)?(tk.ask-tk.bid)/_Point:0;
-   string f[];MBA_Add(f,g_run_id);MBA_Add(f,_Symbol);MBA_AddU(f,tk.time_msc);MBA_Add(f,MBA_TimeMS(tk.time_msc));MBA_AddD(f,tk.bid,MBA_Digits());MBA_AddD(f,tk.ask,MBA_Digits());MBA_AddD(f,tk.last,MBA_Digits());MBA_AddL(f,(long)tk.volume);MBA_AddD(f,tk.volume_real,4);MBA_AddL(f,(long)tk.flags);MBA_AddD(f,spread,2);MBA_Add(f,IntegerToString(td));MBA_Add(f,"LIVE_CAPTURE");
-   g_rawticks.WriteFields(f);
+   string f[];MBA_Add(f,g_run_id);MBA_Add(f,_Symbol);MBA_AddU(f,tk.time_msc);MBA_Add(f,MBA_TimeMS(tk.time_msc));MBA_AddD(f,tk.bid,MBA_Digits());MBA_AddD(f,tk.ask,MBA_Digits());MBA_AddD(f,tk.last,MBA_Digits());MBA_AddL(f,(long)tk.volume);MBA_AddD(f,tk.volume_real,4);MBA_AddL(f,(long)tk.flags);MBA_AddD(f,spread,2);MBA_Add(f,IntegerToString(td));MBA_Add(f,source);
+   return g_rawticks.WriteFields(f);
+  }
+
+void InitRawTickCursor()
+  {
+   g_rt_ready=false;
+   if(!InpWriteRawTicks) return;
+   ulong now_ms=(ulong)TimeCurrent()*1000ULL;
+   string tail[];
+   int k=g_rawticks.TailLines(tail,300);
+   if(k>0)
+     {
+      string c[];
+      ulong last=0;
+      if(StringSplit(tail[k-1],',',c)>2) last=(ulong)StringToInteger(c[2]);
+      if(last>0)
+        {
+         int dupe=0;
+         for(int q=k-1;q>=0;q--)
+           {
+            string d[];
+            if(StringSplit(tail[q],',',d)>2 && (ulong)StringToInteger(d[2])==last) dupe++; else break;
+           }
+         g_rt_cursor=last;g_rt_dupe=dupe;
+         if(InpRawTickBackfillDays>0 && now_ms>last && (now_ms-last)>(ulong)InpRawTickBackfillDays*86400000ULL)
+           {
+            ulong newc=now_ms-(ulong)InpRawTickBackfillDays*86400000ULL;
+            LogError("WARN:RawTickGap",StringFormat("last stored tick %s is older than InpRawTickBackfillDays=%d; cursor moved to %s (ticks in between are NOT collected)",MBA_TimeMS(last),InpRawTickBackfillDays,MBA_TimeMS(newc)));
+            g_rt_cursor=newc;g_rt_dupe=0;
+           }
+         g_rt_ready=true;
+         return;
+        }
+     }
+   g_rt_cursor=(InpRawTickBackfillDays>0)?(now_ms-(ulong)InpRawTickBackfillDays*86400000ULL):now_ms;
+   g_rt_dupe=0;
+   g_rt_ready=true;
+   LogError("INFO:RawTickStart",StringFormat("first RAW_TICKS run, cursor=%s backfill_days=%d",MBA_TimeMS(g_rt_cursor),InpRawTickBackfillDays));
+  }
+
+void CaptureRawTicks()
+  {
+   if(!InpWriteRawTicks || !g_rt_ready) return;
+   ulong t0=GetTickCount64();
+   ulong chunk=(ulong)MathMax(60,InpRawTickChunkSec)*1000ULL;
+   for(int guard=0;guard<500;guard++)
+     {
+      ulong now_ms=(ulong)TimeCurrent()*1000ULL;
+      ulong from=g_rt_cursor;
+      ulong to=0;
+      bool chunked=false;
+      if(now_ms>from && now_ms-from>chunk){to=from+chunk;chunked=true;}
+      MqlTick tk[];
+      ResetLastError();
+      int n=CopyTicksRange(_Symbol,tk,COPY_TICKS_ALL,from,to);
+      if(n<0)
+        {
+         g_rt_err++;
+         if(g_rt_err<=20 || g_rt_err%100==0) LogError("CopyTicksRange",StringFormat("failed from=%s chunked=%s",MBA_TimeMS(from),MBA_Bool(chunked)));
+         return;
+        }
+      string src=(now_ms>from && now_ms-from>5000)?"BACKFILL_RANGE":"CAPTURE_RANGE";
+      int skipped=0;
+      bool budget_hit=false;
+      for(int k=0;k<n;k++)
+        {
+         if((ulong)tk[k].time_msc<g_rt_cursor) continue;
+         if((ulong)tk[k].time_msc==g_rt_cursor && skipped<g_rt_dupe){skipped++;continue;}
+         if(!WriteRawTick(tk[k],src)){g_rt_err++;LogError("WriteRawTick","write failed");return;}
+         if((ulong)tk[k].time_msc==g_rt_cursor) g_rt_dupe++;
+         else {g_rt_cursor=(ulong)tk[k].time_msc;g_rt_dupe=1;}
+         g_dq_raw++;g_rows_since_flush++;
+         if((k&1023)==1023 && (long)(GetTickCount64()-t0)>(long)MathMax(50,InpRawTickBudgetMs)){budget_hit=true;break;}
+        }
+      if(budget_hit) break;
+      if(!chunked) break;
+      // whole chunk consumed: move to its end (a tick exactly at `to` would already have moved the cursor there)
+      if(g_rt_cursor<to){g_rt_cursor=to;g_rt_dupe=0;if(n==0)g_rt_empty++;}
+      if((long)(GetTickCount64()-t0)>(long)MathMax(50,InpRawTickBudgetMs)) break;
+     }
+   long lag=(long)((ulong)TimeCurrent()*1000ULL)-(long)g_rt_cursor;
+   g_rt_lag_ms=(lag>0?lag:0);
   }
 
 //+------------------------------------------------------------------+
 //| Forward: one row per (event, horizon), written when the horizon |
 //| bar closes. rr[nr-1] is the horizon bar.                         |
 //+------------------------------------------------------------------+
-void WriteForwardForClosedBar(int tfIndex,const MqlRates &rr[],int nr,string source)
+int WriteForwardForClosedBar(int tfIndex,const MqlRates &rr[],int nr,string source)
   {
-   if(!InpWriteForward) return;
+   if(!InpWriteForward) return 0;
    ENUM_TIMEFRAMES tf=MBA_TFs[tfIndex];
    int hmax=MathMin(InpForwardMaxBars,MBA_MAX_FORWARD);
-   const MqlRates fb=rr[nr-1];
+   int rows=0;
    for(int h=1;h<=hmax;h++)
      {
       int ei=nr-1-h;
       if(ei<1) break;
-      double event_close=rr[ei].close;
-      int dir=MBA_Direction(rr[ei]);
-      double future_high=-DBL_MAX,future_low=DBL_MAX,best_mfe=-DBL_MAX,best_mae=DBL_MAX;
-      int t_mfe=-1,t_mae=-1;
-      for(int k=1;k<=h;k++)
-        {
-         const MqlRates b=rr[ei+k];
-         future_high=MathMax(future_high,b.high);future_low=MathMin(future_low,b.low);
-         double fav=0,adv=0;
-         if(dir>0){fav=(b.high-event_close)/_Point;adv=(b.low-event_close)/_Point;}
-         else if(dir<0){fav=(event_close-b.low)/_Point;adv=(event_close-b.high)/_Point;}
-         else {fav=MathMax(MathAbs(b.high-event_close),MathAbs(b.low-event_close))/_Point;adv=0;}
-         if(fav>best_mfe){best_mfe=fav;t_mfe=k;}
-         if(adv<best_mae){best_mae=adv;t_mae=k;}
-        }
-      double mfe=MathMax(0,best_mfe);double mae=(best_mae==DBL_MAX?0:best_mae);
-      double fc=fb.close;double ret=(fc-event_close)/_Point;
-      int d=fc>event_close?1:(fc<event_close?-1:0);
       double atr=MBA_ATRAt(rr,ei,InpATRPeriod);
       string ekey=BuildEventKey(tf,rr[ei].time);
       string f[];
-      MBA_Add(f,g_run_id);MBA_Add(f,ekey+"|"+IntegerToString(h));MBA_Add(f,ekey);MBA_Add(f,BuildEventId(tf,rr[ei].time));
-      MBA_Add(f,g_broker);MBA_Add(f,g_server);MBA_Add(f,_Symbol);MBA_Add(f,MBA_TFName(tf));MBA_Add(f,"LIVE");
-      MBA_Add(f,MBA_DT(rr[ei].time,true));MBA_AddL(f,h);MBA_Add(f,MBA_DT(fb.time,true));MBA_AddD(f,fc,MBA_Digits());
-      MBA_AddD(f,ret,2);MBA_AddD(f,atr>0?(fc-event_close)/atr:0,6);MBA_AddD(f,future_high,MBA_Digits());MBA_AddD(f,future_low,MBA_Digits());
-      MBA_AddD(f,mfe,2);MBA_AddD(f,mae,2);MBA_AddD(f,atr>0?mfe*_Point/atr:0,6);MBA_AddD(f,atr>0?mae*_Point/atr:0,6);
-      MBA_AddL(f,t_mfe);MBA_AddL(f,t_mae);MBA_Add(f,MBA_Dir(d));MBA_Add(f,"EVENT_CANDLE_DIRECTION");MBA_Add(f,source);MBA_Add(f,MBA_SCHEMA_VERSION);
-      g_forward[tfIndex].WriteFields(f);g_rows_since_flush++;
+      MBA_FillForwardRow(f,g_run_id,ekey,BuildEventId(tf,rr[ei].time),g_broker,g_server,"LIVE",MBA_TFName(tf),rr,ei,h,atr,source);
+      if(g_forward[tfIndex].WriteFields(f)){rows++;g_rows_since_flush++;}
+      else LogError("WriteForward",MBA_TFName(tf)+" "+ekey+" h="+IntegerToString(h));
      }
+   return rows;
   }
 
 //+------------------------------------------------------------------+
 //| Process one closed bar (live or back-fill)                       |
+//| The bar is marked as processed (g_last_bar) only after its       |
+//| candle row is on disk. Failures are retried.                     |
 //+------------------------------------------------------------------+
+bool BarFailed(int i,datetime t,string why)
+  {
+   g_fail_n[i]++;g_dq_retry[i]++;
+   LogError("ProcessBar",StringFormat("%s %s %s attempt=%d/%d",MBA_TFName(MBA_TFs[i]),why,TimeToString(t,TIME_DATE|TIME_MINUTES),g_fail_n[i],MathMax(1,InpMaxBarRetries)));
+   if(g_fail_n[i]>=MathMax(1,InpMaxBarRetries))
+     {
+      // give up on this bar so the collector does not stall forever; the loss is explicit in the log and in META/data_quality
+      LogError("CRITICAL:BarSkipped",StringFormat("%s %s was NOT collected (%s)",MBA_TFName(MBA_TFs[i]),TimeToString(t,TIME_DATE|TIME_MINUTES),why));
+      g_dq_skipped[i]++;
+      g_last_bar[i]=t;
+      g_fail_n[i]=0;
+      g_retry_at[i]=0;
+     }
+   else g_retry_at[i]=GetTickCount64()+(ulong)MathMax(200,InpRetryDelayMs);
+   return false;
+  }
+
 bool ProcessBar(int i,int shift,string source)
   {
    ENUM_TIMEFRAMES tf=MBA_TFs[i];
    datetime t=iTime(_Symbol,tf,shift);
-   if(t<=0) return false;
+   if(t<=0){g_retry_at[i]=GetTickCount64()+(ulong)MathMax(200,InpRetryDelayMs);return false;}
    int want=MathMax(InpFeatureLookback+5,120);
    MqlRates rr[];
    int nr=CopyRates(_Symbol,tf,shift,want,rr);
-   if(nr<3 || rr[nr-1].time!=t){g_last_bar[i]=t;LogError("ProcessBar",MBA_TFName(tf)+" rates unavailable "+TimeToString(t));return false;}
+   if(nr<3 || rr[nr-1].time!=t) return BarFailed(i,t,"rates unavailable");
    int idx=nr-1;
    MBA_BarCtx c;
    c.run_id=g_run_id;c.symbol=_Symbol;c.tf_name=MBA_TFName(tf);c.source=source;c.broker=g_broker;c.server=g_server;c.data_source="LIVE";
    c.bar=rr[idx];c.server_time=t;
    c.event_id=BuildEventId(tf,t);c.event_key=BuildEventKey(tf,t);
-   // ---- time basis
+   // ---- time basis (v1.23: history is converted with the DST rule of the bar date)
    int off=0;
-   if(InpUseDynamicUTC){off=MBA_ServerOffsetSec();c.utc_basis=(source=="LIVE_CAPTURE"?"LIVE_CLOCK_OFFSET":"BACKFILL_ASSUMES_CURRENT_OFFSET");}
-   else {off=-InpAnalysisTimezoneOffset*3600;c.utc_basis="FIXED_INPUT";}
+   bool dst_mismatch=false;
+   if(InpUseDynamicUTC)
+     {
+      off=MBA_OffsetAt(t,g_dst_mode,FixedInputOffsetSec());
+      if(g_dst_mode==MBA_DST_US_NY_CLOSE)
+        {
+         c.utc_basis=MBA_DstBasisName(g_dst_mode);
+         // cross-check against the live clock when the bar just closed
+         if(source=="LIVE_CAPTURE" && (TimeTradeServer()-t)<=(datetime)(PeriodSeconds(tf)+3600) && MBA_ServerOffsetSec()!=off) dst_mismatch=true;
+        }
+      else c.utc_basis=(source=="LIVE_CAPTURE"?"LIVE_CLOCK_OFFSET":"BACKFILL_ASSUMES_CURRENT_OFFSET");
+     }
+   else {off=FixedInputOffsetSec();c.utc_basis="FIXED_INPUT";}
    c.utc_offset_sec=off;c.utc_time=t-(datetime)off;c.analysis_time=c.utc_time;
    // ---- geometry
    c.range=MBA_Range(c.bar);c.body=MBA_Body(c.bar);c.uw=MBA_UpperWick(c.bar);c.lw=MBA_LowerWick(c.bar);
@@ -425,6 +601,7 @@ bool ProcessBar(int i,int shift,string source)
    c.atr=MBA_ATRAt(rr,idx,InpATRPeriod);
    c.avg_tv=MBA_AvgTickVolumeAt(rr,idx,InpFeatureLookback);
    c.vr=c.avg_tv>0?(double)c.bar.tick_volume/c.avg_tv:1.0;
+   c.bar_spread=(double)c.bar.spread;
    int sec=PeriodSeconds(tf);
    c.gap_bars=0;
    if(sec>0 && tf!=PERIOD_MN1){int g=(int)((t-rr[idx-1].time)/sec)-1;c.gap_bars=(g>0?g:0);}
@@ -448,10 +625,13 @@ bool ProcessBar(int i,int shift,string source)
    c.spread_avg=c.tick_ok?MBA_SafeRatio(ta.spread_sum,(double)MathMax(1,ta.tick_count)):MBA_NaN();
    c.spread_max=c.tick_ok?ta.spread_max:MBA_NaN();
    c.spread_min=c.tick_ok?ta.spread_min:MBA_NaN();
-   if(c.tick_ok)
+   // ---- audit: candle served by the broker vs candle rebuilt from the ticks (bid chart only)
+   c.ohlc_status="NA";c.ohlc_dev=MBA_NaN();
+   if(c.tick_ok && ta.bid_first>0 && SymbolInfoInteger(_Symbol,SYMBOL_CHART_MODE)==SYMBOL_CHART_MODE_BID)
      {
-      if(InpWriteTickAggregates) WriteTickAggregateRow(tf,t,end,ta,source);
-      PushTickCount(i,ta.tick_count);
+      double dv=MathMax(MathMax(MathAbs(c.bar.open-ta.bid_first),MathAbs(c.bar.high-ta.bid_max)),MathMax(MathAbs(c.bar.low-ta.bid_min),MathAbs(c.bar.close-ta.bid_last)))/_Point;
+      c.ohlc_dev=dv;
+      c.ohlc_status=(dv<=InpOhlcTolerancePoints?"OK":"DIFF");
      }
    // ---- location / levels (all known before the event bar opens, except *_open which are the open of the period)
    double dopen=0,wopen=0,mopen=0,pdh=0,pdl=0;
@@ -487,7 +667,7 @@ bool ProcessBar(int i,int shift,string source)
         }
      }
    // ---- multi-timeframe context: only bars closed BEFORE the event bar opens
-   for(int s=0;s<8;s++)
+   for(int s=0;s<MBA_TF_COUNT;s++)
      {
       ENUM_TIMEFRAMES htf=MBA_TFs[s];
       MqlRates hr[];
@@ -505,14 +685,193 @@ bool ProcessBar(int i,int shift,string source)
       g_cal.Context(t,3600,c.news_n,c.news_high_n,c.news_min_next,c.news_min_since);
       c.news_state=(c.news_n>0?StringFormat("EVENTS_%d_AROUND_60M",c.news_n):"NONE_60M");
      }
-   // ---- write
+   // ---- write: the candle row decides whether the bar is done (nothing else is written before it, so a retry never duplicates)
    string f[];
-   MBA_FillCandleRow(f,c);g_candles[i].WriteFields(f);
-   if(InpWriteEvents){MBA_FillEventRow(f,c);g_events[i].WriteFields(f);}
-   WriteForwardForClosedBar(i,rr,nr,source);
+   MBA_FillCandleRow(f,c);
+   if(!g_candles[i].WriteFields(f)) return BarFailed(i,t,"candle write failed");
+   g_dq_cndl[i]++;
+   if(g_dq_first[i]==0) g_dq_first[i]=t;
+   g_dq_last[i]=t;
+   g_fail_n[i]=0;g_retry_at[i]=0;
+   if(InpWriteEvents)
+     {
+      MBA_FillEventRow(f,c);
+      if(g_events[i].WriteFields(f)) g_dq_evt[i]++;
+      else LogError("WriteEvent",MBA_TFName(tf)+" "+TimeToString(t,TIME_DATE|TIME_MINUTES));
+     }
+   if(c.tick_ok)
+     {
+      if(InpWriteTickAggregates)
+        {
+         if(WriteTickAggregateRow(tf,t,end,ta,source)) g_dq_tagg[i]++;
+         else LogError("WriteTickAggregate",MBA_TFName(tf)+" "+TimeToString(t,TIME_DATE|TIME_MINUTES));
+        }
+      PushTickCount(i,ta.tick_count);
+      g_dq_tickok[i]++;
+     }
+   else g_dq_tickmiss[i]++;
+   if(c.ohlc_status=="OK" || c.ohlc_status=="DIFF")
+     {
+      g_dq_ohlc_chk[i]++;
+      if(c.ohlc_status=="DIFF") g_dq_ohlc_diff[i]++;
+      if(c.ohlc_dev>g_dq_ohlc_dev[i]) g_dq_ohlc_dev[i]=c.ohlc_dev;
+     }
+   if(c.gap_bars>0){g_dq_gap_ev[i]++;if(c.gap_bars>g_dq_gap_max[i])g_dq_gap_max[i]=c.gap_bars;}
+   if(dst_mismatch) g_dq_dst_mm[i]++;
+   g_dq_fwd[i]+=WriteForwardForClosedBar(i,rr,nr,source);
    g_last_bar[i]=t;
    g_rows_since_flush++;
    return true;
+  }
+
+//+------------------------------------------------------------------+
+//| Time-based forward engine (v1.23)                                |
+//| For every event of a timeframe <= InpTimeFwdMaxTFSec, once the   |
+//| longest horizon is complete, writes one row per horizon (minutes)|
+//| measured on M1 bars. Cursor = last event_time in the file.       |
+//+------------------------------------------------------------------+
+bool EnsureM1Cache(datetime need_from,datetime need_to)
+  {
+   if(ArraySize(g_m1c)>0 && need_from>=g_m1c_from && need_to<=g_m1c_to) return true;
+   datetime a=need_from-120;
+   datetime b=need_to+(datetime)MathMax(600,InpTimeFwdCacheMin)*60;
+   datetime lim=iTime(_Symbol,PERIOD_M1,0)-1;
+   if(b>lim) b=lim;
+   ArrayResize(g_m1c,0);
+   int n=CopyRates(_Symbol,PERIOD_M1,a,b,g_m1c);
+   if(n<=0)
+     {
+      ArrayResize(g_m1c,0);
+      g_m1_nd_from=a;g_m1_nd_to=b;                  // no M1 bars at all in this window: later events inside it are skipped at once
+      LogError("INFO:TimeFwdNoM1",StringFormat("no M1 bars between %s and %s in this terminal; FORWARD_TIME skipped for events in that window",TimeToString(a,TIME_DATE|TIME_MINUTES),TimeToString(b,TIME_DATE|TIME_MINUTES)));
+      return false;
+     }
+   ArraySetAsSeries(g_m1c,false);
+   g_m1c_from=a;g_m1c_to=b;
+   return (need_to<=b);
+  }
+
+bool TimeFwdOne(int i)
+  {
+   if(!g_tfwd_on[i]) return false;
+   ENUM_TIMEFRAMES tf=MBA_TFs[i];
+   if(g_tfwd_last[i]==0)
+     {
+      string c[];
+      string ll=g_tfwd[i].LastDataLine();
+      if(StringLen(ll)>0 && StringSplit(ll,',',c)>9) g_tfwd_last[i]=StringToTime(c[9]);              // event_time of the last row
+      else
+        {
+         string fl=g_candles[i].FirstDataLine();
+         if(StringLen(fl)==0 || StringSplit(fl,',',c)<=8) return false;                              // no candle yet
+         datetime ft=StringToTime(c[8]);
+         if(ft<=0) return false;
+         g_tfwd_last[i]=ft-1;
+        }
+      if(g_tfwd_last[i]==0) return false;
+     }
+   datetime m1_first=(datetime)SeriesInfoInteger(_Symbol,PERIOD_M1,SERIES_TERMINAL_FIRSTDATE);
+   for(int it=0;it<3000;it++)
+     {
+      int sh=iBarShift(_Symbol,tf,g_tfwd_last[i],false);
+      if(sh<0) return false;
+      int ns=sh-1;
+      if(ns<1) return false;
+      datetime eo=iTime(_Symbol,tf,ns);
+      if(eo<=0 || eo>g_last_bar[i]) return false;                 // candle of this event not written yet
+      datetime ec=iTime(_Symbol,tf,ns-1);
+      if(ec<=eo) ec=eo+(datetime)PeriodSeconds(tf);
+      datetime need_to=ec+(datetime)(g_hmax*60);
+      if(iTime(_Symbol,PERIOD_M1,0)<need_to) return false;        // longest horizon not complete yet
+      if(ec<m1_first || m1_first<=0)                              // no M1 history that old in this terminal: cheap skip
+        {
+         g_tfwd_last[i]=eo;g_dq_tfwd_skip[i]++;
+         continue;
+        }
+      if(ec>=g_m1_nd_from && need_to<=g_m1_nd_to)                 // inside a window already known to be empty
+        {
+         g_tfwd_last[i]=eo;g_dq_tfwd_skip[i]++;
+         continue;
+        }
+      if(!EnsureM1Cache(ec,need_to-1))
+        {
+         g_tfwd_last[i]=eo;g_dq_tfwd_skip[i]++;                  // EnsureM1Cache logged the empty window
+         continue;
+        }
+      int want=MathMax(InpFeatureLookback+5,120);
+      MqlRates rr[];
+      int nr=CopyRates(_Symbol,tf,ns,want,rr);
+      if(nr<3 || rr[nr-1].time!=eo)
+        {
+         g_tfwd_fail[i]++;
+         if(g_tfwd_fail[i]>=MathMax(1,InpMaxBarRetries))
+           {
+            LogError("CRITICAL:TimeFwdSkipped",StringFormat("%s %s event rates unavailable",MBA_TFName(tf),TimeToString(eo,TIME_DATE|TIME_MINUTES)));
+            g_tfwd_last[i]=eo;g_tfwd_fail[i]=0;g_dq_tfwd_skip[i]++;
+            continue;
+           }
+         return false;
+        }
+      g_tfwd_fail[i]=0;
+      int idx=nr-1;
+      MBA_TFwdEvent e;
+      e.run_id=g_run_id;e.event_key=BuildEventKey(tf,eo);e.event_id=BuildEventId(tf,eo);e.broker=g_broker;e.server=g_server;e.symbol=_Symbol;
+      e.tf_name=MBA_TFName(tf);e.data_source="LIVE";e.source="TIME_FORWARD";
+      e.event_open=eo;e.event_close=ec;e.ref=rr[idx].close;e.atr=MBA_ATRAt(rr,idx,InpATRPeriod);
+      e.spread_points=(double)rr[idx].spread;e.commission_points=g_comm_points;e.dir=MBA_Direction(rr[idx]);
+      int r=MBA_WriteTimeForward(g_tfwd[i],e,g_m1c,g_hz,g_ptgt);
+      if(r<0){LogError("WriteTimeForward",MBA_TFName(tf)+" "+TimeToString(eo,TIME_DATE|TIME_MINUTES));return false;}
+      g_dq_tfwd[i]+=r;g_rows_since_flush+=r;
+      g_tfwd_last[i]=eo;
+      return true;                                                 // one expensive event per call
+     }
+   return true;
+  }
+
+//+------------------------------------------------------------------+
+//| META/data_quality                                                |
+//+------------------------------------------------------------------+
+void WriteQuality()
+  {
+   g_last_quality=TimeTradeServer();
+   for(int i=0;i<MBA_TF_COUNT;i++)
+     {
+      ENUM_TIMEFRAMES tf=MBA_TFs[i];
+      long expected=0;
+      if(g_dq_first[i]>0 && g_dq_last[i]>=g_dq_first[i])
+        {
+         // real bars held by the terminal between the first and last bar of this run (Bars(start,stop) over a history hole returns a theoretical count)
+         int s1=iBarShift(_Symbol,tf,g_dq_first[i],true),s2=iBarShift(_Symbol,tf,g_dq_last[i],true);
+         if(s1>=0 && s2>=0 && s1>=s2) expected=s1-s2+1;
+        }
+      long missing=expected-g_dq_cndl[i];
+      long wfail=g_candles[i].WriteFailures()+g_events[i].WriteFailures()+g_forward[i].WriteFailures()+g_tickagg[i].WriteFailures()+g_tfwd[i].WriteFailures();
+      string status="OK";
+      if(g_bf_wait[i] && g_dq_cndl[i]==0) status="WAITING_HISTORY";
+      else if(g_dq_cndl[i]==0) status="NO_BARS_THIS_RUN";
+      else if(missing>0 || g_dq_skipped[i]>0 || wfail>0) status="CHECK";
+      else if(missing<0) status="MORE_ROWS_THAN_BARS";
+      string f[];
+      MBA_Add(f,g_run_id);MBA_Add(f,MBA_DT(TimeTradeServer(),true));MBA_Add(f,MBA_DT(TimeGMT(),true));MBA_Add(f,_Symbol);MBA_Add(f,MBA_TFNames[i]);
+      MBA_Add(f,g_dq_first[i]>0?MBA_DT(g_dq_first[i],true):"");MBA_Add(f,g_dq_last[i]>0?MBA_DT(g_dq_last[i],true):"");
+      MBA_AddL(f,expected);MBA_AddL(f,g_dq_cndl[i]);MBA_AddL(f,missing);MBA_AddL(f,g_dq_evt[i]);MBA_AddL(f,g_dq_fwd[i]);MBA_AddL(f,g_dq_tagg[i]);MBA_AddL(f,g_dq_tfwd[i]);MBA_AddL(f,g_dq_tfwd_skip[i]);
+      MBA_AddL(f,g_dq_retry[i]);MBA_AddL(f,g_dq_skipped[i]);MBA_AddL(f,wfail);MBA_AddL(f,g_dq_tickok[i]);MBA_AddL(f,g_dq_tickmiss[i]);
+      MBA_AddL(f,g_dq_ohlc_chk[i]);MBA_AddL(f,g_dq_ohlc_diff[i]);MBA_AddD(f,g_dq_ohlc_dev[i],2);MBA_AddL(f,g_dq_gap_ev[i]);MBA_AddL(f,g_dq_gap_max[i]);MBA_AddL(f,g_dq_dst_mm[i]);
+      MBA_Add(f,"");MBA_Add(f,"");MBA_Add(f,"");MBA_Add(f,"");MBA_Add(f,status);
+      g_quality.WriteFields(f);
+     }
+   if(InpWriteRawTicks)
+     {
+      string f[];
+      MBA_Add(f,g_run_id);MBA_Add(f,MBA_DT(TimeTradeServer(),true));MBA_Add(f,MBA_DT(TimeGMT(),true));MBA_Add(f,_Symbol);MBA_Add(f,"RAW_TICKS");
+      for(int k=0;k<12;k++) MBA_Add(f,"");              // columns 6..17
+      MBA_AddL(f,g_rawticks.WriteFailures());           // column 18: write_failures
+      for(int k=0;k<8;k++) MBA_Add(f,"");               // columns 19..26
+      MBA_AddL(f,g_dq_raw);MBA_Add(f,MBA_TimeMS(g_rt_cursor));MBA_AddL(f,g_rt_lag_ms);MBA_AddL(f,g_rt_err+g_rt_empty);
+      MBA_Add(f,(g_rt_err>0)?"CHECK":"OK");
+      g_quality.WriteFields(f);
+     }
+   g_quality.Flush();
   }
 
 int DaysFor(ENUM_TIMEFRAMES tf)
@@ -524,6 +883,7 @@ int DaysFor(ENUM_TIMEFRAMES tf)
    else if(tf==PERIOD_M30) d=InpDaysM30;
    else if(tf==PERIOD_H1) d=InpDaysH1;
    else if(tf==PERIOD_H4) d=InpDaysH4;
+   else if(tf==PERIOD_D1) d=InpDaysD1;
    else if(tf==PERIOD_W1) d=InpDaysW1;
    else if(tf==PERIOD_MN1) d=InpDaysMN1;
    return MathMax(1,MathMin(d,InpBackfillMaxDays));
@@ -575,11 +935,18 @@ bool CatchUpOne(int i)
   {
    ENUM_TIMEFRAMES tf=MBA_TFs[i];
    if(g_bf_wait[i]){ResolveBackfillStart(i);return false;}
+   if(GetTickCount64()<g_retry_at[i]) return false;            // a failed bar waits before the next attempt
    if(g_bf_first[i]>0)
      {
       int sh0=iBarShift(_Symbol,tf,g_bf_first[i],true);
+      if(sh0>=1)
+        {
+         // g_bf_first is cleared only after the bar is really processed (v1.22 cleared it first and a failure jumped to live, skipping the history)
+         if(ProcessBar(i,sh0,(sh0==1)?"LIVE_CAPTURE":"BACKFILL_SERVER")) g_bf_first[i]=0;
+         else if(g_last_bar[i]>=g_bf_first[i]) g_bf_first[i]=0;  // the bar was given up after the retry limit
+         return (sh0>1) || g_bf_first[i]>0;
+        }
       g_bf_first[i]=0;
-      if(sh0>=1){ProcessBar(i,sh0,(sh0==1)?"LIVE_CAPTURE":"BACKFILL_SERVER");return sh0>1;}
      }
    datetime latest=iTime(_Symbol,tf,1);
    if(latest<=0 || latest<=g_last_bar[i]) return false;
@@ -587,7 +954,9 @@ bool CatchUpOne(int i)
    if(g_last_bar[i]>0)
      {
       int sh=iBarShift(_Symbol,tf,g_last_bar[i],true);
-      if(sh>1) shift=MathMin(sh-1,MathMax(1,InpMaxCatchupBars));
+      // v1.23.1: always the NEXT bar after the last stored one. The old cap (MathMin(sh-1,InpMaxCatchupBars)) jumped to the bar InpMaxCatchupBars from now
+      // whenever more bars were pending, silently skipping the rest of the history (M1 kept only 200001 candles).
+      if(sh>1) shift=sh-1;
      }
    ProcessBar(i,shift,(shift==1)?"LIVE_CAPTURE":"BACKFILL_SERVER");
    return shift>1;
@@ -599,9 +968,35 @@ int OnInit()
    g_broker=MBA_SafeToken(AccountInfoString(ACCOUNT_COMPANY));
    g_server=MBA_SafeToken(AccountInfoString(ACCOUNT_SERVER));
    g_run_id=StringFormat("LIVE_%s_%s",MBA_SafeName(_Symbol),TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-   if(!InitWriters())return INIT_FAILED;
+   g_dst_mode=InpUseDynamicUTC?MBA_ResolveDstMode((int)InpDstMode):MBA_DST_FIXED_INPUT;
+   if(!InitWriters())
+     {
+      Print("MBA: could not open one or more output files (check the folder/permissions). Collection aborted.");
+      return INIT_FAILED;
+     }
    WriteRun();
    WriteSpec();
+   LogError("INFO:UtcMode",StringFormat("server_utc_offset_now=%d s, history conversion=%s",MBA_ServerOffsetSec(),MBA_DstBasisName(g_dst_mode)));
+   // schema change: older parts with another header stay untouched; history is rebuilt under the new schema
+   for(int i=0;i<MBA_TF_COUNT;i++)
+      if(g_candles[i].HasForeignParts())
+        {
+         LogError("WARN:SchemaChange",MBA_TFName(MBA_TFs[i])+" has CSV parts with another header (older schema). Rows of schema "+MBA_SCHEMA_VERSION+" go to new parts; archive the old LIVE folder first to avoid mixing schemas.");
+         break;
+        }
+   // time-based forward configuration
+   ArrayResize(g_hz,0);
+   if(InpWriteTimeForward) MBA_ParseHorizons(InpTimeHorizonsMin,g_hz);
+   g_hmax=(ArraySize(g_hz)>0?g_hz[ArraySize(g_hz)-1]:0);
+   g_ptgt[0]=InpTimeFwdTargetP1;g_ptgt[1]=InpTimeFwdTargetP2;g_ptgt[2]=InpTimeFwdTargetP3;
+   double tv=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE),ts=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_SIZE);
+   double vpp=(ts>0?tv*_Point/ts:0);
+   g_comm_points=(InpCommissionPerLotDeclared>0 && vpp>0)?InpCommissionPerLotDeclared/vpp:0;
+   for(int i=0;i<MBA_TF_COUNT;i++)
+     {
+      int ps=PeriodSeconds(MBA_TFs[i]);
+      g_tfwd_on[i]=(InpWriteTimeForward && g_hmax>0 && ps>0 && ps<=InpTimeFwdMaxTFSec);
+     }
    // resume: continue after the last stored bar of each timeframe (no duplicates, gaps are back-filled)
    for(int i=0;i<MBA_TF_COUNT;i++)
      {
@@ -648,7 +1043,9 @@ int OnInit()
       string lf[];MBA_Add(lf,g_run_id);MBA_Add(lf,MBA_DT(TimeCurrent(),true));MBA_Add(lf,_Symbol);MBA_Add(lf,"INFO:CalendarBackfill");MBA_Add(lf,StringFormat("rows_written=%d days=%d",nw,CalendarDays()));MBA_AddL(lf,0);
       g_errors.WriteFields(lf);
      }
+   InitRawTickCursor();
    if(InpWriteDOM)MarketBookAdd(_Symbol);
+   g_last_quality=TimeTradeServer();
    EventSetTimer(1);
    return INIT_SUCCEEDED;
   }
@@ -657,9 +1054,10 @@ void OnDeinit(const int reason)
   {
    EventKillTimer();
    if(InpWriteDOM)MarketBookRelease(_Symbol);
+   WriteQuality();
    FlushAll();
-   for(int i=0;i<MBA_TF_COUNT;i++){g_candles[i].Close();g_events[i].Close();g_forward[i].Close();g_tickagg[i].Close();}
-   g_rawticks.Close();g_runs.Close();g_errors.Close();g_news.Close();g_dom_levels.Close();g_dom_snapshots.Close();g_spec.Close();
+   for(int i=0;i<MBA_TF_COUNT;i++){g_candles[i].Close();g_events[i].Close();g_forward[i].Close();g_tfwd[i].Close();g_tickagg[i].Close();}
+   g_rawticks.Close();g_runs.Close();g_errors.Close();g_news.Close();g_dom_levels.Close();g_dom_snapshots.Close();g_spec.Close();g_quality.Close();
   }
 
 void OnBookEvent(const string &symbol)
@@ -669,21 +1067,29 @@ void OnBookEvent(const string &symbol)
 
 void OnTick()
   {
-   MqlTick tk;if(!SymbolInfoTick(_Symbol,tk))return;
-   WriteRawTick(tk);
+   ulong ms=GetTickCount64();
+   if(ms-g_rt_last_call<250) return;                  // OnTick only triggers the range read; throttled
+   g_rt_last_call=ms;
+   CaptureRawTicks();
   }
 
 void OnTimer()
   {
    RefreshCalendarWindow();
    CaptureLiveNews();
+   CaptureRawTicks();
    // round-robin, one bar per timeframe per pass, within a time budget
    ulong t0=GetTickCount64();
    bool more=true;
    while(more && (long)(GetTickCount64()-t0)<(long)MathMax(100,InpBackfillBudgetMs))
      {
       more=false;
-      for(int i=0;i<MBA_TF_COUNT;i++) if(CatchUpOne(i)) more=true;
+      for(int i=0;i<MBA_TF_COUNT;i++)
+        {
+         if(CatchUpOne(i)) more=true;
+         if(TimeFwdOne(i)) more=true;
+        }
      }
    if(g_rows_since_flush>=InpFlushEveryRows) FlushAll();
+   if(InpQualityIntervalSec>0 && TimeTradeServer()-g_last_quality>=InpQualityIntervalSec) WriteQuality();
   }

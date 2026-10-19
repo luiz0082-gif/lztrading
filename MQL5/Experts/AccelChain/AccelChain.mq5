@@ -19,14 +19,14 @@
 //|  Doc: MQL5/Experts/AccelChain/README.md                          |
 //+------------------------------------------------------------------+
 #property copyright "LZ Trading"
-#property version   "1.00"
+#property version   "1.01"
 #property description "AccelChain - aceleracao de ticks/estrutura M1 + corrente de 4-8 pernas"
 
 #include <Trade/Trade.mqh>
 #include <LZ/LZPanel.mqh>
 
 #define EA_NAME     "AccelChain"
-#define EA_VERSION  "1.00"
+#define EA_VERSION  "1.01"
 #define CSV_SCHEMA  "1.0"
 #define MAXL        12
 #define TICKBUF     8192
@@ -78,7 +78,7 @@ input group "=== PROFIT ==="
 input double          InpLot              = 0.01;       // Lote fixo (base)
 input bool            InpUseDecreasingLots= false;      // [true/false] Lotes decrescentes (perna i = base x fator^i)
 input double          InpLotDecay         = 0.80;       // Fator por perna - lido se decrescente = true
-input bool            InpUseTP            = false;      // [true/false] TP comum da corrente (ordem no servidor)
+input bool            InpUseTP            = true;       // [true/false] TP comum da corrente (ordem no servidor, visivel na posicao)
 input double          InpTPExtraSteps     = 3.0;        // TP = ultimo degrau + x degraus - lido se TP = true
 input bool            InpUseProfitLock    = true;       // [true/false] Escada de lucro: cada nova perna trava a anterior
 input double          InpLockStepFrac     = 0.5;        // Trava = nova entrada - (x degrau)
@@ -103,6 +103,15 @@ input bool            InpUseMaxSeqAge     = true;       // [true/false] Idade ma
 input int             InpMaxSeqAgeSec     = 180;        // Idade maxima (s) - lida se true
 input bool            InpUseFailCooldown  = true;       // [true/false] Pausa extra apos corrente perdedora
 input int             InpFailCooldownSec  = 60;         // Pausa apos perda (s) - lida se true
+
+input group "=== SAIDAS FORCADAS (estilo sem stop: nao fecha posicao no meio do caminho) ==="
+input bool            InpForcedExitsClosePos = false;   // [true/false] Exaustao / invalidacao / idade maxima FECHAM as posicoes abertas. false = so cancelam as pendentes e a corrente segue ate a trava de lucro / TP
+input bool            InpUseSoloTrail     = true;       // [true/false] Trava de lucro tambem na perna sem sucessora (so fecha no LUCRO)
+input double          InpSoloArmSteps     = 1.5;        // Arma a trava quando a perna tem x degraus de lucro - lido se true
+input double          InpSoloTrailSteps   = 1.0;        // Distancia da trava ao preco, em degraus - lido se true
+
+input group "=== INICIO ==="
+input bool            InpResetOnLoad      = true;       // [true/false] Ao carregar o EA zera o dia: resultado, correntes, pausa e travas (recomeca limpo)
 
 input group "=== SESSAO ==="
 input bool            InpUseSession       = true;       // [true/false] Operar so na janela (GMT)
@@ -188,7 +197,7 @@ struct SChain
    double   e0, step, lot, tp, invalid, spreadPts, activity, sD, sM, sE, score;
    int      filled, closed, cancelled, maxLevel;
    double   gross, comm, swap, net, peakFloat, troughFloat;
-   string   trigger, cancelReason, endReason, flatten;
+   string   trigger, cancelReason, endReason, flatten, softReason;
    SLeg     leg[MAXL];
 };
 
@@ -645,7 +654,7 @@ void ResetChain()
    g_ch.activity = 0; g_ch.sD = 0; g_ch.sM = 0; g_ch.sE = 0; g_ch.score = 0;
    g_ch.filled = 0; g_ch.closed = 0; g_ch.cancelled = 0; g_ch.maxLevel = -1;
    g_ch.gross = 0; g_ch.comm = 0; g_ch.swap = 0; g_ch.net = 0; g_ch.peakFloat = 0; g_ch.troughFloat = 0;
-   g_ch.trigger = ""; g_ch.cancelReason = ""; g_ch.endReason = ""; g_ch.flatten = "";
+   g_ch.trigger = ""; g_ch.cancelReason = ""; g_ch.endReason = ""; g_ch.flatten = ""; g_ch.softReason = "";
    for(int i = 0; i < MAXL; i++) ZeroMemory(g_ch.leg[i]);
    g_exhaustSinceMs = 0;
 }
@@ -828,9 +837,30 @@ void ApplyLock(const int prev, const double newEntry)
 void ManageLocks()
 {
    double mark = LegMarkPrice();
+   if(InpUseSoloTrail && g_ch.step > 0)
+   {
+      double cost = (g_tick.ask - g_tick.bid) + ((InpCommissionPerLotRT > 0) ? InpCommissionPerLotRT / MoneyPerPrice(1.0) : 0);
+      for(int i = 0; i < MAXL; i++)
+      {
+         if(!g_ch.leg[i].open || g_ch.leg[i].closeReq != 0) continue;
+         double gain = (mark - g_ch.leg[i].openPrice) * g_ch.dir;
+         if(gain < InpSoloArmSteps * g_ch.step) continue;
+         double cand = mark - g_ch.dir * InpSoloTrailSteps * g_ch.step;
+         double fl = g_ch.leg[i].openPrice + g_ch.dir * cost;       // nunca abaixo de entrada + custo: so fecha no lucro
+         if((fl - cand) * g_ch.dir > 0) cand = fl;
+         cand = (g_ch.dir > 0) ? FloorTick(cand) : CeilTick(cand);
+         double old = g_ch.leg[i].lockPx;
+         if(old != 0 && (cand - old) * g_ch.dir <= 0) continue;
+         g_ch.leg[i].lockPx = cand;
+         g_ch.leg[i].lockMods++;
+         LogEvent("POSITION_MODIFY", "INFO", "PASS", "SOLO_TRAIL", StringFormat("leg %d trava %s (ganho %s)", i, P(cand), P(gain)),
+                  i, 0, 0, 0, g_ch.leg[i].lot, -1, 0, g_ch.leg[i].pos, old, cand);
+      }
+   }
    for(int i = 0; i < MAXL; i++)
    {
       if(!g_ch.leg[i].open || g_ch.leg[i].lockPx == 0) continue;
+      if(g_ch.leg[i].closeReq != 0) continue;                      // fechamento ja pedido (evita CLOSE_FAILED 10036 em ticks seguidos)
       if((mark - g_ch.leg[i].lockPx) * g_ch.dir <= 0) CloseLeg(i, 1, "LOCK_EXIT");
    }
 }
@@ -1254,7 +1284,9 @@ void TryStartChain()
 void FinalizeChain()
 {
    datetime now = TimeCurrent();
-   string er = (g_ch.flatten != "") ? g_ch.flatten : (g_ch.cancelReason != "" ? "ESCADA_ENCERRADA" : (g_ch.net >= 0 ? "ESCADA_ENCERRADA" : "SL"));
+   string er = (g_ch.flatten != "") ? g_ch.flatten :
+               (g_ch.softReason != "") ? ("SOFT_" + g_ch.softReason) :
+               (g_ch.cancelReason != "" ? "ESCADA_ENCERRADA" : (g_ch.net >= 0 ? "ESCADA_ENCERRADA" : (InpUseStopLoss ? "SL" : "LOSS")));
    g_ch.endReason = er;
    string r = CSV_SCHEMA + ";" + IntegerToString((long)g_ch.id) + ";" + EA_NAME + ";" + EA_VERSION + ";" + g_sym + ";" + EnumToString(g_tf) + ";" +
               IntegerToString((long)InpMagic) + ";" + DirStr(g_ch.dir) + ";" + Ts(g_ch.t0) + ";" + Ts(now) + ";" +
@@ -1319,13 +1351,23 @@ void ManageChain()
          g_ch.flatten = "EMERGENCY";
          LogEvent("RISK", "ERROR", "BLOCK", "CHAIN_LOSS", StringFormat("corrente %.2f <= -%.2f", g_ch.net + OpenFloat(), InpChainLossMoney));
       }
-      else if(InpUseInvalidation && openN > 0 && (mark - g_ch.invalid) * g_ch.dir <= 0)
+      else if(InpUseInvalidation && openN > 0 && (mark - g_ch.invalid) * g_ch.dir <= 0 && (InpForcedExitsClosePos || g_ch.softReason == ""))
       {
-         g_ch.flatten = "INVALIDATION";
-         LogEvent("RISK", "WARN", "BLOCK", "INVALIDATION", StringFormat("preco %s cruzou a invalidacao %s", P(mark), P(g_ch.invalid)));
+         LogEvent("RISK", "WARN", "BLOCK", "INVALIDATION", StringFormat("preco %s cruzou a invalidacao %s (%s)", P(mark), P(g_ch.invalid),
+                  InpForcedExitsClosePos ? "fecha posicoes" : "so cancela pendentes; posicoes seguem"));
+         if(InpForcedExitsClosePos) g_ch.flatten = "INVALIDATION";
+         else { g_ch.softReason = "INVALIDATION"; if(pendN > 0) { CancelPendings("INVALIDATION"); pendN = 0; } }
       }
-      else if(InpUseMaxSeqAge && g_ch.setupDone && now - g_ch.t0 >= InpMaxSeqAgeSec)
-         g_ch.flatten = "TIME_EXIT";
+      else if(InpUseMaxSeqAge && g_ch.setupDone && now - g_ch.t0 >= InpMaxSeqAgeSec && (InpForcedExitsClosePos || g_ch.softReason == ""))
+      {
+         if(InpForcedExitsClosePos) g_ch.flatten = "TIME_EXIT";
+         else
+         {
+            g_ch.softReason = "TIME_EXIT";
+            LogEvent("RISK", "INFO", "PASS", "TIME_EXIT", "idade maxima: so cancela pendentes; posicoes seguem ate a trava/TP");
+            if(pendN > 0) { CancelPendings("TIME_EXIT"); pendN = 0; }
+         }
+      }
    }
    if(g_ch.flatten != "")
    {
@@ -1343,11 +1385,20 @@ void ManageChain()
          if(g_exhaustSinceMs == 0) g_exhaustSinceMs = NowMs();
          else if(NowMs() - g_exhaustSinceMs >= EXH_HOLD_MS)
          {
-            g_ch.flatten = "EXHAUSTION";
-            LogEvent("RISK", "INFO", "PASS", "EXHAUSTION", StringFormat("momentum esgotado (%d/4 sinais) por >= %d ms", c, EXH_HOLD_MS));
-            if(pendN > 0) CancelPendings("EXHAUSTION");
-            CloseAllLegs("EXHAUSTION");
-            return;
+            if(InpForcedExitsClosePos)
+            {
+               g_ch.flatten = "EXHAUSTION";
+               LogEvent("RISK", "INFO", "PASS", "EXHAUSTION", StringFormat("momentum esgotado (%d/4 sinais) por >= %d ms", c, EXH_HOLD_MS));
+               if(pendN > 0) CancelPendings("EXHAUSTION");
+               CloseAllLegs("EXHAUSTION");
+               return;
+            }
+            if(g_ch.softReason == "")
+            {
+               g_ch.softReason = "EXHAUSTION";
+               LogEvent("RISK", "INFO", "PASS", "EXHAUSTION", StringFormat("momentum esgotado (%d/4 sinais): so cancela pendentes; posicoes seguem", c));
+               if(pendN > 0) { CancelPendings("EXHAUSTION"); pendN = 0; }
+            }
          }
       }
       else g_exhaustSinceMs = 0;
@@ -1449,7 +1500,49 @@ void DrawPanel()
       else if(g_block != "")       g_panel.Strip("BLOQUEIO", g_block, (g_state == "PARADO") ? LZ_LOSS : LZ_WARN);
       else                         g_panel.Strip(g_state, "-", sc);
 
-      g_panel.Section("DIRECAO / MOMENTO");
+      //--- RESULTADO: todo o dinheiro junto, sem misturar com a corrente
+      g_panel.Section("RESULTADO");
+      double flt = OpenFloat();
+      g_panel.KV2("DIA (REAL+FLUT)", StringFormat("%+.2f", dpnl), dpnl >= 0 ? LZ_PROFIT : LZ_LOSS,
+                  "REALIZADO DIA", StringFormat("%+.2f", g_dayRealized), g_dayRealized >= 0 ? LZ_PROFIT : LZ_LOSS);
+      g_panel.KV2("FLUTUANTE", StringFormat("%+.2f", flt), flt >= 0 ? LZ_PROFIT : LZ_LOSS,
+                  "CORRENTES HOJE", StringFormat("%d (%d +)", g_dayChains, g_dayWinChains), LZ_TEXT);
+      if(InpUseDailyLossStop)
+         g_panel.Bar("LIMITE DO DIA", StringFormat("%s %+.2f / -%.2f", g_ccy, dpnl, InpDailyLossMoney),
+                     (dpnl < 0) ? MathMin(100.0, -dpnl / InpDailyLossMoney * 100.0) : 0.0, (dpnl < 0) ? LZ_LOSS : LZ_PROFIT);
+      else
+         g_panel.KV("LIMITE DO DIA", "DESLIGADO", LZ_MUTED);
+
+      //--- CORRENTE ATUAL
+      g_panel.Section("CORRENTE ATUAL");
+      if(g_ch.active)
+      {
+         string lg = "";
+         for(int i = 0; i < g_ch.n && i < MAXL; i++)
+         {
+            string st = "-";
+            if(g_ch.leg[i].open)           st = (g_ch.leg[i].lockPx != 0 ? "T" : "A");
+            else if(g_ch.leg[i].closeDone) st = "F";
+            else if(g_ch.leg[i].cancelled) st = "x";
+            else if(g_ch.leg[i].placed)    st = "S";
+            lg += StringFormat("%d%s ", i + 1, st);
+         }
+         g_panel.KV("PERNAS", lg, LZ_TEXT);
+         g_panel.KV("", "A aberta  T travada  F fechada  S pendente  x cancelada", LZ_MUTED);
+         g_panel.KV2("SENTIDO", StringFormat("%s #%I64u", DirStr(g_ch.dir), g_ch.id), g_ch.dir > 0 ? LZ_PROFIT : LZ_SELL,
+                     "GATILHO", g_ch.trigger, LZ_TEXT);
+         g_panel.KV2("DEGRAU", StringFormat("%d pts", InpStepPoints), LZ_TEXT,
+                     "TP", g_ch.tp > 0 ? P(g_ch.tp) : "OFF", LZ_TEXT);
+         g_panel.KV2("REAL. CORRENTE", StringFormat("%+.2f", g_ch.net), g_ch.net >= 0 ? LZ_PROFIT : LZ_LOSS,
+                     "IDADE", StringFormat("%d s", (int)(TimeCurrent() - g_ch.t0)), LZ_TEXT);
+         g_panel.KV2("INVALIDA EM", InpUseInvalidation ? P(g_ch.invalid) : "OFF", LZ_TEXT,
+                     "SAIDA", g_ch.softReason != "" ? ("SOFT " + g_ch.softReason) : "LIVRE", g_ch.softReason != "" ? LZ_WARN : LZ_TEXT);
+      }
+      else
+         g_panel.KV("CORRENTE", "nenhuma ativa", LZ_MUTED);
+
+      //--- SINAL
+      g_panel.Section("SINAL");
       color bc = (g_view.bias > 0) ? LZ_PROFIT : (g_view.bias < 0 ? LZ_LOSS : LZ_MUTED);
       g_panel.KV2("VIES M1", StringFormat("%+.0f", g_view.bias), bc, "ATIVIDADE", g_mc.ready ? StringFormat("%.0f", g_mc.activity) : "-", LZ_TEXT);
       g_panel.KV2("SPREAD/DEGRAU", StringFormat("%.2f", g_view.spreadStep), g_view.spreadStep > InpMaxSpreadToStep ? LZ_LOSS : LZ_TEXT,
@@ -1459,40 +1552,14 @@ void DrawPanel()
       g_panel.KV2("SCORE", g_view.total > 0 ? StringFormat("%.0f / min %d", g_view.total, InpMinScore) : "-", LZ_TEXT,
                   "D/M/A/E", g_view.total > 0 ? StringFormat("%.0f/%.0f/%.0f/%.0f", g_view.D, g_view.M, g_view.A, g_view.E) : "-", LZ_TEXT);
 
-      g_panel.Section("CORRENTE");
-      if(g_ch.active)
-      {
-         g_panel.ChipBegin();
-         for(int i = 0; i < g_ch.n && i < MAXL; i++)
-         {
-            string t = StringFormat("L%d", i + 1);
-            color c = LZ_LINE;
-            if(g_ch.leg[i].open)           { c = LZ_PROFIT; t += (g_ch.leg[i].lockPx != 0 ? " TRAVADA" : " ABERTA"); }
-            else if(g_ch.leg[i].closeDone) { c = LZ_MUTED;  t += " FECHADA"; }
-            else if(g_ch.leg[i].cancelled) { c = LZ_WARN;   t += " CANC"; }
-            else if(g_ch.leg[i].placed)    { c = LZ_INFO;   t += " STOP"; }
-            g_panel.ChipFlow(t, c);
-         }
-         g_panel.ChipEnd();
-         double flt = OpenFloat();
-         g_panel.KV2("DEGRAU", StringFormat("%d pts", InpStepPoints), LZ_TEXT, "INVALIDA EM", InpUseInvalidation ? P(g_ch.invalid) : "OFF", LZ_TEXT);
-         g_panel.KV2("FLUTUANTE", StringFormat("%s %+.2f", g_ccy, flt), flt >= 0 ? LZ_PROFIT : LZ_LOSS,
-                     "REALIZADO", StringFormat("%+.2f", g_ch.net), g_ch.net >= 0 ? LZ_PROFIT : LZ_LOSS);
-         g_panel.KV("IDADE", StringFormat("%d s", (int)(TimeCurrent() - g_ch.t0)), LZ_TEXT);
-      }
-      else
-         g_panel.KV("CORRENTE", "nenhuma ativa", LZ_MUTED);
-
-      g_panel.Section("RISCO");
-      if(InpUseDailyLossStop)
-         g_panel.Bar("PERDA DO DIA", StringFormat("%s %+.2f / -%.2f", g_ccy, dpnl, InpDailyLossMoney),
-                     (dpnl < 0) ? MathMin(100.0, -dpnl / InpDailyLossMoney * 100.0) : 0.0, (dpnl < 0) ? LZ_LOSS : LZ_PROFIT);
-      else
-         g_panel.KV("PERDA DO DIA", StringFormat("%s %+.2f  (limite DESLIGADO)", g_ccy, dpnl), (dpnl < 0) ? LZ_LOSS : LZ_PROFIT);
-      g_panel.KV2("PERDA MAX CORR.", InpUseChainLossStop ? StringFormat("%s %.2f", g_ccy, InpChainLossMoney) : "OFF", LZ_TEXT,
-                  "AIRBAG SL", InpUseStopLoss ? StringFormat("%d pts", InpStopLossPoints) : "OFF", LZ_TEXT);
-      g_panel.KV2("CORRENTES HOJE", StringFormat("%d (%d +)", g_dayChains, g_dayWinChains), LZ_TEXT,
-                  "REALIZADO DIA", StringFormat("%+.2f", g_dayRealized), g_dayRealized >= 0 ? LZ_PROFIT : LZ_LOSS);
+      //--- PROTECOES (estilo da conta)
+      g_panel.Section("PROTECOES");
+      g_panel.KV2("STOP LOSS", InpUseStopLoss ? StringFormat("%d pts", InpStopLossPoints) : "OFF", InpUseStopLoss ? LZ_WARN : LZ_MUTED,
+                  "TAKE PROFIT", InpUseTP ? "ON" : "OFF", InpUseTP ? LZ_PROFIT : LZ_WARN);
+      g_panel.KV2("SAIDA FORCADA", InpForcedExitsClosePos ? "FECHA POS." : "NAO FECHA", InpForcedExitsClosePos ? LZ_WARN : LZ_PROFIT,
+                  "TRAVA LUCRO", InpUseProfitLock ? "ON" : "OFF", LZ_TEXT);
+      g_panel.KV2("PERDA CORRENTE", InpUseChainLossStop ? StringFormat("%s %.2f", g_ccy, InpChainLossMoney) : "OFF", InpUseChainLossStop ? LZ_TEXT : LZ_MUTED,
+                  "PERDA DIA", InpUseDailyLossStop ? StringFormat("%s %.2f", g_ccy, InpDailyLossMoney) : "OFF", InpUseDailyLossStop ? LZ_TEXT : LZ_MUTED);
 
       g_panel.Section("TELEMETRIA");
       g_panel.KV("ULTIMO EVENTO", g_lastEvent, LZ_TEXT);
@@ -1579,6 +1646,14 @@ int OnInit()
    ResetChain();
    SymbolInfoTick(g_sym, g_tick);
    NewDayCheck();
+   if(InpResetOnLoad)
+   {
+      // recomeca limpo ao carregar: nada do dia anterior (resultado, contagem, pausa, trava) pesa na sessao nova
+      g_dayRealized = 0; g_dayChains = 0; g_dayWinChains = 0;
+      g_haltDay = false; g_haltReason = ""; g_targetHit = false;
+      g_pauseUntil = 0; g_lastChainEnd = 0;
+      LogEvent("DAY_RESET", "INFO", "PASS", "RESET_ON_LOAD", "EA carregado: resultado do dia, contagem de correntes, pausa e travas zerados");
+   }
    ScanOrphans();
    UpdateStructure();
 

@@ -21,20 +21,34 @@
 //|  feita pelo EA (fecha a leg a mercado). Piramidagem tambem e     |
 //|  decisao EXPLICITA do projeto.                                   |
 //|  Exige conta HEDGING (cada degrau e uma posicao independente).   |
+//|  v1.09: saidas LOGICAS (nao sao SL): perna de recuo no prejuizo  |
+//|  sai quando a tendencia vira contra ou apos tempo maximo; o      |
+//|  end_reason da corrente deixa de chamar de SL o que nao foi SL.  |
+//|  v1.10: sessao em JANELAS de horario (relogio do servidor por    |
+//|  padrao): A 01-05 e B 12-15, escolhidas pelos logs/MBA; GMT     |
+//|  continua disponivel em InpSessionClock.                         |
+//|  v1.11: fim da janela FECHA tudo (sem lucro/perda flutuando),    |
+//|  sem correntes novas nos minutos finais, painel com hora LOCAL,  |
+//|  janela, tempo restante, flutuante e spread.                     |
+//|  v1.12/1.13: painel sem texto estourando a borda: largura 480 e  |
+//|  quebra de linha (nada cortado) nas faixas de bloqueio/alerta.   |
 //|  Doc: MQL5/Experts/ChainScalper/README.md                        |
 //+------------------------------------------------------------------+
 #property copyright "LZ Trading"
-#property version   "1.08"
+#property version   "1.13"
 #property description "ChainScalper M1 - corrente de 4-8 posicoes com saida escalonada"
 
 #include <Trade/Trade.mqh>
 #include <LZ/LZPanel.mqh>
 
 #define EA_NAME     "ChainScalper"
-#define EA_VERSION  "1.08"
+#define EA_VERSION  "1.13"
 #define CSV_SCHEMA  "1.1"
 #define MAXL        16
+#define CS_PANEL_W  480    // largura do painel (px)
 #define PB0         8      // 0..7 = escada a favor (STOP); 8..15 = entradas de recuo (LIMIT)
+
+enum ENUM_SESSION_CLOCK { SESSION_CLOCK_SERVER = 0, SESSION_CLOCK_GMT = 1 };   // relogio das janelas de sessao
 
 //==================================================================
 // INPUTS
@@ -100,14 +114,30 @@ input double          InpDailyLossMoney   = 30.0;       // Perda diaria maxima (
 input bool            InpUsePendingTTL    = true;       // [true/false] Validade das ordens pendentes
 input int             InpPendingTTLSec    = 120;        // Validade das pendentes (s) - lida se true
 
+input group "=== SAIDA LOGICA (nao e Stop Loss: o EA fecha a mercado por invalidacao da tese) ==="
+input bool            InpUseTrendFlipExit = true;       // [true/false] Perna no prejuizo fecha quando a tendencia virou CONTRA a corrente
+input double          InpTrendFlipMinLoss = 0.0;        // Prejuizo minimo em preco p/ acionar (0 = qualquer prejuizo) - lido se true
+input bool            InpTrendFlipBreakout= false;      // [true/false] Tambem aplica as pernas de ROMPIMENTO (false = so as de recuo)
+input bool            InpUseLegMaxTime    = true;       // [true/false] Perna de recuo no prejuizo fecha apos o tempo maximo
+input int             InpLegMaxMin        = 60;         // Tempo maximo da perna no prejuizo (minutos) - lido se true
+input bool            InpLegMaxTimeBreakout = false;    // [true/false] Tambem aplica as pernas de ROMPIMENTO
+
 input group "=== OUTROS TFs (contexto: so segura em vela forte e rapida CONTRA) ==="
 input bool            InpUseHtfShockGuard = true;       // [true/false] Nao abre/estende se M15 ou H1 abrir vela forte e rapida contra
 input double          InpHtfShockMult     = 2.0;        // Choque = corpo da vela >= x mediana do range (20 velas)
 
-input group "=== SESSAO ==="
-input bool            InpUseSession       = true;       // [true/false] Operar so na janela (GMT)
-input int             InpSessionStartGMT  = 7;          // Inicio (hora GMT)
-input int             InpSessionEndGMT    = 20;         // Fim (hora GMT)
+input group "=== SESSAO (janelas de horario) ==="
+input bool            InpUseSession       = true;       // [true/false] Abrir correntes so nas janelas abaixo
+input ENUM_SESSION_CLOCK InpSessionClock  = SESSION_CLOCK_SERVER; // Relogio das janelas: SERVER (hora do servidor, padrao) ou GMT
+input bool            InpUseWindowA       = true;       // [true/false] Janela A (principal: abertura asiatica / madrugada)
+input int             InpWindowAStartHour = 1;          // Janela A: inicio (hora cheia, inclusive 0..23) - lida se a janela estiver true
+input int             InpWindowAEndHour   = 5;          // Janela A: fim (hora cheia, exclusive 0..24; inicio > fim cruza a meia-noite)
+input bool            InpUseWindowB       = true;       // [true/false] Janela B (secundaria: 12 a 15, antes da abertura/dados dos EUA)
+input int             InpWindowBStartHour = 12;         // Janela B: inicio (hora cheia, inclusive 0..23) - lida se a janela estiver true
+input int             InpWindowBEndHour   = 15;         // Janela B: fim (hora cheia, exclusive 0..24)
+input bool            InpUseNoNewBeforeEnd = true;      // [true/false] Nao abre correntes novas nos minutos finais da janela
+input int             InpNoNewMinBeforeEnd = 10;        // Minutos finais da janela sem correntes novas - lido se true
+input bool            InpUseFlattenAtEnd  = true;       // [true/false] No FIM da janela cancela pendentes e FECHA todas as posicoes (nada fica flutuando)
 
 input group "=== MANUTENCAO ==="
 input bool            InpResetDailyPnl    = false;      // [true/false] Zera o resultado do dia ao carregar o EA (use uma vez e volte para false)
@@ -160,7 +190,7 @@ struct SLeg
    datetime openTime;
    datetime closeSeen;
    double   slInit, tpInit, lockPx, tpLast;   // lockPx = nivel de trava de lucro (virtual, so no EA)
-   int      closeReq;      // 1 = fechamento pedido pela trava de lucro
+   int      closeReq;      // 1 = trava de lucro, 2 = tendencia virou (saida logica), 3 = tempo maximo (saida logica)
    double   mfe, mae;      // excursao em preco (mfe>=0, mae<=0)
    int      trailMods;
    uint     lastModErrMs;
@@ -180,7 +210,7 @@ struct SChain
    double   gross, comm, swap, net;
    double   peakFloat, troughFloat;
    int      maxLevel;
-   string   cancelReason, endReason, flatten;
+   string   cancelReason, endReason, flatten, lastLossExit;
    SLeg     leg[MAXL];
 };
 
@@ -320,13 +350,119 @@ ENUM_ORDER_TYPE_FILLING PickFilling()
    return ORDER_FILLING_RETURN;
 }
 
+//--- janela [ini, fim) em hora cheia; ini > fim cruza a meia-noite; ini == fim = janela vazia
+bool HourInWindow(const int h, const int ini, const int fim)
+{
+   if(ini == fim) return false;
+   if(ini < fim) return (h >= ini && h < fim);
+   return (h >= ini || h < fim);
+}
+
 bool InSession()
 {
    if(!InpUseSession) return true;
-   MqlDateTime d; TimeToStruct(TimeGMT(), d);
+   MqlDateTime d; TimeToStruct(InpSessionClock == SESSION_CLOCK_GMT ? TimeGMT() : TimeCurrent(), d);
    int h = d.hour;
-   if(InpSessionStartGMT < InpSessionEndGMT) return (h >= InpSessionStartGMT && h < InpSessionEndGMT);
-   return (h >= InpSessionStartGMT || h < InpSessionEndGMT);
+   if(InpUseWindowA && HourInWindow(h, InpWindowAStartHour, InpWindowAEndHour)) return true;
+   if(InpUseWindowB && HourInWindow(h, InpWindowBStartHour, InpWindowBEndHour)) return true;
+   return false;
+}
+
+string SessionWindowsText()
+{
+   string r = "";
+   if(InpUseWindowA) r += StringFormat("A %02d-%02d", InpWindowAStartHour, InpWindowAEndHour);
+   if(InpUseWindowB) r += (r != "" ? ", " : "") + StringFormat("B %02d-%02d", InpWindowBStartHour, InpWindowBEndHour);
+   if(r == "") r = "nenhuma";
+   return r + (InpSessionClock == SESSION_CLOCK_GMT ? " GMT" : " servidor");
+}
+
+//--- versao curta para o painel (cabe numa linha)
+string SessionWindowsShort()
+{
+   string t = SessionWindowsText();
+   StringReplace(t, " servidor", " srv");
+   return t;
+}
+
+//--- relogio usado pelas janelas
+datetime ClockNow() { return (InpSessionClock == SESSION_CLOCK_GMT) ? TimeGMT() : TimeCurrent(); }
+
+int ClockMinuteOfDay()
+{
+   MqlDateTime d; TimeToStruct(ClockNow(), d);
+   return d.hour * 60 + d.min;
+}
+
+//--- diferenca (min) entre a hora LOCAL do PC e o relogio das janelas, arredondada a 30 min (absorve atraso de tick)
+int ClockToLocalMin()
+{
+   double m = (double)(TimeLocal() - ClockNow()) / 60.0;
+   return (int)(MathRound(m / 30.0) * 30.0);
+}
+
+string HHMM(const int minutes)
+{
+   int t = ((minutes % 1440) + 1440) % 1440;
+   return StringFormat("%02d:%02d", t / 60, t % 60);
+}
+
+string DurTxt(const int minutes)
+{
+   if(minutes >= 60) return StringFormat("%dh%02d", minutes / 60, minutes % 60);
+   return StringFormat("%d min", minutes);
+}
+
+//--- janela w (0 = A, 1 = B): ligada, inicio e fim em minutos do dia
+bool WindowCfg(const int w, int &s, int &e)
+{
+   bool on = (w == 0) ? InpUseWindowA : InpUseWindowB;
+   s = ((w == 0) ? InpWindowAStartHour : InpWindowBStartHour) * 60;
+   e = ((w == 0) ? InpWindowAEndHour   : InpWindowBEndHour)   * 60;
+   return on;
+}
+
+//--- minutos ate o fim da janela em que estamos (-1 = fora de qualquer janela ou sessao desligada)
+int WindowMinutesLeft(string &name)
+{
+   name = "";
+   if(!InpUseSession) return -1;
+   int t = ClockMinuteOfDay(), best = -1;
+   for(int w = 0; w < 2; w++)
+   {
+      int s, e;
+      if(!WindowCfg(w, s, e)) continue;
+      bool inside = (s < e) ? (t >= s && t < e) : (t >= s || t < e);
+      if(!inside) continue;
+      int left = (s < e) ? (e - t) : ((t >= s) ? (1440 - t + e) : (e - t));
+      if(left > best) { best = left; name = (w == 0) ? "A" : "B"; }
+   }
+   return best;
+}
+
+//--- minutos ate a proxima abertura de janela (usado fora das janelas)
+int MinutesToNextWindow(string &name)
+{
+   name = "";
+   int t = ClockMinuteOfDay(), best = 100000;
+   for(int w = 0; w < 2; w++)
+   {
+      int s, e;
+      if(!WindowCfg(w, s, e)) continue;
+      int d = ((s - t) % 1440 + 1440) % 1440;
+      if(d == 0) d = 1440;
+      if(d < best) { best = d; name = (w == 0) ? "A" : "B"; }
+   }
+   return best;
+}
+
+//--- ultimos minutos da janela: nao abre corrente nova
+bool SessionEnding()
+{
+   if(!InpUseSession || !InpUseNoNewBeforeEnd) return false;
+   string n;
+   int left = WindowMinutesLeft(n);
+   return (left >= 0 && left <= InpNoNewMinBeforeEnd);
 }
 
 string SessionName()
@@ -595,7 +731,7 @@ void ResetChain()
    g_ch.score = 0; g_ch.filled = 0; g_ch.closed = 0; g_ch.cancelled = 0;
    g_ch.gross = 0; g_ch.comm = 0; g_ch.swap = 0; g_ch.net = 0;
    g_ch.peakFloat = 0; g_ch.troughFloat = 0; g_ch.maxLevel = -1;
-   g_ch.cancelReason = ""; g_ch.endReason = ""; g_ch.flatten = "";
+   g_ch.cancelReason = ""; g_ch.endReason = ""; g_ch.flatten = ""; g_ch.lastLossExit = "";
    for(int i = 0; i < MAXL; i++) ZeroMemory(g_ch.leg[i]);
 }
 
@@ -748,13 +884,17 @@ void ProcessLegClosed(const int idx)
       if(reason == DEAL_REASON_TP) er = "TP";
       else if(reason == DEAL_REASON_SL) er = "SL";
       else if(reason == DEAL_REASON_EXPERT)
-         er = (g_ch.leg[idx].closeReq == 1) ? "TRAIL" : ((g_lastCloseReason != "") ? g_lastCloseReason : "EMERGENCY");
+         er = (g_ch.leg[idx].closeReq == 1) ? "TRAIL" :
+              (g_ch.leg[idx].closeReq == 2) ? "TREND_FLIP_EXIT" :
+              (g_ch.leg[idx].closeReq == 3) ? "LEG_TIMEOUT" :
+              ((g_lastCloseReason != "") ? g_lastCloseReason : "EMERGENCY");
       else if(reason == DEAL_REASON_CLIENT || reason == DEAL_REASON_MOBILE || reason == DEAL_REASON_WEB) er = "MANUAL";
       else if(reason == DEAL_REASON_SO) er = "EMERGENCY";
    }
    else
       LogEvent("WARNING", "WARN", "PASS", "NO_CLOSE_DEAL", StringFormat("leg %d sem deal de saida no historico", idx), idx, 0, 0, 0, 0, -1, 0, g_ch.leg[idx].pos);
 
+   if(net < 0) g_ch.lastLossExit = er;
    double mfeM = PriceToMoney(g_ch.leg[idx].mfe, g_ch.lot), maeM = PriceToMoney(g_ch.leg[idx].mae, g_ch.lot);
    double slip = (g_ch.leg[idx].planPrice > 0) ? (g_ch.leg[idx].openPrice - g_ch.leg[idx].planPrice) * g_ch.dir / g_point : 0;
    g_tradeSeq++;
@@ -1092,7 +1232,9 @@ void TryStartChain()
    { SetBlock("TRADING_NOT_ALLOWED", "AutoTrading/conta/EA sem permissao"); g_state = "BLOQUEADO"; return; }
    if(SymbolInfoInteger(g_sym, SYMBOL_TRADE_MODE) != SYMBOL_TRADE_MODE_FULL)
    { SetBlock("SYMBOL_DISABLED", "modo de negociacao do simbolo nao e FULL"); g_state = "BLOQUEADO"; return; }
-   if(!InSession()) { SetBlock("SESSION_CLOSED", StringFormat("fora da janela %02d-%02d GMT", InpSessionStartGMT, InpSessionEndGMT)); g_state = "FORA SESSAO"; return; }
+   if(!InSession()) { SetBlock("SESSION_CLOSED", StringFormat("fora das janelas (%s)", SessionWindowsShort())); g_state = "FORA SESSAO"; return; }
+   if(SessionEnding())
+   { SetBlock("SESSION_ENDING", StringFormat("ultimos %d min da janela: sem correntes novas%s", InpNoNewMinBeforeEnd, InpUseFlattenAtEnd ? " (tudo fecha no fim)" : "")); g_state = "FIM JANELA"; return; }
    if(!g_an.ready)  { SetBlock("DATA_NOT_READY", "indicadores nao prontos"); g_state = "BLOQUEADO"; return; }
    if(TimeCurrent() - g_lastChainEnd < InpCooldownSec)
    { SetBlock("COOLDOWN", StringFormat("%d s apos a ultima corrente", InpCooldownSec)); g_state = "AGUARDANDO"; return; }
@@ -1162,7 +1304,8 @@ void CloseLeg(const int i, const int req, const string reason)
       LogEvent("ERROR", "ERROR", "BLOCK", "CLOSE_FAILED", g_trade.ResultRetcodeDescription(), i, rc, 0, 0, g_ch.lot, -1, 0, g_ch.leg[i].pos);
    }
    else
-      LogEvent("ORDER_SEND", "INFO", "PASS", reason, StringFormat("leg %d fechada pela trava de lucro %s", i, P(g_ch.leg[i].lockPx)),
+      LogEvent("ORDER_SEND", "INFO", "PASS", reason, (req == 1) ? StringFormat("leg %d fechada pela trava de lucro %s", i, P(g_ch.leg[i].lockPx))
+                                                          : StringFormat("leg %d fechada por saida logica (%s)", i, reason),
                i, rc, 0, 0, g_ch.lot, -1, 0, g_ch.leg[i].pos);
 }
 
@@ -1207,7 +1350,7 @@ void FinalizeChain()
 {
    datetime now = TimeCurrent();
    double planned = g_ch.n * g_ch.riskLeg;
-   string er = g_ch.flatten != "" ? g_ch.flatten : (g_ch.net >= 0 ? "TRAIL_OR_TP" : "SL");
+   string er = g_ch.flatten != "" ? g_ch.flatten : (g_ch.net >= 0 ? "TRAIL_OR_TP" : (g_ch.lastLossExit != "" ? g_ch.lastLossExit : "LOSS"));
    g_ch.endReason = er;
    string r = CSV_SCHEMA + ";" + IntegerToString((long)g_ch.id) + ";" + EA_NAME + ";" + EA_VERSION + ";" + g_sym + ";" + EnumToString(g_tf) + ";" +
               IntegerToString((long)InpMagic) + ";" + DirStr(g_ch.dir) + ";" + Ts(g_ch.t0) + ";" + Ts(now) + ";" +
@@ -1263,7 +1406,7 @@ void ProgramPullbacks()
    string why;
    if(HtfAdverse(dir, why)) return;
    if(g_an.ready && g_an.trend != dir) return;
-   if(!InSession()) return;
+   if(!InSession() || SessionEnding()) return;
 
    int pend = 0;
    for(int i = PB0; i < MAXL; i++)
@@ -1301,6 +1444,27 @@ double OpenFloat()
    return p;
 }
 
+//--- saidas logicas (nao sao ordens de stop): invalidacao da tese por tendencia contra ou tempo maximo
+void ManageLogicalExits()
+{
+   if(!InpUseTrendFlipExit && !InpUseLegMaxTime) return;
+   int dir = g_ch.dir;
+   double mark = LegMarkPrice();
+   datetime now = TimeCurrent();
+   for(int i = 0; i < MAXL; i++)
+   {
+      if(!g_ch.leg[i].open || g_ch.leg[i].closeReq != 0 || g_ch.leg[i].pos == 0) continue;
+      bool pb = (i >= PB0);
+      double gain = (mark - g_ch.leg[i].openPrice) * dir;          // lucro em preco pelo preco de saida real
+      if(gain >= 0) continue;                                        // so atua no prejuizo; no lucro valem TP e trava
+      if(InpUseTrendFlipExit && (pb || InpTrendFlipBreakout) && g_an.ready && g_an.trend != dir && -gain >= InpTrendFlipMinLoss)
+      { CloseLeg(i, 2, "TREND_FLIP_EXIT"); continue; }
+      if(InpUseLegMaxTime && (pb || InpLegMaxTimeBreakout) && InpLegMaxMin > 0 &&
+         g_ch.leg[i].openTime > 0 && now - g_ch.leg[i].openTime >= InpLegMaxMin * 60)
+         CloseLeg(i, 3, "LEG_TIMEOUT");
+   }
+}
+
 void ManageChain()
 {
    datetime now = TimeCurrent();
@@ -1325,6 +1489,12 @@ void ManageChain()
                                InpChainLossMoney, InpChainLossReadsVol ? "ligado" : "desligado"));
       }
    }
+   if(g_ch.flatten == "" && InpUseFlattenAtEnd && InpUseSession && !InSession())
+   {
+      g_ch.flatten = "SESSION_CLOSE";
+      LogEvent("RISK", "WARN", "PASS", "SESSION_FLATTEN",
+               StringFormat("fim da janela (%s): cancela %d pendentes e fecha %d posicoes (flutuante %.2f)", SessionWindowsText(), pendN, openN, OpenFloat()));
+   }
    if(g_ch.flatten != "")
    {
       if(pendN > 0) CancelPendings(g_ch.flatten);
@@ -1348,6 +1518,9 @@ void ManageChain()
 
    //--- 3) saida escalonada
    if(openN > 0 && InpUseProfitLock) ManageTrail();
+
+   //--- 4) saidas logicas (invalidacao da tese)
+   if(openN > 0) ManageLogicalExits();
 }
 
 //==================================================================
@@ -1477,6 +1650,34 @@ void ScanOrphans() { AdoptOrphans(); }
 //==================================================================
 // PAINEL
 //==================================================================
+//--- faixa de decisao com quebra de linha por palavras: nada fica cortado
+//--- capacidade (chars) = largura da faixa - recuo do texto (depende do rotulo) - folga, a 7 px por char
+void StripWrap(const string label, const string text, const color clr)
+{
+   int cap = (CS_PANEL_W - 12 - 6 - (StringLen(label) + 1) * 6 - 14) / 7;
+   if(cap < 12) cap = 12;
+   string pad = "";
+   for(int i = 0; i < StringLen(label); i++) pad += " ";
+   string rest = text;
+   bool first = true;
+   while(StringLen(rest) > 0)
+   {
+      string line = rest;
+      if(StringLen(rest) > cap)
+      {
+         int cut = cap;
+         while(cut > 0 && StringGetCharacter(rest, cut) != 32) cut--;
+         if(cut <= 0) cut = cap;
+         line = StringSubstr(rest, 0, cut);
+         rest = StringSubstr(rest, cut);
+         while(StringLen(rest) > 0 && StringGetCharacter(rest, 0) == 32) rest = StringSubstr(rest, 1);
+      }
+      else rest = "";
+      g_panel.Strip(first ? label : pad, line, clr);
+      first = false;
+   }
+}
+
 void DrawPanel()
 {
    if(!InpShowPanel) return;
@@ -1487,7 +1688,7 @@ void DrawPanel()
    else if(g_state == "ARMADO") sc = LZ_PROFIT;
    else if(g_state == "PARADO") sc = LZ_LOSS;
    else if(g_state == "META") sc = LZ_GOLD;
-   else if(g_state == "PAUSA" || g_state == "BLOQUEADO" || g_state == "FORA SESSAO") sc = LZ_WARN;
+   else if(g_state == "PAUSA" || g_state == "BLOQUEADO" || g_state == "FORA SESSAO" || g_state == "FIM JANELA") sc = LZ_WARN;
    else if(g_state == "AGUARDANDO") sc = LZ_ACCENT;
 
    double bid = g_tick.bid, ask = g_tick.ask;
@@ -1499,10 +1700,46 @@ void DrawPanel()
                   StringFormat("%s %s  spread %.0f pt  dia %s %+.2f", g_sym, EnumToString(g_tf), sp, g_ccy, dpnl), g_state, sc);
    if(g_panel.Expanded())
    {
-      if(g_state == "CORRENTE")      g_panel.Strip("CORRENTE", StringFormat("%s #%I64u  score %d  n=%d", DirStr(g_ch.dir), g_ch.id, g_ch.score, g_ch.n), LZ_INFO);
+      if(g_state == "CORRENTE")      StripWrap("CORRENTE", StringFormat("%s #%I64u  score %d  n=%d", DirStr(g_ch.dir), g_ch.id, g_ch.score, g_ch.n), LZ_INFO);
       else if(g_state == "ARMADO")   g_panel.Strip("ARMADO", "tendencia ok, aguardando rompimento", LZ_PROFIT);
-      else if(g_block != "")         g_panel.Strip("BLOQUEIO", g_block, (g_state == "PARADO") ? LZ_LOSS : LZ_WARN);
+      else if(g_block != "")         StripWrap("BLOQUEIO", g_block, (g_state == "PARADO") ? LZ_LOSS : LZ_WARN);
       else                           g_panel.Strip(g_state, "-", sc);
+
+      int xc; double xv, xf; OpenStats(xc, xv, xf);
+      if(xc > 0 && InpUseSession && !InSession())
+         StripWrap("ATENCAO", StringFormat("%d posicao(oes) aberta(s) FORA da janela, flutuante %s %+.2f%s", xc, g_ccy, xf,
+                                 InpUseFlattenAtEnd ? " - fechando agora" : " - fechamento no fim DESLIGADO"), InpUseFlattenAtEnd ? LZ_WARN : LZ_LOSS);
+
+      g_panel.Section("HORARIO");
+      MqlDateTime ts, tl, tg;
+      TimeToStruct(TimeCurrent(), ts); TimeToStruct(TimeLocal(), tl); TimeToStruct(TimeGMT(), tg);
+      g_panel.KV2("HORA LOCAL", StringFormat("%02d:%02d:%02d", tl.hour, tl.min, tl.sec), LZ_ACCENT,
+                  "SERVIDOR", StringFormat("%02d:%02d:%02d", ts.hour, ts.min, ts.sec), LZ_TEXT);
+      int toLoc = ClockToLocalMin();
+      string wn = "";
+      int wleft = WindowMinutesLeft(wn);
+      if(!InpUseSession)
+         g_panel.KV("JANELA", "sessao DESLIGADA (opera o dia todo)", LZ_WARN);
+      else if(wleft >= 0)
+         g_panel.KV("JANELA", StringFormat("DENTRO (%s)  faltam %s", wn, DurTxt(wleft)), SessionEnding() ? LZ_WARN : LZ_PROFIT);
+      else
+      {
+         string nn = "";
+         int mn = MinutesToNextWindow(nn);
+         g_panel.KV("JANELA", StringFormat("FORA  proxima %s em %s", nn, DurTxt(mn)), LZ_MUTED);
+      }
+      if(InpUseSession)
+      {
+         for(int w = 0; w < 2; w++)
+         {
+            int ws, we;
+            if(!WindowCfg(w, ws, we)) continue;
+            g_panel.KV(w == 0 ? "JANELA A" : "JANELA B",
+                       StringFormat("%s-%s %s | %s-%s loc", HHMM(ws), HHMM(we), InpSessionClock == SESSION_CLOCK_GMT ? "GMT" : "srv", HHMM(ws + toLoc), HHMM(we + toLoc)), LZ_TEXT);
+         }
+         g_panel.KV2("FIM DA JANELA", InpUseFlattenAtEnd ? "FECHA TUDO" : "NAO FECHA", InpUseFlattenAtEnd ? LZ_PROFIT : LZ_WARN,
+                     "SEM NOVAS", InpUseNoNewBeforeEnd ? StringFormat("ult. %d min", InpNoNewMinBeforeEnd) : "OFF", LZ_TEXT);
+      }
 
       g_panel.Section("ANALISE (barras fechadas)");
       string tr = (g_an.ready && g_an.trend != 0) ? (g_an.trend > 0 ? "ALTA" : "BAIXA") : "SEM TENDENCIA";
@@ -1510,6 +1747,8 @@ void DrawPanel()
       g_panel.KV2("TENDENCIA", tr, tc, "SCORE", g_an.ready ? StringFormat("%d/%d", g_an.score, SC_MAX) : "-", LZ_TEXT);
       g_panel.KV2("ATR", g_an.ready ? StringFormat("%.2f (x%.2f)", g_an.atr, g_an.expn) : "-", LZ_TEXT,
                   "EFIC.", g_an.ready ? StringFormat("%.2f", g_an.er) : "-", LZ_TEXT);
+      g_panel.KV2("SPREAD", StringFormat("%.0f / max %d pts", sp, InpMaxSpreadPts), sp > InpMaxSpreadPts ? LZ_LOSS : LZ_TEXT,
+                  "FLUTUANTE", StringFormat("%s %+.2f", g_ccy, xf), xc == 0 ? LZ_MUTED : (xf >= 0 ? LZ_PROFIT : LZ_LOSS));
       if(g_an.ready)
       {
          double lvl = g_an.trend > 0 ? g_an.hh : g_an.ll;
@@ -1560,6 +1799,8 @@ void DrawPanel()
                      (dpnl < 0) ? LZ_LOSS : LZ_PROFIT);
       else
          g_panel.KV("PERDA DO DIA", StringFormat("%s %+.2f  (limite DESLIGADO)", g_ccy, dpnl), (dpnl < 0) ? LZ_LOSS : LZ_PROFIT);
+      g_panel.KV2("POSICOES ABERTAS", StringFormat("%d (%.2f lote)", xc, xv), xc == 0 ? LZ_MUTED : LZ_TEXT,
+                  "PENDENTES", StringFormat("%d", CountPendings()), LZ_TEXT);
       g_panel.KV2("CORRENTES HOJE", StringFormat("%d (%d +)", g_dayChains, g_dayWinChains), LZ_TEXT,
                   "REALIZADO DIA", StringFormat("%+.2f", g_dayRealized), g_dayRealized >= 0 ? LZ_PROFIT : LZ_LOSS);
 
@@ -1596,6 +1837,8 @@ int OnInit()
    else if(InpUseStopLoss && InpStopLossPoints <= 0) err = "SL ligado exige InpStopLossPoints > 0";
    else if(InpUseChainLossStop && InpChainLossMoney <= 0) err = "perda maxima da corrente ligada exige InpChainLossMoney > 0";
    else if(InpUseDailyLossStop && InpDailyLossMoney <= 0) err = "perda diaria ligada exige InpDailyLossMoney > 0";
+   else if(InpUseLegMaxTime && InpLegMaxMin <= 0) err = "tempo maximo da perna ligado exige InpLegMaxMin > 0";
+   else if(InpUseTrendFlipExit && InpTrendFlipMinLoss < 0) err = "InpTrendFlipMinLoss >= 0";
    else if(InpUseDailyTarget && InpDailyTargetMoney <= 0) err = "meta diaria ligada exige InpDailyTargetMoney > 0";
    else if(InpUsePendingTTL && InpPendingTTLSec <= 0) err = "validade ligada exige InpPendingTTLSec > 0";
    else if(InpUseHtfShockGuard && InpHtfShockMult <= 0) err = "guarda de TFs maiores ligada exige InpHtfShockMult > 0";
@@ -1604,6 +1847,12 @@ int OnInit()
    else if(InpUsePullbackLimits && InpUsePullbackTP && InpPullbackTpPoints <= 0) err = "TP do recuo ligado exige InpPullbackTpPoints > 0";
    else if(InpUsePullbackLimits && !InpUsePendingTTL) err = "recuo ligado exige a validade das pendentes ligada (InpUsePendingTTL), senao as ordens ficariam para sempre";
    else if(InpChainLossReadsVol && InpChainLossAtrMult <= 0) err = "piso de volatilidade ligado exige InpChainLossAtrMult > 0";
+   else if(InpUseSession && InpUseNoNewBeforeEnd && InpNoNewMinBeforeEnd <= 0) err = "sem correntes novas no fim da janela, ligado, exige InpNoNewMinBeforeEnd > 0";
+   else if(InpUseSession && !InpUseWindowA && !InpUseWindowB) err = "sessao ligada exige ao menos uma janela ligada (A ou B)";
+   else if(InpUseSession && InpUseWindowA && (InpWindowAStartHour < 0 || InpWindowAStartHour > 23 || InpWindowAEndHour < 0 || InpWindowAEndHour > 24 || InpWindowAStartHour == InpWindowAEndHour))
+      err = "janela A: inicio 0..23, fim 0..24 e inicio diferente do fim";
+   else if(InpUseSession && InpUseWindowB && (InpWindowBStartHour < 0 || InpWindowBStartHour > 23 || InpWindowBEndHour < 0 || InpWindowBEndHour > 24 || InpWindowBStartHour == InpWindowBEndHour))
+      err = "janela B: inicio 0..23, fim 0..24 e inicio diferente do fim";
    if(err != "") { Print(EA_NAME, ": INIT_FAILED - ", err); return INIT_PARAMETERS_INCORRECT; }
 
    // v1.08: nenhum limite de perda e obrigatorio (decisao do operador: tudo opcional).
@@ -1662,21 +1911,32 @@ int OnInit()
 
    if(MQLInfoInteger(MQL_TESTER) || InpShowPanel)
    {
-      g_panel.Init("LZP_CS_", InpPanelX, InpPanelY, 400);
+      g_panel.Init("LZP_CS_", InpPanelX, InpPanelY, CS_PANEL_W);
       g_panel.SetScale(InpPanelScale);
    }
    EventSetTimer(1);
 
    LogEvent("INIT", "INFO", "PASS", "INIT",
-            StringFormat("v%s %s %s step=%dpts legs=%d-%d lot=%.2f | SL=%s(%d) TP=%s lock=%s chainLoss=%s(%.1f) dailyLoss=%s(%.1f) ttl=%s(%d) target=%s sess=%s(%d-%dGMT) htf=%s(%.1f)",
+            StringFormat("v%s %s %s step=%dpts legs=%d-%d lot=%.2f | SL=%s(%d) TP=%s lock=%s chainLoss=%s(%.1f) dailyLoss=%s(%.1f) ttl=%s(%d) target=%s sess=%s(%s) htf=%s(%.1f)",
                          EA_VERSION, g_sym, EnumToString(g_tf), InpStepPoints, InpMinLegs, InpMaxLegs, InpLot,
                          B(InpUseStopLoss), InpStopLossPoints, B(InpUseTP), B(InpUseProfitLock), B(InpUseChainLossStop), InpChainLossMoney,
                          B(InpUseDailyLossStop), InpDailyLossMoney, B(InpUsePendingTTL), InpPendingTTLSec, B(InpUseDailyTarget),
-                         B(InpUseSession), InpSessionStartGMT, InpSessionEndGMT, B(InpUseHtfShockGuard), InpHtfShockMult));
+                         B(InpUseSession), SessionWindowsText(), B(InpUseHtfShockGuard), InpHtfShockMult));
    LogEvent("INIT", "INFO", "PASS", "INIT_PULLBACK",
             StringFormat("recuo=%s(dist %d pts, avanco %d pts, max %d, tp %s %d pts) perdaCorrenteVol=%s(%.1f x ATR)",
                          B(InpUsePullbackLimits), InpPullbackDistPoints, InpPullbackAdvancePoints, InpMaxPullbackOrders,
                          B(InpUsePullbackTP), InpPullbackTpPoints, B(InpChainLossReadsVol), InpChainLossAtrMult));
+   LogEvent("INIT", "INFO", "PASS", "INIT_SESSION",
+            StringFormat("janelas %s | semNovas=%s(%d min) fechaNoFim=%s | deslocamento hora local = %+d min do relogio das janelas",
+                         SessionWindowsText(), B(InpUseNoNewBeforeEnd), InpNoNewMinBeforeEnd, B(InpUseFlattenAtEnd), ClockToLocalMin()));
+   LogEvent("INIT", "INFO", "PASS", "INIT_LOGICAL_EXITS",
+            StringFormat("trendFlipExit=%s(minLoss %.2f, rompimento %s) legMaxTime=%s(%d min, rompimento %s) | limites: SL=%s chainLoss=%s dailyLoss=%s",
+                         B(InpUseTrendFlipExit), InpTrendFlipMinLoss, B(InpTrendFlipBreakout), B(InpUseLegMaxTime), InpLegMaxMin,
+                         B(InpLegMaxTimeBreakout), B(InpUseStopLoss), B(InpUseChainLossStop), B(InpUseDailyLossStop)));
+   if(!InpUseStopLoss && !InpUseChainLossStop && !InpUseDailyLossStop)
+      LogEvent("WARNING", "WARN", "PASS", "NO_LOSS_LIMIT",
+               StringFormat("nenhum limite de perda monetario ligado; protecao apenas por saida logica (trendFlip=%s, legMaxTime=%s)",
+                            B(InpUseTrendFlipExit), B(InpUseLegMaxTime)));
    if(InpStepPoints * g_point < SymbolInfoInteger(g_sym, SYMBOL_SPREAD) * g_point)
       Print(EA_NAME, ": AVISO - degrau de ", InpStepPoints, " pts e menor que o spread atual (", (int)SymbolInfoInteger(g_sym, SYMBOL_SPREAD), " pts): cada degrau nasce abaixo do custo.");
    PrintFormat("%s v%s pronto: %s %s magic=%I64u tick=%s stops=%d freeze=%d fill=%s",

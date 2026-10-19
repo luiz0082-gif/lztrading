@@ -1,0 +1,535 @@
+{
+ "M15_W60": {
+  "first": "2024-09-10",
+  "last": "2026-10-16",
+  "days": 543,
+  "cut": "2025-12-15",
+  "entries": 44487,
+  "excluded": 1639,
+  "K": [
+   25,
+   50,
+   100,
+   150,
+   200,
+   300
+  ],
+  "point": 0.001,
+  "spread_med": 30.0,
+  "swap_pts": {
+   "BUY": 0.0,
+   "SELL": 0.0
+  },
+  "swap_mode": 0,
+  "B_rows": 540,
+  "dir_slot": {
+   "tests": 534,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 4.025879744541553,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.02,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 2
+  },
+  "ev_slot": {
+   "tests": 3204,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_hour": {
+   "tests": 138,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.498653160803199,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_hour": {
+   "tests": 828,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_wd_hour": {
+   "tests": 642,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.9617210143516615,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_wd_hour": {
+   "tests": 3852,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  }
+ },
+ "M15_W240": {
+  "first": "2024-09-11",
+  "last": "2026-10-16",
+  "days": 542,
+  "cut": "2025-12-16",
+  "entries": 40147,
+  "excluded": 5979,
+  "K": [
+   25,
+   50,
+   100,
+   150,
+   200,
+   300,
+   400,
+   500,
+   600
+  ],
+  "point": 0.001,
+  "spread_med": 30.0,
+  "swap_pts": {
+   "BUY": 0.0,
+   "SELL": 0.0
+  },
+  "swap_mode": 0,
+  "B_rows": 738,
+  "dir_slot": {
+   "tests": 729,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.829580416293373,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.01,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 1
+  },
+  "ev_slot": {
+   "tests": 4212,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_hour": {
+   "tests": 189,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.491338416081924,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_hour": {
+   "tests": 1092,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_wd_hour": {
+   "tests": 873,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 4.077488603055607,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.005,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 1
+  },
+  "ev_wd_hour": {
+   "tests": 5044,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  }
+ },
+ "M1_W60": {
+  "first": "2026-03-11",
+  "last": "2026-10-16",
+  "days": 158,
+  "cut": "2026-07-21",
+  "entries": 191469,
+  "excluded": 8531,
+  "K": [
+   25,
+   50,
+   100,
+   150,
+   200
+  ],
+  "point": 0.001,
+  "spread_med": 30.0,
+  "swap_pts": {
+   "BUY": 0.0,
+   "SELL": 0.0
+  },
+  "swap_mode": 0,
+  "B_rows": 6640,
+  "dir_slot": {
+   "tests": 6035,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 4.4474277377578915,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_slot": {
+   "tests": 36210,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_15m": {
+   "tests": 405,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.6334145728969944,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_15m": {
+   "tests": 2430,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_hour": {
+   "tests": 105,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.2308106670734973,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_hour": {
+   "tests": 630,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_wd_hour": {},
+  "ev_wd_hour": {}
+ },
+ "M1_W240": {
+  "first": "2026-03-12",
+  "last": "2026-10-16",
+  "days": 157,
+  "cut": "2026-07-22",
+  "entries": 173413,
+  "excluded": 26587,
+  "K": [
+   25,
+   50,
+   100,
+   150,
+   200,
+   300,
+   400,
+   500
+  ],
+  "point": 0.001,
+  "spread_med": 30.0,
+  "swap_pts": {
+   "BUY": 0.0,
+   "SELL": 0.0
+  },
+  "swap_mode": 0,
+  "B_rows": 9696,
+  "dir_slot": {
+   "tests": 8728,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 4.543272457408483,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_slot": {
+   "tests": 52368,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_15m": {
+   "tests": 584,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.9124036490437657,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_15m": {
+   "tests": 3504,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_hour": {
+   "tests": 152,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.6488121878876654,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.02,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 1
+  },
+  "ev_hour": {
+   "tests": 912,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_wd_hour": {},
+  "ev_wd_hour": {}
+ },
+ "M5_W60": {
+  "first": "2025-05-15",
+  "last": "2026-10-16",
+  "days": 370,
+  "cut": "2026-03-25",
+  "entries": 90605,
+  "excluded": 3744,
+  "K": [
+   25,
+   50,
+   100,
+   150,
+   200
+  ],
+  "point": 0.001,
+  "spread_med": 30.0,
+  "swap_pts": {
+   "BUY": 0.0,
+   "SELL": 0.0
+  },
+  "swap_mode": 0,
+  "B_rows": 1335,
+  "dir_slot": {
+   "tests": 1330,
+   "bh_disc": 1,
+   "validated": 1,
+   "fwer_t": 4.052349819243395,
+   "fwer_disc": 1,
+   "fwer_and_val": 1,
+   "placebo_validated_mean": 0.005,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 1
+  },
+  "ev_slot": {
+   "tests": 7980,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_15m": {
+   "tests": 445,
+   "bh_disc": 1,
+   "validated": 0,
+   "fwer_t": 3.683963914657033,
+   "fwer_disc": 1,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_15m": {
+   "tests": 2670,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_hour": {
+   "tests": 115,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.485891638948531,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_hour": {
+   "tests": 690,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_wd_hour": {
+   "tests": 535,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 4.0379422759130605,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_wd_hour": {
+   "tests": 3210,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  }
+ },
+ "M5_W240": {
+  "first": "2025-05-15",
+  "last": "2026-10-16",
+  "days": 370,
+  "cut": "2026-03-25",
+  "entries": 82109,
+  "excluded": 12240,
+  "K": [
+   25,
+   50,
+   100,
+   150,
+   200,
+   300,
+   400,
+   500
+  ],
+  "point": 0.001,
+  "spread_med": 30.0,
+  "swap_pts": {
+   "BUY": 0.0,
+   "SELL": 0.0
+  },
+  "swap_mode": 0,
+  "B_rows": 1952,
+  "dir_slot": {
+   "tests": 1944,
+   "bh_disc": 1,
+   "validated": 1,
+   "fwer_t": 4.191066726121031,
+   "fwer_disc": 1,
+   "fwer_and_val": 1,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_slot": {
+   "tests": 11664,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_15m": {
+   "tests": 648,
+   "bh_disc": 1,
+   "validated": 0,
+   "fwer_t": 3.8365029549624876,
+   "fwer_disc": 1,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.005,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 1
+  },
+  "ev_15m": {
+   "tests": 3888,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_hour": {
+   "tests": 168,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 3.5418569454031372,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.0,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 0
+  },
+  "ev_hour": {
+   "tests": 1008,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  },
+  "dir_wd_hour": {
+   "tests": 776,
+   "bh_disc": 0,
+   "validated": 0,
+   "fwer_t": 4.221962245209873,
+   "fwer_disc": 0,
+   "fwer_and_val": 0,
+   "placebo_validated_mean": 0.01,
+   "placebo_validated_p95": 0.0,
+   "placebo_validated_max": 2
+  },
+  "ev_wd_hour": {
+   "tests": 4656,
+   "validated": 0,
+   "validated_and_bh": 0,
+   "validated_clocks": 0,
+   "placebo_mean": 0.0,
+   "placebo_max": 0
+  }
+ }
+}

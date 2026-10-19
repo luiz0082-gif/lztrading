@@ -1,0 +1,119 @@
+{
+ "M15_W240": {
+  "tests": 25416,
+  "bh_disc": 4,
+  "validated": 2,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 1,
+   "race": 1
+  },
+  "placebo_validated": {
+   "17": 2,
+   "29": 3,
+   "41": 4,
+   "53": 2,
+   "67": 3,
+   "79": 2,
+   "97": 3,
+   "113": 2
+  },
+  "placebo_mean": 2.625,
+  "placebo_max": 4,
+  "k_tested": [
+   150,
+   300
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 138,
+   "gap_med_abs": 119.50000000000216,
+   "fechou_no_dia_pct": 84.05797101449275
+  }
+ },
+ "M15_W60": {
+  "tests": 25494,
+  "bh_disc": 1,
+  "validated": 1,
+  "validated_by_outcome": {
+   "race": 1
+  },
+  "placebo_validated": {
+   "17": 2,
+   "29": 4,
+   "41": 1,
+   "53": 3,
+   "67": 3,
+   "79": 2,
+   "97": 1,
+   "113": 1
+  },
+  "placebo_mean": 2.125,
+  "placebo_max": 4,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 138,
+   "gap_med_abs": 119.50000000000216,
+   "fechou_no_dia_pct": 84.05797101449275
+  }
+ },
+ "M5_W60": {
+  "tests": 24954,
+  "bh_disc": 0,
+  "validated": 0,
+  "validated_by_outcome": {},
+  "placebo_validated": {
+   "17": 2,
+   "29": 10,
+   "41": 0,
+   "53": 1,
+   "67": 2,
+   "79": 4,
+   "97": 5,
+   "113": 4
+  },
+  "placebo_mean": 3.5,
+  "placebo_max": 10,
+  "k_tested": [
+   50,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 72,
+   "gap_med_abs": 138.00000000000523,
+   "fechou_no_dia_pct": 80.55555555555556
+  }
+ },
+ "M5_W240": {
+  "tests": 24822,
+  "bh_disc": 1,
+  "validated": 0,
+  "validated_by_outcome": {},
+  "placebo_validated": {
+   "17": 1,
+   "29": 24,
+   "41": 3,
+   "53": 1,
+   "67": 3,
+   "79": 0,
+   "97": 6,
+   "113": 5
+  },
+  "placebo_mean": 5.375,
+  "placebo_max": 24,
+  "k_tested": [
+   150,
+   300
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 72,
+   "gap_med_abs": 138.00000000000523,
+   "fechou_no_dia_pct": 80.55555555555556
+  }
+ }
+}

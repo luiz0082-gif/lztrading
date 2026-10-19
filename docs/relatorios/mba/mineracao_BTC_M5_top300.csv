@@ -1,0 +1,21 @@
+tf,h,rule,dir,n_tr,m_tr,t_tr,n_va,m_va,t_va,n_te,m_te,t_te,ntests
+M5,144,dist_lo7d:Q5/5 & dow=4 & mtf_W1=BEARISH,SHORT,345.0,253.982,3.924,161,53.587,192.135,296,-214.284,-200.433,3856890
+M5,12,vol24:Q5/5 & dow=3 & session=LONDON_NY_OVERLAP,SHORT,692.0,43.578,3.783,174,30.494,17.141,84,-38.175,-21.177,3856890
+M5,12,vol24:Q5/5 & session=OFF_SESSION & mtf_M30=BULLISH,SHORT,642.0,19.84,3.534,93,15.307,17.125,137,-0.086,-0.095,3856890
+M5,12,vol24:Q5/5 & hour:Q4/5 & dow=3,SHORT,791.0,41.789,4.118,257,9.635,5.692,102,-14.804,-8.165,3856890
+M5,3,vol24:Q5/5 & session=OFF_SESSION & mtf_M30=BULLISH,SHORT,642.0,5.713,3.626,93,3.059,3.704,137,0.895,0.943,3856890
+M5,3,prev_day_low_distance_atr:Q4/5 & previous_low_distance_atr:Q5/5 & dow=5,SHORT,417.0,3.286,3.973,223,1.433,3.508,148,1.509,3.587,3856890
+M5,3,vol24:Q5/5 & prev_day_low_distance_atr:Q5/5 & session=OFF_SESSION,SHORT,342.0,7.595,4.069,62,3.698,3.293,145,0.56,0.604,3856890
+M5,3,previous_low_distance_atr:Q5/5 & dow=5 & news_hi=0,SHORT,2262.0,1.947,3.513,770,0.888,3.21,623,0.928,3.91,3856890
+M5,3,previous_low_distance_atr:Q5/5 & dow=5 & wkend=1,SHORT,2262.0,1.947,3.513,771,0.886,3.204,623,0.928,3.91,3856890
+M5,3,previous_low_distance_atr:Q5/5 & dow=5,SHORT,2262.0,1.947,3.513,771,0.886,3.204,623,0.928,3.91,3856890
+M5,3,price_position_weekly_open:Q4/5 & prev_day_low_distance_atr:Q2/5 & mtf_H1=BREAK_UP,LONG,184.0,13.257,3.617,67,5.105,2.725,54,-5.736,-2.912,3856890
+M5,3,vol24:Q5/5 & dow=3 & session=LONDON_NY_OVERLAP,SHORT,692.0,10.709,3.534,174,5.712,2.7,84,-9.538,-4.805,3856890
+M5,3,session_low_distance_atr:Q1/5 & wkend=1 & mtf_H4=BULLISH,LONG,1350.0,2.251,3.531,439,0.983,2.171,661,0.847,3.108,3856890
+M5,3,ret24:Q1/5 & dow=2 & session=NEW_YORK,LONG,576.0,7.427,3.502,219,2.324,2.159,138,4.549,5.208,3856890
+M5,3,vol24:Q2/5 & session_high_distance_atr:Q1/5 & hour:Q5/5,LONG,376.0,5.52,3.565,175,1.324,2.036,137,0.268,0.381,3856890
+M5,3,vol24:Q2/5 & news_next:Q5/5 & mtf_M30=RANGE,SHORT,280.0,8.716,3.682,81,1.893,1.989,147,2.124,3.164,3856890
+M5,3,prev_day_high_distance_atr:Q4/5 & dow=3 & news_since:Q5/5,SHORT,270.0,9.151,3.67,56,2.299,1.939,35,2.365,1.902,3856890
+M5,3,prev_day_high_distance_atr:Q5/5 & session_high_distance_atr:Q1/5 & news_since:Q2/5,LONG,151.0,10.01,3.545,61,3.249,1.751,51,0.135,0.14,3856890
+M5,3,dist_hi24:Q5/5 & dow=3 & mtf_H1=BREAK_UP,SHORT,300.0,6.957,3.573,103,2.483,1.674,161,-4.461,-3.461,3856890
+M5,3,previous_high_distance_atr:Q4/5 & dow=5 & mtf_M30=BULLISH,SHORT,1027.0,2.424,3.861,363,0.58,1.515,567,0.327,1.556,3856890

@@ -1,0 +1,81 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+150,EV_SELL_Ak,brk,hour,brk=rompeu_min_fechou_fora & hora=21h,155,48,35,-63.876,-5.569,-24.805,-1.012,-109.072,-69.740,0.000,False,False
+300,EV_SELL_Ak,extreme,hour,extreme=extremo_baixa & hora=00h,218,49,42,-129.189,-5.507,-141.085,-8.371,-238.651,-250.204,0.000,False,False
+300,race,extreme,hour,extreme=extremo_baixa & hora=00h,218,49,42,0.460,5.054,0.296,2.767,0.705,0.540,0.000,True,True
+150,EV_BUY_Ak,streak*weekday,sess,streak=3+ altas & weekday=TER & Tarde(20-24),364,45,29,-48.559,-5.005,-23.252,-1.153,-107.740,-74.132,0.000,False,False
+150,EV_SELL_Ak,streak*brk,sess,streak=2 baixas & brk=rompeu_min_falhou & Tarde(20-24),75,41,26,-71.211,-4.964,-13.850,-0.612,-115.199,-57.147,0.000,False,False
+150,EV_SELL_Ak,compress*brk,sess,compress=expandido & brk=rompeu_min_fechou_fora & Tarde(20-24),339,95,63,-45.584,-4.869,-30.403,-2.086,-89.439,-72.627,0.000,False,False
+150,EV_SELL_Ak,brk*prevday,sess,brk=rompeu_min_fechou_fora & prevday=dia_ant_baixa & Tarde(20-24),207,48,31,-59.104,-4.869,-35.925,-1.700,-102.749,-79.692,0.000,False,False
+150,race,ret4,hour,ret4=Q1(caiu+) & hora=00h,1270,212,142,0.203,4.695,0.125,2.474,0.627,0.551,0.000,True,True
+150,EV_SELL_Ak,streak*compress,sess,streak=3+ baixas & compress=expandido & Tarde(20-24),494,131,79,-38.148,-4.644,-18.656,-1.306,-81.810,-61.284,0.000,False,False
+150,EV_SELL_Ak,streak*brk,sess,streak=3+ baixas & brk=rompeu_min_fechou_fora & Tarde(20-24),294,87,66,-44.909,-4.618,-28.700,-1.788,-88.750,-70.354,0.000,False,False
+150,race,streak*compress,sess,streak=3+ baixas & compress=expandido & Tarde(20-24),494,131,79,0.313,4.613,0.044,0.569,-0.055,-0.288,0.000,True,False
+300,EV_BUY_Ak,brk,hour,brk=rompeu_min_fechou_fora & hora=21h,155,48,35,86.306,4.578,44.460,1.436,74.745,32.496,0.000,True,False
+150,race,streak*weekday,sess,streak=3+ altas & weekday=TER & Tarde(20-24),364,45,29,-0.324,-4.567,-0.155,-1.252,-0.694,-0.481,0.000,True,False
+300,EV_SELL_Ak,brk,hour,brk=rompeu_min_fechou_fora & hora=21h,155,48,35,-98.694,-4.517,-45.462,-1.467,-147.337,-91.541,0.000,False,False
+150,race,compress*brk,sess,compress=expandido & brk=rompeu_min_fechou_fora & Tarde(20-24),339,95,63,0.364,4.509,0.183,2.232,0.010,-0.157,0.000,True,True
+150,race,ret4*compress,sess,ret4=Q1(caiu+) & compress=expandido & Tarde(20-24),1054,159,99,0.261,4.487,0.041,0.657,-0.103,-0.298,0.000,True,False
+150,race,ret4*tickvol,sess,ret4=Q1(caiu+) & tickvol=alto & Tarde(20-24),899,158,76,0.248,4.439,0.109,1.272,-0.106,-0.273,0.000,True,False
+150,EV_BUY_Ak,compress*brk,sess,compress=expandido & brk=rompeu_min_fechou_fora & Tarde(20-24),339,95,63,51.148,4.408,28.202,2.255,-5.452,-25.834,0.000,True,False
+150,EV_BUY_Ak,ret4*tickvol,sess,ret4=Q1(caiu+) & tickvol=alto & Tarde(20-24),899,158,76,36.010,4.376,18.101,1.442,-20.651,-42.277,0.000,True,False
+150,EV_BUY_Ak,ret4*compress,sess,ret4=Q1(caiu+) & compress=expandido & Tarde(20-24),1054,159,99,37.564,4.373,6.882,0.733,-20.588,-47.234,0.000,True,False
+150,EV_SELL_Ak,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=TER & Asia(00-09),458,44,27,43.570,4.273,-27.773,-1.542,13.512,-61.117,0.000,True,False
+150,race,streak*brk,sess,streak=3+ baixas & brk=rompeu_min_fechou_fora & Tarde(20-24),294,87,66,0.360,4.253,0.180,1.958,0.019,-0.182,0.000,True,True
+300,EV_SELL_Ak,ret4*weekday,sess,ret4=Q3 & weekday=SEX & Tarde(20-24),234,44,26,75.781,4.192,64.276,2.325,9.098,-2.094,0.000,True,False
+150,EV_BUY_Ak,streak*compress,sess,streak=3+ baixas & compress=expandido & Tarde(20-24),494,131,79,41.518,4.151,10.047,0.857,-16.672,-42.254,0.000,True,False
+300,EV_SELL_Ak,ret4*weekday,sess,ret4=Q4 & weekday=SEX & Tarde(20-24),248,45,30,98.106,4.151,52.391,1.818,31.444,-12.389,0.000,True,False
+150,race,brk,hour,brk=rompeu_min_fechou_fora & hora=00h,376,175,122,0.201,4.081,0.144,2.249,0.712,0.662,0.000,True,True
+150,EV_SELL_Ak,ret4*compress,sess,ret4=Q1(caiu+) & compress=expandido & Tarde(20-24),1054,159,99,-32.190,-4.070,-18.934,-1.710,-75.748,-61.998,0.000,False,False
+300,EV_BUY_Ak,compress*extreme,sess,compress=expandido & extreme=extremo_alta & Tarde(20-24),326,53,31,-94.235,-4.052,21.900,0.714,-131.791,-11.081,0.000,False,False
+150,EV_BUY_Ak,streak*brk,sess,streak=3+ baixas & brk=rompeu_min_fechou_fora & Tarde(20-24),294,87,66,50.805,4.044,23.371,1.723,-3.535,-33.627,0.000,True,False
+300,EV_BUY_Ak,brk*extreme,sess,brk=dentro & extreme=extremo_alta & Tarde(20-24),191,49,31,-91.775,-3.941,20.405,0.788,-130.526,-9.957,0.000,False,False
+150,EV_BUY_Ak,streak,hour,streak=3+ altas & hora=23h,386,115,65,-19.615,-3.871,0.156,0.012,-129.623,-106.361,0.000,False,False
+300,EV_SELL_Ak,prev1*weekday,sess,prev1=forte_alta & weekday=SEX & Tarde(20-24),196,44,29,93.172,3.868,43.904,1.974,24.991,-19.335,0.000,False,False
+300,EV_SELL_Ak,brk*weekday,sess,brk=dentro & weekday=SEX & Tarde(20-24),931,45,30,77.486,3.868,50.314,1.963,11.611,-16.243,0.000,False,False
+150,EV_BUY_Ak,ret4*brk,sess,ret4=Q1(caiu+) & brk=rompeu_min_fechou_fora & Tarde(20-24),487,116,84,41.331,3.868,14.421,1.382,-13.733,-43.258,0.000,True,False
+300,race,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=TER & Asia(00-09),458,44,27,-0.275,-3.851,-0.021,-0.212,-0.226,0.036,0.000,False,False
+150,race,ret4*brk,sess,ret4=Q1(caiu+) & brk=rompeu_min_fechou_fora & Tarde(20-24),487,116,84,0.283,3.840,0.118,1.643,-0.058,-0.244,0.000,False,False
+300,EV_BUY_Ak,streak*brk,sess,streak=3+ baixas & brk=rompeu_min_fechou_fora & Tarde(20-24),294,87,66,67.258,3.812,54.797,3.414,34.008,22.976,0.000,False,False
+150,EV_BUY_Ak,brk*spread,sess,brk=rompeu_min_fechou_fora & spread=normal & Tarde(20-24),513,123,73,38.905,3.808,13.948,1.143,-16.681,-46.047,0.000,True,False
+300,EV_SELL_Ak,streak*brk,sess,streak=3+ baixas & brk=rompeu_min_fechou_fora & Tarde(20-24),294,87,66,-62.489,-3.801,-50.550,-2.868,-104.544,-88.169,0.000,False,False
+150,race,brk*spread,sess,brk=rompeu_min_fechou_fora & spread=normal & Tarde(20-24),513,123,73,0.268,3.784,0.108,1.285,-0.078,-0.267,0.000,False,False
+150,EV_BUY_Ak,prev1*brk,sess,prev1=forte_baixa & brk=rompeu_min_fechou_fora & Tarde(20-24),416,116,84,39.117,3.776,21.477,2.018,-16.252,-34.637,0.000,True,False
+150,EV_BUY_Ak,streak*tickvol,sess,streak=3+ altas & tickvol=alto & NY(15-20),506,139,30,-31.376,-3.774,-42.111,-1.993,-26.947,-34.180,0.000,False,False
+300,race,streak*weekday,sess,streak=2 baixas & weekday=SEG & Tarde(20-24),395,45,29,0.115,3.774,0.022,0.364,0.004,-0.091,0.000,False,False
+150,EV_SELL_Ak,brk*spread,sess,brk=rompeu_min_fechou_fora & spread=normal & Tarde(20-24),513,123,73,-34.310,-3.771,-26.255,-1.898,-77.811,-69.443,0.000,False,False
+300,EV_SELL_Ak,extreme*weekday,sess,extreme=normal & weekday=SEX & Tarde(20-24),1071,45,30,74.098,3.764,52.538,2.163,8.177,-13.505,0.000,False,False
+150,EV_BUY_Ak,brk*extreme,sess,brk=rompeu_min_fechou_fora & extreme=normal & Tarde(20-24),481,117,84,40.589,3.748,3.418,0.295,-17.177,-56.010,0.000,True,False
+150,race,prev1*brk,sess,prev1=forte_baixa & brk=rompeu_min_fechou_fora & Tarde(20-24),416,116,84,0.271,3.738,0.158,2.115,-0.073,-0.194,0.000,False,False
+300,EV_SELL_Ak,prev1*streak,sess,prev1=forte_baixa & streak=3+ baixas & Tarde(20-24),519,150,103,-44.671,-3.733,0.736,0.057,-87.193,-39.217,0.000,False,False
+300,EV_SELL_Ak,ret4*weekday,sess,ret4=Q5(subiu+) & weekday=SEX & Tarde(20-24),161,35,22,80.395,3.723,46.274,1.060,13.680,-18.403,0.000,False,False
+150,EV_SELL_Ak,brk*extreme,sess,brk=dentro & extreme=extremo_alta & Tarde(20-24),191,49,31,67.449,3.720,-29.995,-1.710,24.327,-74.268,0.000,False,False
+150,EV_SELL_Ak,brk,hour,brk=rompeu_min_fechou_fora & hora=00h,376,175,122,-8.576,-3.710,-6.325,-2.220,-147.297,-144.036,0.000,False,False
+150,EV_SELL_Ak,ret4*brk,sess,ret4=Q1(caiu+) & brk=rompeu_min_fechou_fora & Tarde(20-24),487,116,84,-34.094,-3.705,-24.257,-1.838,-77.673,-67.369,0.000,False,False
+150,EV_BUY_Ak,brk*extreme,sess,brk=dentro & extreme=extremo_alta & Tarde(20-24),191,49,31,-45.352,-3.693,36.480,1.433,-107.110,-21.839,0.000,False,False
+300,EV_SELL_Ak,streak*weekday,sess,streak=2 altas & weekday=SEX & Tarde(20-24),149,45,29,74.058,3.693,42.055,1.370,9.208,-22.976,0.000,False,False
+300,EV_SELL_Ak,streak*weekday,sess,streak=1 alta & weekday=SEX & Tarde(20-24),298,45,30,67.299,3.690,63.590,2.718,1.131,-2.254,0.000,False,False
+150,EV_SELL_Ak,brk*extreme,sess,brk=rompeu_min_fechou_fora & extreme=normal & Tarde(20-24),481,117,84,-36.712,-3.687,-26.987,-2.087,-80.451,-70.634,0.000,False,False
+150,race,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=TER & Asia(00-09),458,44,27,-0.266,-3.670,0.155,1.280,-0.164,0.277,0.000,False,False
+150,EV_BUY_Ak,tickvol*weekday,sess,tickvol=baixo & weekday=TER & Tarde(20-24),1579,41,28,-36.771,-3.662,-35.199,-3.251,-96.545,-87.940,0.000,False,False
+150,race,dopen*brk,sess,dopen=Q5(bem acima) & brk=rompeu_min_fechou_fora & Tarde(20-24),187,40,38,0.430,3.646,-0.007,-0.056,0.033,-0.392,0.000,False,False
+300,EV_SELL_Ak,prev1*weekday,sess,prev1=alta & weekday=SEX & Tarde(20-24),392,45,30,69.412,3.620,53.484,1.883,4.494,-12.404,0.000,False,False
+150,EV_BUY_Ak,brk,hour,brk=rompeu_min_fechou_fora & hora=21h,155,48,35,71.602,3.617,33.867,1.609,38.414,-1.468,0.000,False,False
+150,race,brk*extreme,sess,brk=rompeu_min_fechou_fora & extreme=normal & Tarde(20-24),481,117,84,0.272,3.613,0.036,0.454,-0.091,-0.337,0.000,False,False
+150,race,brk,hour,brk=rompeu_min_fechou_fora & hora=21h,155,48,35,0.484,3.605,0.194,1.457,0.271,-0.043,0.000,False,False
+300,EV_SELL_Ak,dopen*brk,sess,dopen=Q4 & brk=rompeu_min_fechou_fora & NY(15-20),154,42,27,-98.156,-3.601,23.604,0.602,-121.093,-3.509,0.000,False,False
+150,race,tickvol*weekday,sess,tickvol=baixo & weekday=TER & Tarde(20-24),1579,41,28,-0.251,-3.589,-0.253,-3.334,-0.629,-0.581,0.000,False,False
+300,EV_SELL_Ak,tickvol*weekday,sess,tickvol=normal & weekday=SEX & Tarde(20-24),314,34,23,75.531,3.586,70.440,1.817,9.338,4.945,0.000,False,False
+150,race,prev1*ret4,sess,prev1=forte_baixa & ret4=Q4 & Londres(09-15),529,171,112,0.197,3.585,-0.089,-1.154,0.238,-0.046,0.000,False,False
+300,EV_SELL_Ak,weekday,hour,weekday=SEX & hora=20h,900,45,30,73.252,3.572,59.631,2.509,4.594,-9.026,0.000,False,False
+150,EV_SELL_Ak,ret4,hour,ret4=Q1(caiu+) & hora=00h,1270,212,142,-8.306,-3.562,-2.619,-0.812,-141.068,-135.825,0.000,False,False
+300,EV_BUY_Ak,prev1*streak,sess,prev1=forte_baixa & streak=3+ baixas & Tarde(20-24),519,150,103,46.353,3.557,14.925,1.188,12.303,-18.043,0.000,False,False
+300,EV_BUY_Ak,compress*brk,sess,compress=expandido & brk=rompeu_min_fechou_fora & Tarde(20-24),339,95,63,62.299,3.557,66.910,4.045,27.413,34.545,0.000,False,False
+300,EV_SELL_Ak,prev1*brk,sess,prev1=alta & brk=rompeu_min_falhou & Tarde(20-24),213,82,51,-51.328,-3.547,-10.968,-0.632,-92.002,-53.705,0.000,False,False
+150,EV_BUY_Ak,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=TER & Asia(00-09),458,44,27,-35.046,-3.544,18.905,1.203,-53.118,-2.981,0.000,False,False
+300,EV_SELL_Ak,streak*weekday,sess,streak=3+ altas & weekday=SEX & Tarde(20-24),125,34,20,99.611,3.537,27.559,0.740,32.278,-35.261,0.000,False,False
+150,race,streak*tickvol,sess,streak=3+ baixas & tickvol=alto & Tarde(20-24),472,128,55,0.243,3.532,0.080,0.860,-0.094,-0.322,0.000,False,False
+150,EV_BUY_Ak,brk*weekday,sess,brk=rompeu_min_falhou & weekday=TER & Asia(00-09),406,43,29,-43.575,-3.531,14.611,0.847,-56.549,3.608,0.000,False,False
+300,EV_SELL_Ak,tickvol*weekday,sess,tickvol=baixo & weekday=SEX & Tarde(20-24),486,33,29,70.673,3.528,55.260,2.061,4.682,-10.382,0.000,False,False
+150,EV_BUY_Ak,streak*tickvol,sess,streak=3+ baixas & tickvol=alto & Tarde(20-24),472,128,55,36.302,3.520,13.675,1.033,-17.513,-49.298,0.000,False,False
+150,EV_SELL_Ak,streak*tickvol,sess,streak=3+ altas & tickvol=alto & NY(15-20),506,139,30,30.238,3.518,44.236,2.016,14.699,24.508,0.000,False,False
+300,EV_SELL_Ak,streak*weekday,sess,streak=1 baixa & weekday=SEX & Tarde(20-24),299,45,30,63.829,3.512,60.754,2.648,-3.219,-5.363,0.000,False,False

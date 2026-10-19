@@ -1,0 +1,1 @@
+{"symbol": "XAGUSD", "contract": 1000.0, "usd_pt": 1.0, "dias": 685, "ini": "2024-01-22", "fim": "2026-10-16", "point": 0.001, "spread": 23.34, "targets": [50, 100, 150, 200, 300, 500], "combos": 1020, "real": 3, "pl_med": 1.65, "pl_max": 5, "rob": 1, "pr_med": 0.525, "pr_max": 3, "placebos": 40, "atr": 101.35714285714263}

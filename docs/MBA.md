@@ -1,4 +1,4 @@
-# MarketBehaviorAnalyzer (MBA) — coletor de pesquisa v1.10
+# MarketBehaviorAnalyzer (MBA) — coletor de pesquisa v1.23
 
 Não negocia. Coleta observações de mercado (candles, eventos, forward, ticks, calendário) para estudo estatístico.
 Código: `MQL5/Experts/MarketBehaviorAnalyzer/` (EA + `MBA_Core.mqh`) e `MQL5/Scripts/MarketBehaviorAnalyzer/` (histórico).
@@ -105,3 +105,48 @@ Use `slot_hhmm` (exato) ou `minute` (minuto da hora) conforme a pergunta. Cada d
 ## Não verificado em execução
 
 Compilado com 0 erros e 0 avisos (MetaEditor). **Não foi executado em terminal**. Conferir no primeiro run: pasta `<corretora>`, `META/symbol_spec`, forward com `forward_key` único, uma linha de tick agregado por candle, news com importância, preenchimento (`BACKFILL_SERVER`) após reiniciar, e que `CalendarValueHistory` filtra por moeda na corretora usada.
+
+## v1.23 — integridade da coleta (schema 3)
+
+Origem: auditoria externa (`Melhorias-no-MBA.pdf`) conferida linha a linha no código. Só entrou o que procedeu.
+
+| Problema na v1.22 | Correção na v1.23 |
+|---|---|
+| `ProcessBar` avançava o cursor (`g_last_bar`) quando `CopyRates` falhava: o candle nunca era retentado | O cursor só avança **depois** de o candle estar gravado. Falha → retentativa (`InpMaxBarRetries`=5, `InpRetryDelayMs`). Estourou o limite → `CRITICAL:BarSkipped` em `LOGS/errors` e `bars_skipped` em `META/data_quality`. O backfill inicial (`g_bf_first`) também não é mais descartado numa falha (antes pulava o histórico inteiro para o live). Linhas de tick/evento/forward só são escritas após o candle, então a retentativa não duplica |
+| RAW_TICKS via `OnTick` perdia ticks (eventos NewTick são fundidos) | Captura por `CopyTicksRange` com cursor persistente (último `time_msc` do arquivo + nº de ticks no mesmo ms). Primeira execução faz backfill de `InpRawTickBackfillDays` (14). `OnTick` virou só gatilho (250 ms). `source` = `CAPTURE_RANGE` / `BACKFILL_RANGE`. Dados antigos `LIVE_CAPTURE` continuam no mesmo arquivo e são **incompletos** |
+| UTC do backfill usava o offset atual (1 h errada no inverno) | `InpDstMode`: AUTO (regra NY-close se a corretora está em +2/+3 e bate com a regra hoje), `US_NY_CLOSE`, `FIXED_CURRENT`, `FIXED_INPUT`. `utc_basis` = `RULE_NY_CLOSE_US_DST`; o `server_time` original continua gravado. Notícias também usam a regra da data do evento. Exness (UTC+0) cai em `FIXED_CURRENT`. Linhas ao vivo são comparadas com o relógio do servidor (`dst_rule_mismatch`) |
+| MAE podia sair positivo/negativo conforme o caso | `mfe_points` e `mae_points` **sempre ≥ 0** (distância a partir do fechamento do evento, relativa à direção do candle). Novos `max_up_points` / `max_down_points` (independentes de direção). `time_to_*` = -1 quando a excursão não ocorreu. Doji: `DOJI_SYMMETRIC` |
+| Forward só até 10 candles | Novo `FORWARD_TIME` (ver abaixo); o `FORWARD` por barras continua |
+| Sem D1 | D1 incluído (`InpDaysD1`, coluna `mtf_D1`). M2…H12 **não** foram adicionados: são derivados do M1 e só multiplicariam disco |
+| `tick_data_ok` = “≥1 tick” | Agregado de ticks ganhou `max_tick_interval_ms`, `first_tick_offset_ms`, `last_tick_to_end_ms`, `bid/ask_first/last` |
+| Nada provava que o candle da corretora = ticks | Colunas `ohlc_vs_ticks` (OK/DIFF/NA) e `ohlc_dev_points` por candle (só gráfico em Bid; tolerância `InpOhlcTolerancePoints`). Novo `bar_spread_points` (spread gravado pelo servidor) |
+
+### FORWARD_TIME (horizontes por tempo)
+Para eventos de timeframes até H4 (`InpTimeFwdMaxTFSec`=14400), medido em barras **M1** a partir do fechamento do evento. Horizontes em `InpTimeHorizonsMin` (padrão 1,3,5,10,15,30,60,120,240). Linha escrita quando o maior horizonte fecha (atraso de até 4 h; cursor = último `event_time` do arquivo, então reinício e backfill funcionam).
+Colunas: `ret`, `max_up/down`, `mfe/mae` (positivos), `time_to_mfe/mae_min`, `m1_bars_found/expected/complete`, `event_spread_points`, `cost_points` (spread + comissão declarada convertida em pontos), `net_return_dir_points`, e tempo até o primeiro toque (`hit_up/dn_a050/a100/a200_min` = 0,5/1/2 ATR; `hit_up/dn_p1..p3_min` = alvos absolutos `InpTimeFwdTargetP1..3`, padrão 100/200/300 pontos; vazio = não tocou no horizonte). Resolução do toque = 1 minuto (fim da barra M1); toque de alvo de alta e de baixa no mesmo minuto é ambíguo. “Alvo antes do stop” = comparar os dois tempos.
+Limitações: horizonte em tempo de relógio (fechamento de mercado dentro da janela reduz `m1_bars_found`; filtrar por `complete`); eventos mais antigos que o M1 do terminal são pulados (`tfwd_skipped_no_m1`).
+
+### META/data_quality
+Uma linha por série a cada `InpQualityIntervalSec` (300 s) e no encerramento: barras esperadas (`Bars()` entre a primeira e a última desta execução) × candles gravados, `missing_vs_terminal`, retentativas, barras puladas, falhas de escrita, ticks ok/ausentes, conferência OHLC×ticks (qtd, divergentes, desvio máximo), gaps, `dst_rule_mismatch`, e para RAW_TICKS: linhas gravadas, cursor, atraso e erros. `status`: OK / CHECK / NO_BARS_THIS_RUN / WAITING_HISTORY.
+
+### Auditoria externa
+`python tools/mba/mba_audit.py --live "<Common>/Files/MarketBehaviorAnalyzer/<corretora>/<símbolo>/LIVE"` (somente leitura): duplicatas, gaps, OHLC incoerente, UTC×regra, agregado×candle, FORWARD_TIME, último `data_quality`, tempo de RAW_TICKS.
+
+### Atualizando da v1.22
+O cabeçalho mudou (schema 3). O gravador abre partes novas, **mas** a retomada só enxerga partes com o cabeçalho atual, então a v1.23 refaz todo o histórico. Antes do primeiro run: mover a pasta `LIVE` antiga (ex.: `LIVE_v2_arquivo`). O script History usa pasta própria por execução. Parâmetro novo do script: `InpDstMode` substitui `InpUtcRule`.
+Disco: FORWARD_TIME de M1 é o maior arquivo novo (até 9 linhas por evento M1); desligue com `InpWriteTimeForward=false` ou reduza `InpTimeHorizonsMin`.
+
+### Não verificado em execução
+Compilado com 0 erros e 0 avisos nos três terminais (IC, FP, Exness). **Não foi executado em terminal.** Conferir no primeiro run: `LOGS/errors` (`INFO:UtcMode`, `WARN:SchemaChange`, `INFO:RawTickStart`), `META/data_quality` sem `CHECK`, `ohlc_vs_ticks` majoritariamente OK, RAW_TICKS crescendo com `source=CAPTURE_RANGE`, FORWARD_TIME com `complete=TRUE`, e rodar `mba_audit.py`. A regra de DST é por dia (correta para barras de mercado, que reabrem após a troca).
+
+### v1.23.1 — M1 incompleto (bug do teto de catch-up)
+`CatchUpOne` limitava o passo a `InpMaxCatchupBars` (200000): quando faltavam mais barras que isso, o EA pulava para a barra 200000 contando de hoje e **descartava o resto do histórico**. No M1 (1000 dias ≈ 1 milhão de barras) isso deixava só 200.001 candles (a partir de ~mar/2026) em vários símbolos. **Não era limite da corretora**: o terminal tem M1 desde 2021 (o FORWARD_TIME lê M1 direto do terminal e achou 60 barras por hora em 2021). Corrigido: sempre processa a próxima barra. Para recuperar o M1: parar o EA, mover a pasta `CANDLES/EVENTS/FORWARD/FORWARD_TIME/TICKS` do M1 (ou a pasta `LIVE` inteira) e reiniciar; o M1 de 1000 dias leva horas por símbolo e ~700 MB por ano.
+
+### Ferramentas de pesquisa (tools/mba)
+- `mba_audit.py` — auditoria estrutural de uma pasta LIVE.
+- `mba_mine.py` — minerador simples (descoberta/validação/placebo/BH).
+- `mba_report.py` — relatório completo por ativo (descritivo + mineração `ret`/`hit`/`open`, custo por spread de ticks por slot de NY, vantagem contra a média, famílias deduplicadas). Saída em `docs/relatorios/mba/ativos/<ATIVO>/`.
+- `mba_consolidate.py` — comparativo entre ativos: `docs/relatorios/RELATORIO-MBA-8-PARES-2026-10-16.md`.
+- Estudo de alcance (primeira passagem por barra, BUY/SELL executáveis, minuto a minuto): `mba_reach_load.py` → `mba_reach.py` → `mba_reach_analyze.py` / `mba_reach_struct.py` → `mba_reach_summary.py` → `mba_reach_report.py`. Relatório: `docs/relatorios/INVESTIGACAO-ALCANCE-HORARIO-MBA-2026-10-17.md`; saídas por ativo em `docs/relatorios/mba/reach/<ATIVO>/`.
+
+Armadilhas aprendidas: (1) `rates.spread` histórico é 0 em contas ECN e menor que o spread real; usar o spread medido nos ticks. (2) `atr`/`range` dos candles são gravados com 2 casas (0.00 em FX de 5 dígitos): recalcular do OHLC. (3) Para vender com barras de Bid o custo é o spread da SAÍDA; cobrar o da entrada gera falsos lucros na rolagem. (4) Testar contra a média de todas as velas, senão a tendência do ativo vira "padrão". (5) Sinais condicionais: nunca tirar média por dia — o número de sinais no dia depende do futuro (vaza resultado); usar média por entrada com erro agrupado por dia. (6) Barras de Bid entre 23:00 e 01:15 do servidor geram "padrões" de rolagem; excluir ou usar ask dos ticks.

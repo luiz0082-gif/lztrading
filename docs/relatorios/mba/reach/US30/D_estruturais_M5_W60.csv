@@ -1,0 +1,59 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+8000,race,tickvol,hour,tickvol=baixo & hora=06h,1208,145,50,0.015,87.014,0.016,35.650,0.000,0.000,0.000,True,True
+8000,race,tickvol,hour,tickvol=baixo & hora=05h,1202,140,47,0.027,7.063,0.028,52.358,-0.001,0.000,0.000,True,True
+3000,EV_BUY_Ak,tickvol*weekday,sess,tickvol=alto & weekday=QUI & NY(15-20),1183,38,27,-497.179,-6.359,334.070,1.054,-649.928,154.286,0.000,False,False
+8000,EV_SELL_Ak,ret4*dopen,sess,ret4=Q5(subiu+) & dopen=Q1(bem abaixo) & Londres(09-15),857,69,40,-1558.206,-4.752,56.121,0.089,-1616.431,-47.243,0.000,False,False
+3000,EV_BUY_Ak,prev1*tickvol,sess,prev1=forte_baixa & tickvol=alto & NY(15-20),1166,151,112,-438.764,-4.671,-27.570,-0.148,-590.179,-201.220,0.000,False,False
+3000,race,prev1*ret4,sess,prev1=forte_baixa & ret4=Q1(caiu+) & NY(15-20),2148,218,146,-0.120,-4.622,-0.011,-0.339,-0.104,-0.002,0.000,True,False
+8000,EV_BUY_Ak,ret4*dopen,sess,ret4=Q5(subiu+) & dopen=Q1(bem abaixo) & Londres(09-15),857,69,40,1511.041,4.517,-57.956,-0.091,1339.947,-184.422,0.000,True,False
+8000,race,tickvol,hour,tickvol=normal & hora=07h,1105,153,94,0.019,4.495,0.018,1.309,-0.005,-0.004,0.000,True,False
+3000,EV_BUY_Ak,prev1*ret4,sess,prev1=forte_baixa & ret4=Q1(caiu+) & NY(15-20),2148,218,146,-369.886,-4.371,-129.119,-1.272,-596.609,-374.873,0.000,False,False
+8000,race,prev1*weekday,sess,prev1=baixa & weekday=QUA & Asia(00-09),2048,44,30,0.038,4.359,0.041,2.651,0.019,0.022,0.000,True,True
+3000,EV_BUY_Ak,pdpos,hour,pdpos=acima_PDH & hora=10h,567,33,25,-1126.512,-4.311,152.520,0.441,-1269.811,10.680,0.000,False,False
+8000,EV_BUY_Ak,streak*dopen,sess,streak=3+ altas & dopen=Q1(bem abaixo) & Londres(09-15),537,69,36,1353.835,4.302,156.032,0.228,1172.210,50.106,0.000,True,False
+8000,EV_BUY_Ak,ret4*pdpos,sess,ret4=Q4 & pdpos=acima_PDH & NY(15-20),1045,77,59,1909.942,4.298,-175.912,-0.332,1967.603,-99.617,0.000,True,False
+8000,race,ret4*pdpos,sess,ret4=Q4 & pdpos=acima_PDH & NY(15-20),1045,77,59,0.215,4.203,-0.020,-0.334,0.218,-0.014,0.000,True,False
+8000,EV_BUY_Ak,pdpos,hour,pdpos=acima_PDH & hora=10h,567,33,25,-2563.439,-4.157,-29.409,-0.030,-2320.347,215.234,0.000,False,False
+3000,EV_SELL_Ak,prev1*ret4,sess,prev1=forte_baixa & ret4=Q1(caiu+) & NY(15-20),2148,218,146,338.598,4.130,-4.904,-0.047,7.891,-316.694,0.000,True,False
+8000,EV_SELL_Ak,pdpos,hour,pdpos=acima_PDH & hora=10h,567,33,25,2569.979,4.128,14.388,0.014,2101.136,-456.348,0.000,False,False
+3000,EV_SELL_Ak,pdpos,hour,pdpos=acima_PDH & hora=10h,567,33,25,1163.917,4.119,-142.949,-0.422,1043.785,-263.833,0.000,True,False
+8000,EV_SELL_Ak,streak*dopen,sess,streak=3+ altas & dopen=Q1(bem abaixo) & Londres(09-15),537,69,36,-1371.523,-4.119,-179.368,-0.267,-1422.210,-306.718,0.000,False,False
+8000,EV_SELL_Ak,ret4*pdpos,sess,ret4=Q4 & pdpos=acima_PDH & NY(15-20),1045,77,59,-1842.059,-4.113,240.178,0.466,-2086.645,-41.234,0.000,False,False
+3000,EV_SELL_Ak,ret4*prevday,sess,ret4=Q1(caiu+) & prevday=dia_ant_alta & NY(15-20),2453,113,82,398.367,4.105,12.825,0.114,76.366,-291.839,0.000,True,False
+3000,EV_BUY_Ak,compress*tickvol,sess,compress=normal & tickvol=alto & NY(15-20),1525,130,111,-382.649,-4.026,150.729,0.796,-530.110,-23.379,0.000,False,False
+3000,race,pdpos,hour,pdpos=acima_PDH & hora=10h,567,33,25,-0.343,-3.989,0.047,0.422,-0.347,0.044,0.000,False,False
+8000,race,tickvol,hour,tickvol=normal & hora=05h,1103,157,88,0.022,3.970,0.020,2.373,-0.007,-0.008,0.000,True,True
+3000,EV_BUY_Ak,streak*dopen,sess,streak=3+ altas & dopen=Q4 & Londres(09-15),770,112,75,-607.108,-3.919,10.035,0.048,-789.663,-175.846,0.000,False,False
+3000,race,ret4*prevday,sess,ret4=Q1(caiu+) & prevday=dia_ant_alta & NY(15-20),2453,113,82,-0.122,-3.900,-0.014,-0.363,-0.104,-0.002,0.000,False,False
+3000,race,ret4*dopen,sess,ret4=Q5(subiu+) & dopen=Q1(bem abaixo) & Londres(09-15),857,69,40,0.219,3.899,0.021,0.251,0.201,0.010,0.000,False,False
+3000,EV_BUY_Ak,spread*tickvol,sess,spread=normal & tickvol=alto & NY(15-20),5044,174,132,-235.534,-3.878,-6.580,-0.054,-388.959,-182.327,0.000,False,False
+8000,race,streak*pdpos,sess,streak=3+ altas & pdpos=acima_PDH & NY(15-20),810,81,60,0.204,3.855,-0.080,-1.087,0.207,-0.072,0.000,False,False
+8000,race,streak*compress,sess,streak=3+ baixas & compress=normal & Londres(09-15),971,198,133,-0.082,-3.843,0.047,1.189,-0.102,0.026,0.000,False,False
+3000,EV_BUY_Ak,tickvol*weekday,sess,tickvol=alto & weekday=TER & Asia(00-09),2851,40,29,-566.700,-3.831,-204.951,-0.961,-737.571,-374.556,0.000,False,False
+8000,race,ret4*dopen,sess,ret4=Q5(subiu+) & dopen=Q1(bem abaixo) & Londres(09-15),857,69,40,0.156,3.827,-0.011,-0.162,0.134,-0.027,0.000,False,False
+3000,EV_BUY_Ak,ret4*dopen,sess,ret4=Q5(subiu+) & dopen=Q1(bem abaixo) & Londres(09-15),857,69,40,679.302,3.808,28.488,0.108,511.113,-122.780,0.000,False,False
+3000,race,tickvol*weekday,sess,tickvol=alto & weekday=QUI & NY(15-20),1183,38,27,-0.099,-3.777,0.107,1.003,-0.076,0.131,0.000,False,False
+3000,race,streak*dopen,sess,streak=3+ altas & dopen=Q4 & Londres(09-15),770,112,75,-0.190,-3.776,0.020,0.292,-0.209,0.000,0.000,False,False
+8000,EV_SELL_Ak,streak*pdpos,sess,streak=3+ altas & pdpos=acima_PDH & NY(15-20),810,81,60,-1725.890,-3.773,696.594,1.160,-1961.037,418.302,0.000,False,False
+8000,race,streak*brk,sess,streak=2 altas & brk=rompeu_max_fechou_fora & Londres(09-15),508,151,98,0.098,3.757,0.030,0.800,0.081,0.009,0.000,False,False
+3000,EV_BUY_Ak,brk*weekday,sess,brk=rompeu_min_falhou & weekday=QUI & NY(15-20),307,37,27,-711.464,-3.756,-593.478,-2.164,-895.369,-807.692,0.000,False,False
+3000,race,ret4*brk,sess,ret4=Q1(caiu+) & brk=dentro & NY(15-20),2557,221,147,-0.112,-3.742,0.011,0.307,-0.090,0.024,0.000,False,False
+3000,race,ret4*extreme,sess,ret4=Q1(caiu+) & extreme=normal & NY(15-20),4170,222,147,-0.090,-3.738,0.011,0.391,-0.073,0.023,0.000,False,False
+8000,race,tickvol*weekday,sess,tickvol=baixo & weekday=QUA & Asia(00-09),2546,38,26,0.025,3.726,0.009,0.814,0.007,-0.011,0.000,False,False
+8000,EV_BUY_Ak,dopen*brk,sess,dopen=Q1(bem abaixo) & brk=rompeu_max_falhou & Londres(09-15),238,47,28,2072.202,3.715,565.885,0.632,1918.269,459.977,0.000,False,False
+8000,EV_BUY_Ak,streak*pdpos,sess,streak=3+ altas & pdpos=acima_PDH & NY(15-20),810,81,60,1729.451,3.711,-743.568,-1.222,1780.317,-669.017,0.000,False,False
+3000,EV_BUY_Ak,prev1*compress,sess,prev1=forte_baixa & compress=expandido & NY(15-20),2064,221,147,-313.961,-3.709,-224.530,-1.921,-587.706,-497.361,0.000,False,False
+3000,EV_SELL_Ak,ret4*brk,sess,ret4=Q1(caiu+) & brk=dentro & NY(15-20),2557,221,147,343.081,3.692,-6.545,-0.062,31.921,-300.931,0.000,False,False
+3000,EV_SELL_Ak,ret4*dopen,sess,ret4=Q5(subiu+) & dopen=Q1(bem abaixo) & Londres(09-15),857,69,40,-634.180,-3.691,-40.090,-0.148,-733.975,-159.676,0.000,False,False
+8000,EV_SELL_Ak,dopen*brk,sess,dopen=Q1(bem abaixo) & brk=rompeu_max_falhou & Londres(09-15),238,47,28,-2038.871,-3.681,-660.033,-0.780,-2114.872,-793.583,0.000,False,False
+3000,race,prev1*compress,sess,prev1=forte_baixa & compress=expandido & NY(15-20),2064,221,147,-0.096,-3.672,-0.031,-0.860,-0.086,-0.022,0.000,False,False
+8000,EV_SELL_Ak,tickvol*weekday,sess,tickvol=alto & weekday=QUA & Asia(00-09),2574,40,30,-675.264,-3.668,-438.671,-1.494,-717.283,-491.001,0.000,False,False
+8000,race,streak*tickvol,sess,streak=1 alta & tickvol=baixo & Asia(00-09),2858,173,121,0.020,3.594,0.026,2.847,0.001,0.005,0.000,False,False
+8000,race,prev1*tickvol,sess,prev1=baixa & tickvol=baixo & Asia(00-09),3409,174,126,0.019,3.593,0.017,2.383,0.000,-0.004,0.000,False,False
+3000,EV_BUY_Ak,extreme*tickvol,sess,extreme=normal & tickvol=alto & NY(15-20),4621,174,130,-228.888,-3.559,5.718,0.045,-383.870,-172.084,0.000,False,False
+8000,EV_BUY_Ak,dopen*tickvol,sess,dopen=Q5(bem acima) & tickvol=baixo & Londres(09-15),1586,81,32,-826.854,-3.558,1331.098,2.114,-987.468,1217.838,0.000,False,False
+3000,race,dopen*brk,sess,dopen=Q1(bem abaixo) & brk=rompeu_max_falhou & Londres(09-15),238,47,28,0.263,3.546,0.334,2.256,0.250,0.329,0.000,False,False
+3000,EV_BUY_Ak,ret4*pdpos,sess,ret4=Q2 & pdpos=acima_PDH & NY(15-20),705,68,52,648.910,3.545,-138.755,-0.768,490.765,-315.982,0.000,False,False
+3000,race,ret4*pdpos,sess,ret4=Q2 & pdpos=acima_PDH & NY(15-20),705,68,52,0.210,3.544,-0.035,-0.596,0.227,-0.018,0.000,False,False
+8000,EV_SELL_Ak,dopen*tickvol,sess,dopen=Q5(bem acima) & tickvol=baixo & Londres(09-15),1586,81,32,824.301,3.533,-1350.393,-2.228,752.886,-1468.444,0.000,False,False
+3000,race,tickvol*weekday,sess,tickvol=alto & weekday=TER & Asia(00-09),2851,40,29,-0.171,-3.526,-0.057,-0.782,-0.191,-0.077,0.000,False,False

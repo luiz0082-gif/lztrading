@@ -1,6 +1,16 @@
 //+------------------------------------------------------------------+
 //|                                                  EA_HFT_XAU.mq5  |
-//|                                                  versão 1.07     |
+//|                                                  versão 1.08     |
+//| v1.08: precisão de tendência e menos posição "presa" (análise do |
+//|        CSV 09-16/out: 100% das perdas vieram de posições >120 s; |
+//|        174/264 entradas ocorreram com lado oposto aberto).       |
+//|        - tendência com histerese ER entra/sai e flag "ativa";    |
+//|          sem tendência ativa não cria pendentes (SEM_TENDENCIA)  |
+//|        - veto de lock: lados opostos abertos => nada novo        |
+//|        - saída lógica (não é SL): sem progresso em N s e         |
+//|          tendência confirmada contra a posição                   |
+//|        - sinal M1 atualizado mesmo com bloqueio ativo            |
+//|        - PARAMS e ER/ATR no CSV de eventos                       |
 //| v1.07: tendência estável (eficiência de 15 velas M1, com         |
 //|        histerese) no lugar da direção de uma vela; CopyRates em  |
 //|        ordem de série (sinal/ATR usavam a vela mais antiga);     |
@@ -16,7 +26,7 @@
 //| podem exceder esses limites.                                     |
 //+------------------------------------------------------------------+
 #property copyright "EA HFT XAU"
-#property version   "1.07"
+#property version   "1.08"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -48,7 +58,19 @@ input double InpPassoMinATR      = 0.30;   // passo mínimo entre níveis do mes
 
 input group "=== Tendência (define fav x ctr) ==="
 input int    InpTendJanela       = 15;     // velas M1 fechadas (3..20)
-input double InpTendERMin        = 0.35;   // eficiência mínima p/ declarar tendência; abaixo disso mantém a anterior
+input double InpTendERMin        = 0.35;   // eficiência mínima p/ declarar tendência (ativa a tendência)
+input double InpTendERSai        = 0.25;   // abaixo disso a tendência fica inativa (histerese: entre SAI e MIN mantém o estado)
+input bool   InpTendExigeAtiva   = true;   // sem tendência ativa não cria pendentes novas (mercado lateral = falso rompimento)
+
+input group "=== RISCO: Anti-Lock (lados opostos) ==="
+input bool   InpVetaLock         = true;   // com posições BUY e SELL abertas ao mesmo tempo: cancela pendentes e não cria novas
+
+input group "=== SAIDA LOGICA (nao e Stop Loss) ==="
+input bool   InpUsarSemProgresso = true;   // fecha a posição que após N s ainda não está no lucro (descontado o piso)
+input int    InpSemProgressoSeg  = 90;     // segundos
+input double InpSemProgressoMin  = 0.0;    // lucro mínimo em preço (USD/oz) exigido após N s; abaixo disso fecha
+input bool   InpUsarInvalTend    = true;   // fecha posição no prejuízo quando a tendência ativa virou CONTRA ela
+input double InpInvalTendPerda   = 0.0;   // prejuízo mínimo em preço p/ acionar (0 = qualquer prejuízo)
 
 input group "=== Score ==="
 input double InpScoreForte       = 0.60;
@@ -144,6 +166,7 @@ double   g_score_ultimo = 0;
 int      g_dir_ultimo   = 1;
 int      g_sinal_recuo  = 0;
 double   g_tend_er      = 0;   // eficiência da janela de tendência (0..1)
+bool     g_tend_ativa   = false; // true quando ER >= MIN; só volta a false com ER < SAI
 
 datetime g_ultima_vela_m1 = 0;
 uint     g_ultimo_check_ms = 0;
@@ -308,7 +331,7 @@ void P_Draw(double spread_preco)
    // ===== Header =====
    color sc = EstadoCor(g_estado);
    P_Lbl("title", PX + 16, PY + 8, "HFT XAU", CLR_TEXT, 11, "Segoe UI Semibold");
-   P_Lbl("ver",   PX + PW - 66, PY + 11, "v1.07", CLR_MUTED, 8, "Consolas");
+   P_Lbl("ver",   PX + PW - 66, PY + 11, "v1.08", CLR_MUTED, 8, "Consolas");
    // status dot em duas camadas (efeito de glow sutil)
    P_Rect("dot_out", PX + PW - 26, PY + 14, 10, 10, CLR_BG_HDR, sc);
    P_Rect("dot_in",  PX + PW - 24, PY + 16,  6,  6, sc, sc);
@@ -435,7 +458,7 @@ int OnInit()
    P_Clear();
    P_Draw(sym.Ask() - sym.Bid());
 
-   PrintFormat("EA HFT XAU v1.07 OK | Ponto=%.5f Dig=%d TickVal=%.4f ValPonto=%.4f | ATRmed=%.5f | Score=%.3f Dir=%d",
+   PrintFormat("EA HFT XAU v1.08 OK |Ponto=%.5f Dig=%d TickVal=%.4f ValPonto=%.4f | ATRmed=%.5f | Score=%.3f Dir=%d",
                g_ponto, g_digitos, tick_val, g_valor_por_ponto,
                g_atr_med, g_score_ultimo, g_dir_ultimo);
    PrintFormat("PARAMS | Lote=%.2f MaxPos=%d PerdaPos=%s/%.2f PerdaFlutTot=%s/%.2f TempoMax=%s/%dmin Meta=%.2f PerdaDia=%.2f SL=%s/%.2f ExpiraPend=%dmin CancelaOposta=%s",
@@ -448,7 +471,23 @@ int OnInit()
    PrintFormat("TENDENCIA | janela=%d ERmin=%.2f PassoMinATR=%.2f DriftATR=%.2f CancelaOposta=%s",
                InpTendJanela, InpTendERMin, InpPassoMinATR, InpDriftRecenterATR,
                (InpCancelaOposta ? "ON" : "OFF"));
-   LogEvento("INIT", 0, "", 0, 0, "v1.07");
+   PrintFormat("v1.08 | TendExigeAtiva=%s ERmin=%.2f ERsai=%.2f VetaLock=%s SemProgresso=%s/%ds/%.2f InvalTend=%s/%.2f ativa=%s dir=%d er=%.3f",
+               (InpTendExigeAtiva ? "ON" : "OFF"), InpTendERMin, InpTendERSai, (InpVetaLock ? "ON" : "OFF"),
+               (InpUsarSemProgresso ? "ON" : "OFF"), InpSemProgressoSeg, InpSemProgressoMin,
+               (InpUsarInvalTend ? "ON" : "OFF"), InpInvalTendPerda, (g_tend_ativa ? "S" : "N"), g_dir_ultimo, g_tend_er);
+   LogEvento("INIT", 0, "", 0, 0, "v1.08");
+   // inputs efetivos no CSV (a análise anterior não conseguia saber se TEMPO_MAX/PERDA_FLUT estavam ligados)
+   LogEvento("PARAMS", 0, "", 0, InpLote,
+             "lote=" + DoubleToString(InpLote, 2) + " maxpos=" + IntegerToString(InpMaxPosicoes) +
+             " perdaPos=" + (InpUsarPerdaPos ? "ON/" : "OFF/") + DoubleToString(InpPerdaPosUSD, 2) +
+             " flutTot=" + (InpUsarPerdaFlutTot ? "ON/" : "OFF/") + DoubleToString(InpPerdaFlutTotUSD, 2) +
+             " tempoMax=" + (InpUsarTempoMax ? "ON/" : "OFF/") + IntegerToString(InpTempoMaxMin) +
+             " metaDia=" + DoubleToString(InpMetaLucroDiaria, 2) + " perdaDia=" + DoubleToString(InpPerdaMaxDiaria, 2) +
+             " SL=" + (InpUseStopLoss ? "ON" : "OFF") + " cancelaOposta=" + (InpCancelaOposta ? "ON" : "OFF") +
+             " ERmin=" + DoubleToString(InpTendERMin, 2) + " ERsai=" + DoubleToString(InpTendERSai, 2) +
+             " exigeAtiva=" + (InpTendExigeAtiva ? "ON" : "OFF") + " vetaLock=" + (InpVetaLock ? "ON" : "OFF") +
+             " semProg=" + (InpUsarSemProgresso ? "ON/" : "OFF/") + IntegerToString(InpSemProgressoSeg) + "s/" + DoubleToString(InpSemProgressoMin, 2) +
+             " invalTend=" + (InpUsarInvalTend ? "ON/" : "OFF/") + DoubleToString(InpInvalTendPerda, 2));
    return INIT_SUCCEEDED;
 }
 
@@ -615,7 +654,22 @@ bool FecharTudo(string motivo)
    return (n == 0 && ContaOrdensEA() == 0);
 }
 
-// Emergência por posição: perda flutuante, tempo máximo. Roda a cada tick.
+// true se há posição BUY e posição SELL abertas ao mesmo tempo (lock)
+bool TemLock()
+{
+   int nb = 0, ns = 0;
+   for(int i = 0; i < PositionsTotal(); i++)
+   {
+      ulong tk = PositionGetTicket(i);
+      if(tk == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+      if(PositionGetInteger(POSITION_MAGIC) != InpMagico) continue;
+      if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) nb++; else ns++;
+   }
+   return (nb > 0 && ns > 0);
+}
+
+// Emergência por posição: perda flutuante, tempo máximo, saídas lógicas. Roda a cada tick.
 void VerificarRiscoPosicoes()
 {
    for(int i = PositionsTotal() - 1; i >= 0; i--)
@@ -627,6 +681,29 @@ void VerificarRiscoPosicoes()
       double fl = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
       if(InpUsarPerdaPos && InpPerdaPosUSD > 0 && fl <= -InpPerdaPosUSD)
       { FecharPosicao(tk, "PERDA_POS"); continue; }
+
+      // Saídas lógicas v1.08 (market close do EA, não ordem de stop). Lucro em preço (USD/oz)
+      // pelo preço de saída real: BUY sai no bid, SELL sai no ask.
+      if(InpUsarSemProgresso || InpUsarInvalTend)
+      {
+         bool   eh_buy   = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY);
+         double p_open   = PositionGetDouble(POSITION_PRICE_OPEN);
+         double lucro_p  = eh_buy ? (SymbolInfoDouble(_Symbol, SYMBOL_BID) - p_open)
+                                  : (p_open - SymbolInfoDouble(_Symbol, SYMBOL_ASK));
+         datetime t_pos  = (datetime)PositionGetInteger(POSITION_TIME);
+         long idade      = (long)(TimeCurrent() - t_pos);
+
+         // tese invalidada: tendência ativa virou contra a posição e ela está no prejuízo
+         if(InpUsarInvalTend && g_tend_ativa && lucro_p < 0 && -lucro_p >= InpInvalTendPerda &&
+            ((eh_buy && g_dir_ultimo < 0) || (!eh_buy && g_dir_ultimo > 0)))
+         { FecharPosicao(tk, "INVAL_TEND"); continue; }
+
+         // sem progresso: passado N s a posição não chegou ao lucro mínimo (100% das perdas do CSV
+         // vieram de posições que passaram de 120 s sem sair)
+         if(InpUsarSemProgresso && InpSemProgressoSeg > 0 && idade >= InpSemProgressoSeg &&
+            lucro_p < InpSemProgressoMin)
+         { FecharPosicao(tk, "SEM_PROGRESSO"); continue; }
+      }
       if(InpUsarTempoMax && InpTempoMaxMin > 0)
       {
          datetime t = (datetime)PositionGetInteger(POSITION_TIME);
@@ -682,6 +759,10 @@ void OnTick()
    g_pl_flut = PLFlutuante(g_n_pos);
    g_pl_dia  = g_pl_real + g_pl_flut;
 
+   // v1.08: o sinal/tendência é atualizado a cada vela mesmo com bloqueio ativo
+   // (antes só no ramo desbloqueado; com SEM_TENDENCIA isso travaria o desbloqueio)
+   if(DetectarNovaVela()) CalcularSinal();
+
    string motivo = "";
 
    // Metas diárias consideram realizado + flutuante; enquanto sobrar posição/ordem, tenta fechar de novo
@@ -719,10 +800,11 @@ void OnTick()
    if(motivo == "" && !PassouFiltroNews()) motivo = "NEWS_PAUSA";
    if(motivo == "" && spread_preco > InpSpreadMaxPreco) motivo = "SPREAD_ALTO";
    if(motivo == "" && g_n_pos >= InpMaxPosicoes) motivo = "MAX_POSICOES";
+   if(motivo == "" && InpTendExigeAtiva && !g_tend_ativa) motivo = "SEM_TENDENCIA";
+   if(motivo == "" && InpVetaLock && TemLock()) motivo = "LOCK_LADOS_OPOSTOS";
 
    if(motivo == "")
    {
-      if(DetectarNovaVela()) CalcularSinal();
       AtualizarEstadoGrid();
       if(g_estado == EST_PAUSA) motivo = "ESTADO_PAUSA";
       else
@@ -771,6 +853,13 @@ void CancelarPendentesOpostas()
       if(OrderGetString(ORDER_SYMBOL) != _Symbol) continue;
       if(OrderGetInteger(ORDER_MAGIC) != InpMagico) continue;
       ENUM_ORDER_TYPE ot = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+      if(InpVetaLock && n_buy > 0 && n_sell > 0 &&
+         (ot == ORDER_TYPE_BUY_STOP || ot == ORDER_TYPE_SELL_STOP))
+      {
+         if(trade.OrderDelete(tk))
+            LogEvento("CANCEL_LOCK", tk, EnumToString(ot), 0, 0, "lados opostos abertos");
+         continue;
+      }
       bool cancela = (ot == ORDER_TYPE_SELL_STOP && n_buy > 0 && n_sell == 0) ||
                      (ot == ORDER_TYPE_BUY_STOP  && n_sell > 0 && n_buy == 0);
       if(cancela && trade.OrderDelete(tk))
@@ -856,6 +945,16 @@ void CalcularSinal()
    double passo = 0;
    for(int i = 0; i < jan; i++) passo += MathAbs(r[i].close - r[i+1].close);
    g_tend_er = (passo > 0) ? MathAbs(liq) / passo : 0.0;
+
+   // v1.08: no primeiro cálculo adota a direção real (antes ficava em ALTA por padrão até o ER liberar)
+   static bool primeira = true;
+   if(primeira)
+   {
+      if(liq != 0.0) g_dir_ultimo = (liq > 0 ? 1 : -1);
+      primeira = false;
+   }
+
+   bool ativa_ant = g_tend_ativa;
    if(g_tend_er >= InpTendERMin && liq != 0.0)
    {
       int nova = (liq > 0 ? 1 : -1);
@@ -864,7 +963,13 @@ void CalcularSinal()
                    "er=" + DoubleToString(g_tend_er, 3) + " liq=" + DoubleToString(liq, 2) +
                    " anterior=" + IntegerToString(g_dir_ultimo));
       g_dir_ultimo = nova;
+      g_tend_ativa = true;
    }
+   else if(g_tend_er < InpTendERSai)
+      g_tend_ativa = false;      // entre SAI e MIN mantém o estado (histerese)
+   if(g_tend_ativa != ativa_ant)
+      LogEvento("TEND_ATIVA", 0, (g_tend_ativa ? "ON" : "OFF"), r[0].close, 0,
+                "er=" + DoubleToString(g_tend_er, 3) + " dir=" + IntegerToString(g_dir_ultimo));
 
    g_sinal_recuo = 0;
    double upper = H - MathMax(O, C);
@@ -1232,7 +1337,10 @@ void SincronizarPosicoes()
 
       LogEvento("OPEN", tk, (pt == POSITION_TYPE_BUY ? "BUY" : "SELL"), preco_open,
                 PositionGetDouble(POSITION_VOLUME),
-                PositionGetString(POSITION_COMMENT) + " tp_dist=" + DoubleToString(tp_dist, 2));
+                PositionGetString(POSITION_COMMENT) + " tp_dist=" + DoubleToString(tp_dist, 2) +
+                " er=" + DoubleToString(g_tend_er, 3) + " dir=" + IntegerToString(g_dir_ultimo) +
+                " ativa=" + (g_tend_ativa ? "S" : "N") + " atr=" + DoubleToString(g_atr_med, 2) +
+                " score=" + DoubleToString(g_score_ultimo, 2));
    }
 
    // Garante TP (e SL opcional) em toda posição gerenciada; sem TP aplicado após N falhas, fecha.

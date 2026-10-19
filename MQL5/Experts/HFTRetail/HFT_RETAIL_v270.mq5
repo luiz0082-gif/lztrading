@@ -1,6 +1,19 @@
 //+------------------------------------------------------------------+
 //|                                             HFT_RETAIL.mq5       |
 //|     HFT Retail v2.70 - v2.64 + SINAL DE TENDENCIA CORRIGIDO     |
+//| v2.72: sessao em JANELAS de horario (relogio do servidor por    |
+//| padrao): A 04-06 e B 15-18, escolhidas pelos logs (302 trades)  |
+//| e pelo M1 do ouro; sem entradas novas nos minutos finais; opcao |
+//| de fechar a posicao no fim da janela (DESLIGADA: nao muda a     |
+//| regra "sem fechamento forcado"); painel com hora LOCAL, janela, |
+//| tempo restante e textos que quebram linha. Modo antigo (blocos  |
+//| GMT) continua em InpSessionMode. Logica do sinal NAO mudou.     |
+//| v2.71: filtro de atividade (mercado parado) desligavel; adota a  |
+//| posicao aberta ao recarregar o EA; trades.csv (schema v26) com   |
+//| MAE/MFE em pontos, faixa e spread na entrada; entrada/duracao    |
+//| lidas do historico (corrige linhas inconsistentes); alerta de    |
+//| posicao presa (so aviso, NAO fecha); PARAMS no CSV de eventos.   |
+//| Sem SL e sem fechamento forcado.                                 |
 //| v2.70: a regressao da micro-tendencia estava INVERTIDA (x=0 era |
 //| o tick mais novo): alta virava BAIXA e vice-versa, e o voto de  |
 //| momentum entrava contra o movimento. Corrigido (x cronologico). |
@@ -12,9 +25,10 @@
 //| Logica do sinal (ensemble) NAO foi alterada.                     |
 //+------------------------------------------------------------------+
 #property copyright "HFT Retail v2.70"
-#property version   "2.70"
-#define EA_VERSION  "v2.70"
-#define CSV_SCHEMA  "v25"
+#property version   "2.72"
+#define EA_VERSION  "v2.72"
+#define CSV_SCHEMA  "v26"
+#define PANEL_W     480      // largura do painel (px)
 #property strict
 
 #include <Trade/Trade.mqh>
@@ -31,6 +45,8 @@ enum ENUM_EA_STATE
 };
 enum ENUM_TREND { TREND_UP, TREND_DOWN, TREND_SIDE };
 enum ENUM_SIG   { SIG_NONE, SIG_BUY, SIG_SELL };
+enum ENUM_SESSION_MODE  { SESSAO_JANELAS = 0, SESSAO_BLOCOS_GMT = 1 };         // como a sessao e definida
+enum ENUM_SESSION_CLOCK { SESSION_CLOCK_SERVER = 0, SESSION_CLOCK_GMT = 1 };   // relogio das janelas
 enum ENUM_LOGFILE
 {
    LF_EVENTS, LF_TICKS, LF_DECISIONS, LF_ORDERS, LF_FILLS,
@@ -53,7 +69,20 @@ input int    InpGateSeconds         = 30;         // Duração da amostragem (se
 input double InpGateMaxAvgSpread    = 50.0;       // Spread médio máximo (pontos)
 input int    InpGateMinTicks        = 10;         // Mínimo de ticks na amostragem
 
-input group "═══ Sessão (hora GMT real, via TimeGMT) ═══"
+input group "═══ Sessão: janelas de horário (v2.72) ═══"
+input ENUM_SESSION_MODE  InpSessionMode = SESSAO_JANELAS;      // JANELAS (A/B abaixo) ou BLOCOS_GMT (modo antigo, grupo seguinte)
+input ENUM_SESSION_CLOCK InpSessionClock = SESSION_CLOCK_SERVER; // Relogio das janelas: hora do SERVIDOR (padrao) ou GMT
+input bool   InpUseWindowA          = true;       // [true/false] Janela A (abertura asiatica: melhor faixa nos logs)
+input int    InpWindowAStartHour    = 4;          // Janela A: inicio (hora cheia, inclusive 0..23) - lida se a janela estiver true
+input int    InpWindowAEndHour      = 6;          // Janela A: fim (hora cheia, exclusive 0..24; inicio > fim cruza a meia-noite)
+input bool   InpUseWindowB          = true;       // [true/false] Janela B (abertura/dados dos EUA: alvo rapido, risco de contra-movimento)
+input int    InpWindowBStartHour    = 15;         // Janela B: inicio (hora cheia, inclusive 0..23) - lida se a janela estiver true
+input int    InpWindowBEndHour      = 18;         // Janela B: fim (hora cheia, exclusive 0..24)
+input bool   InpUseNoNewBeforeEnd   = true;       // [true/false] Sem entradas novas nos minutos finais da janela
+input int    InpNoNewMinBeforeEnd   = 5;          // Minutos finais sem entrada nova - lido se true
+input bool   InpUseFlattenAtEnd     = false;      // [true/false] No FIM da janela fecha a posicao aberta a mercado (realiza lucro OU perda; padrao false = so o TP fecha)
+
+input group "═══ Sessão: blocos GMT (só no modo BLOCOS_GMT) ═══"
 input bool   InpTradeLondon         = true;       // Operar Londres (08-13 GMT)
 input bool   InpTradeNY             = true;       // Operar Nova York (13-21 GMT)
 input bool   InpTradeAsia           = false;      // Operar Ásia (01-08 GMT)
@@ -68,6 +97,15 @@ input double InpW_MeanRev           = 0.25;       // Peso da Reversão à Média
 input double InpW_Momentum          = 0.30;       // Peso do Momentum
 input double InpMaxSpreadPoints     = 50.0;       // Spread máximo para operar (pontos)
 input double InpMaxSpreadPctOfTP    = 0.0;        // Spread máx. como % do TP em pontos (0 = desligado). Alinha o filtro ao alvo
+
+input group "═══ Filtro de Atividade (mercado parado) ═══"
+input bool   InpUseActivityFilter   = true;       // [true/false] Só entra se o mercado estiver se mexendo (parado = preso por horas)
+input int    InpActWindowSec        = 120;        // Janela da faixa (s), 10..1800
+input double InpActMinRangePts      = 150.0;      // Faixa mínima (máx-mín do preço na janela, pontos) - lida se true
+
+input group "═══ Alerta de Posição Presa (só aviso, não fecha nada) ═══"
+input int    InpStuckAlertSec       = 300;        // Avisa quando a posição passa de x s aberta...
+input double InpStuckAlertPts       = 1000.0;     // ...e está no prejuízo de pelo menos x pontos
 
 input group "═══ DINHEIRO — Take Profit e Metas ═══"
 input double InpTP_MoneyPerTrade    = 5.00;       // Take Profit por operação (moeda da conta)
@@ -176,7 +214,7 @@ public:
       m_header[LF_METRICS]   = "ts_ms;wins;losses;total;hit;daily;weekly;monthly;annual;loss_total";
       m_header[LF_GATE]      = "ts_ms;symbol;passed;avg_spread;ticks";
       m_header[LF_DOM]       = "ts_ms;symbol;bid_vol;ask_vol;imbalance";
-      m_header[LF_TRADES]    = "ts_ms;symbol;side;lots;entry_time;entry_price;exit_price;money;pts;win;duration_s;exit_reason";
+      m_header[LF_TRADES]    = "ts_ms;symbol;side;lots;entry_time;entry_price;exit_price;money;pts;win;duration_s;exit_reason;mae_pts;mfe_pts;range_entry_pts;spread_entry_pts";
    }
 
    // Toda linha ganha 'time_server' (hora do servidor) como 1a coluna.
@@ -260,6 +298,7 @@ CLogHub g_log;
 // CONTEXTO POR SIMBOLO
 //==================================================================
 #define TICK_BUF 256
+#define ACT_BUCKETS 1800
 
 class CSymbolContext
 {
@@ -290,6 +329,13 @@ public:
    double   gate_avg_spread;
    int     wins, losses;
    double  daily_money, daily_points;
+   // v2.71: atividade, excursao da posicao e alerta de presa
+   double   sec_hi[ACT_BUCKETS], sec_lo[ACT_BUCKETS];
+   datetime sec_t[ACT_BUCKETS];
+   datetime first_tick_t;
+   double   mae_pts, mfe_pts, cur_pts, range_entry, spread_entry;
+   long     age_s;
+   ulong    last_status_ms;
 
    void Init(string s)
    {
@@ -310,6 +356,58 @@ public:
       gate_start = TimeCurrent();
       gate_spread_sum = 0; gate_samples = 0; gate_avg_spread = 0;
       wins = 0; losses = 0; daily_money = 0; daily_points = 0;
+      ArrayInitialize(sec_hi, 0); ArrayInitialize(sec_lo, 0); ArrayInitialize(sec_t, 0);
+      first_tick_t = 0;
+      ResetExcursion();
+      range_entry = 0; spread_entry = 0; last_status_ms = 0;
+   }
+
+   void ResetExcursion() { mae_pts = 0; mfe_pts = 0; cur_pts = 0; age_s = 0; }
+
+   // faixa (maxima - minima do preco medio) dos ultimos 'win' segundos, em pontos
+   double RangePts(int win, datetime now, bool &ready)
+   {
+      win = (int)MathMax(10, MathMin(win, ACT_BUCKETS - 1));
+      double hi = -1e18, lo = 1e18;
+      datetime t0 = now - win;
+      for(int k = 0; k < ACT_BUCKETS; k++)
+      {
+         if(sec_t[k] == 0 || sec_t[k] < t0 || sec_t[k] > now) continue;
+         if(sec_hi[k] > hi) hi = sec_hi[k];
+         if(sec_lo[k] < lo) lo = sec_lo[k];
+      }
+      ready = (first_tick_t != 0 && now - first_tick_t >= win);
+      return (hi >= lo && point > 0) ? (hi - lo) / point : 0;
+   }
+
+   void UpdateActivity(datetime t, double mid)
+   {
+      if(first_tick_t == 0) first_tick_t = t;
+      int k = (int)(t % ACT_BUCKETS);
+      if(sec_t[k] != t) { sec_t[k] = t; sec_hi[k] = mid; sec_lo[k] = mid; }
+      else { if(mid > sec_hi[k]) sec_hi[k] = mid; if(mid < sec_lo[k]) sec_lo[k] = mid; }
+   }
+
+   // excursao da posicao aberta (MAE/MFE em pontos) + alerta de presa (so aviso)
+   void TrackPosition()
+   {
+      if(ticket == 0 || !PositionSelectByTicket(ticket)) return;
+      if(PositionGetString(POSITION_SYMBOL) != sym) return;
+      MqlTick tk; if(!SymbolInfoTick(sym, tk) || point <= 0) return;
+      bool buy = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY);
+      double po = PositionGetDouble(POSITION_PRICE_OPEN);
+      cur_pts = buy ? (tk.bid - po) / point : (po - tk.ask) / point;
+      if(cur_pts < mae_pts) mae_pts = cur_pts;
+      if(cur_pts > mfe_pts) mfe_pts = cur_pts;
+      age_s = (long)(TimeCurrent() - (datetime)PositionGetInteger(POSITION_TIME));
+      if(InpStuckAlertSec > 0 && age_s >= InpStuckAlertSec && cur_pts <= -InpStuckAlertPts &&
+         GetTickCount64() - last_status_ms >= 60000)
+      {
+         last_status_ms = GetTickCount64();
+         g_log.Append(LF_EVENTS, StringFormat("%I64d;POS_PRESA;-;%s;ticket=%I64u lado=%s idade=%I64ds flut=%.0fpts (%.2f) pior=%.0fpts melhor=%.0fpts",
+            GetTickCount64(), sym, ticket, buy ? "COMPRA" : "VENDA", age_s, cur_pts,
+            PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP), mae_pts, mfe_pts));
+      }
    }
 
    double MidPrice(int back = 0)
@@ -350,6 +448,7 @@ public:
          else                 last_dir_streak = 0;
       }
       PushMid(mid);
+      UpdateActivity(tk.time, mid);
 
       if(!gate_done)
       {
@@ -462,10 +561,130 @@ double NormVol(string sym, double lots)
    return NormalizeDouble(MathRound(lots / st) * st, 2);
 }
 
-// Sessao em GMT real (TimeGMT). Na v2.4 usava a hora do servidor (IC ~ GMT+2/+3),
-// o que deslocava as janelas e bloqueava o EA em horarios que o usuario julgava abertos.
+// Sessao. Modo JANELAS (padrao v2.72): janelas A/B em hora cheia, no relogio do servidor (ou GMT).
+// Modo BLOCOS_GMT: regra antiga (Londres/NY/Asia/rollover em GMT real via TimeGMT).
+datetime ClockNow() { return (InpSessionClock == SESSION_CLOCK_GMT) ? TimeGMT() : TimeCurrent(); }
+
+int ClockMinuteOfDay()
+{
+   MqlDateTime d; TimeToStruct(ClockNow(), d);
+   return d.hour * 60 + d.min;
+}
+
+// diferenca (min) entre a hora LOCAL do PC e o relogio das janelas, arredondada a 30 min (absorve atraso de tick)
+int ClockToLocalMin()
+{
+   double m = (double)(TimeLocal() - ClockNow()) / 60.0;
+   return (int)(MathRound(m / 30.0) * 30.0);
+}
+
+string HHMM(const int minutes)
+{
+   int t = ((minutes % 1440) + 1440) % 1440;
+   return StringFormat("%02d:%02d", t / 60, t % 60);
+}
+
+string DurTxt(const int minutes)
+{
+   if(minutes >= 60) return StringFormat("%dh%02d", minutes / 60, minutes % 60);
+   return StringFormat("%d min", minutes);
+}
+
+// janela w (0 = A, 1 = B): ligada, inicio e fim em minutos do dia
+bool WindowCfg(const int w, int &ws, int &we)
+{
+   bool on = (w == 0) ? InpUseWindowA : InpUseWindowB;
+   ws = ((w == 0) ? InpWindowAStartHour : InpWindowBStartHour) * 60;
+   we = ((w == 0) ? InpWindowAEndHour   : InpWindowBEndHour)   * 60;
+   return on;
+}
+
+// minutos ate o fim da janela em que estamos (-1 = fora de qualquer janela)
+int WindowMinutesLeft(string &name)
+{
+   name = "";
+   int t = ClockMinuteOfDay(), best = -1;
+   for(int w = 0; w < 2; w++)
+   {
+      int ws, we;
+      if(!WindowCfg(w, ws, we)) continue;
+      bool inside = (ws < we) ? (t >= ws && t < we) : (t >= ws || t < we);
+      if(!inside) continue;
+      int left = (ws < we) ? (we - t) : ((t >= ws) ? (1440 - t + we) : (we - t));
+      if(left > best) { best = left; name = (w == 0) ? "A" : "B"; }
+   }
+   return best;
+}
+
+// minutos ate a proxima abertura de janela (usado fora das janelas)
+int MinutesToNextWindow(string &name)
+{
+   name = "";
+   int t = ClockMinuteOfDay(), best = 100000;
+   for(int w = 0; w < 2; w++)
+   {
+      int ws, we;
+      if(!WindowCfg(w, ws, we)) continue;
+      int dd = ((ws - t) % 1440 + 1440) % 1440;
+      if(dd == 0) dd = 1440;
+      if(dd < best) { best = dd; name = (w == 0) ? "A" : "B"; }
+   }
+   return best;
+}
+
+bool InWindowsNow()
+{
+   string n;
+   return (WindowMinutesLeft(n) >= 0);
+}
+
+// ultimos minutos da janela: sem entradas novas
+bool SessionEnding()
+{
+   if(InpSessionMode != SESSAO_JANELAS || !InpUseNoNewBeforeEnd) return false;
+   string n;
+   int left = WindowMinutesLeft(n);
+   return (left >= 0 && left <= InpNoNewMinBeforeEnd);
+}
+
+// fim da janela com a opcao de fechar ligada
+bool FlattenDue()
+{
+   return (InpSessionMode == SESSAO_JANELAS && InpUseFlattenAtEnd && !InWindowsNow());
+}
+
+string SessionWindowsText()
+{
+   string r = "";
+   if(InpUseWindowA) r += StringFormat("A %02d-%02d", InpWindowAStartHour, InpWindowAEndHour);
+   if(InpUseWindowB) r += (r != "" ? ", " : "") + StringFormat("B %02d-%02d", InpWindowBStartHour, InpWindowBEndHour);
+   if(r == "") r = "nenhuma";
+   return r + (InpSessionClock == SESSION_CLOCK_GMT ? " GMT" : " srv");
+}
+
+// valida as janelas; "" = ok
+string SessionValidate()
+{
+   if(InpSessionMode != SESSAO_JANELAS) return "";
+   if(!InpUseWindowA && !InpUseWindowB) return "modo JANELAS exige ao menos uma janela ligada (A ou B)";
+   if(InpUseWindowA && (InpWindowAStartHour < 0 || InpWindowAStartHour > 23 || InpWindowAEndHour < 0 || InpWindowAEndHour > 24 || InpWindowAStartHour == InpWindowAEndHour))
+      return "janela A: inicio 0..23, fim 0..24 e inicio diferente do fim";
+   if(InpUseWindowB && (InpWindowBStartHour < 0 || InpWindowBStartHour > 23 || InpWindowBEndHour < 0 || InpWindowBEndHour > 24 || InpWindowBStartHour == InpWindowBEndHour))
+      return "janela B: inicio 0..23, fim 0..24 e inicio diferente do fim";
+   if(InpUseNoNewBeforeEnd && InpNoNewMinBeforeEnd <= 0) return "sem entradas no fim da janela, ligado, exige InpNoNewMinBeforeEnd > 0";
+   return "";
+}
+
 bool IsSessionAllowed(string &reason)
 {
+   if(InpSessionMode == SESSAO_JANELAS)
+   {
+      if(!InWindowsNow()) { reason = "sessao: fora das janelas (" + SessionWindowsText() + ")"; return false; }
+      if(SessionEnding())
+      { reason = StringFormat("sessao: ultimos %d min da janela, sem entradas novas", InpNoNewMinBeforeEnd); return false; }
+      return true;
+   }
+   // modo antigo: blocos em GMT real
    MqlDateTime t; TimeToStruct(TimeGMT(), t);
    int h = t.hour;
    if(InpBlockRollover && (h >= 22 || h < 1)) { reason = "sessao: rollover (22-01 GMT)"; return false; }
@@ -755,6 +974,34 @@ void UpdateM15()
    g_m15_ok = true;
 }
 
+// faixa de decisao com quebra de linha por palavras: nada fica cortado
+// capacidade (chars) = largura da faixa - recuo do texto (depende do rotulo) - folga, a 7 px por char
+void StripWrap(const string label, const string text, const color clr)
+{
+   int cap = (PANEL_W - 12 - 6 - (StringLen(label) + 1) * 6 - 14) / 7;
+   if(cap < 12) cap = 12;
+   string pad = "";
+   for(int i = 0; i < StringLen(label); i++) pad += " ";
+   string rest = text;
+   bool first = true;
+   while(StringLen(rest) > 0)
+   {
+      string line = rest;
+      if(StringLen(rest) > cap)
+      {
+         int cut = cap;
+         while(cut > 0 && StringGetCharacter(rest, cut) != 32) cut--;
+         if(cut <= 0) cut = cap;
+         line = StringSubstr(rest, 0, cut);
+         rest = StringSubstr(rest, cut);
+         while(StringLen(rest) > 0 && StringGetCharacter(rest, 0) == 32) rest = StringSubstr(rest, 1);
+      }
+      else rest = "";
+      g_panel.Strip(first ? label : pad, line, clr);
+      first = false;
+   }
+}
+
 void DrawPanel()
 {
    if(!InpShowPanel) return;
@@ -773,15 +1020,59 @@ void DrawPanel()
    {
       // --- DECISAO: por que opera / nao opera (informacao critica, sempre visivel)
       if(g_state == STATE_KILL_SWITCH || g_state == STATE_ERROR)
-         g_panel.Strip("PARADO", g_block_reason, LZ_LOSS);
+         StripWrap("PARADO", g_block_reason, LZ_LOSS);
       else if(g_state == STATE_DAILY_TARGET_HIT)
-         g_panel.Strip("META", g_block_reason, LZ_GOLD);
+         StripWrap("META", g_block_reason, LZ_GOLD);
       else if(g_state == STATE_IN_POSITION || g_state == STATE_EXITING || g_state == STATE_ENTERING)
-         g_panel.Strip("POSICAO", g_block_reason, LZ_INFO);
+         StripWrap("POSICAO", g_block_reason, LZ_INFO);
       else if(g_block_reason != "")
-         g_panel.Strip("BLOQUEIO", g_block_reason, LZ_WARN);
+         StripWrap("BLOQUEIO", g_block_reason, LZ_WARN);
       else
          g_panel.Strip("ARMADO", "liberado, aguardando sinal", LZ_PROFIT);
+
+      // --- alerta: posicao aberta fora da janela
+      if(InpSessionMode == SESSAO_JANELAS && !InWindowsNow())
+         for(int i = 0; i < g_nsym; i++)
+            if(g_syms[i].ticket != 0 && PositionSelectByTicket(g_syms[i].ticket))
+            {
+               double fp = g_syms[i].PositionPnLMoney();
+               StripWrap("ATENCAO", StringFormat("posicao aberta FORA da janela, flutuante %s %+.2f%s", g_ccy, fp,
+                         InpUseFlattenAtEnd ? " - fechando agora" : " - fechamento no fim DESLIGADO (segue ate o TP)"),
+                         InpUseFlattenAtEnd ? LZ_WARN : LZ_LOSS);
+               break;
+            }
+
+      // --- HORARIO
+      g_panel.Section("HORARIO");
+      MqlDateTime hs, hl;
+      TimeToStruct(TimeCurrent(), hs); TimeToStruct(TimeLocal(), hl);
+      g_panel.KV2("HORA LOCAL", StringFormat("%02d:%02d:%02d", hl.hour, hl.min, hl.sec), LZ_ACCENT,
+                  "SERVIDOR", StringFormat("%02d:%02d:%02d", hs.hour, hs.min, hs.sec), LZ_TEXT);
+      if(InpSessionMode == SESSAO_JANELAS)
+      {
+         int toLoc = ClockToLocalMin();
+         string wn = "";
+         int wleft = WindowMinutesLeft(wn);
+         if(wleft >= 0)
+            g_panel.KV("JANELA", StringFormat("DENTRO (%s)  faltam %s", wn, DurTxt(wleft)), SessionEnding() ? LZ_WARN : LZ_PROFIT);
+         else
+         {
+            string nn = "";
+            int mn = MinutesToNextWindow(nn);
+            g_panel.KV("JANELA", StringFormat("FORA  proxima %s em %s", nn, DurTxt(mn)), LZ_MUTED);
+         }
+         for(int w = 0; w < 2; w++)
+         {
+            int ws, we;
+            if(!WindowCfg(w, ws, we)) continue;
+            g_panel.KV(w == 0 ? "JANELA A" : "JANELA B",
+                       StringFormat("%s-%s %s | %s-%s loc", HHMM(ws), HHMM(we), InpSessionClock == SESSION_CLOCK_GMT ? "GMT" : "srv", HHMM(ws + toLoc), HHMM(we + toLoc)), LZ_TEXT);
+         }
+         g_panel.KV2("FIM DA JANELA", InpUseFlattenAtEnd ? "FECHA POSICAO" : "SO O TP FECHA", InpUseFlattenAtEnd ? LZ_WARN : LZ_TEXT,
+                     "SEM NOVAS", InpUseNoNewBeforeEnd ? StringFormat("ult. %d min", InpNoNewMinBeforeEnd) : "OFF", LZ_TEXT);
+      }
+      else
+         g_panel.KV("SESSAO", StringFormat("blocos GMT: L%d NY%d AS%d roll%d", InpTradeLondon, InpTradeNY, InpTradeAsia, InpBlockRollover), LZ_TEXT);
 
       // --- MERCADO
       ENUM_TREND tr = (g_nsym > 0) ? g_syms[0].trend : TREND_SIDE;
@@ -804,6 +1095,18 @@ void DrawPanel()
          g_panel.KV("M15", "sem dados", LZ_MUTED);
       g_panel.KV2("IMB DOM", StringFormat("%+.2f", imb_v), (imb_v >= 0) ? LZ_PROFIT : LZ_LOSS,
                   "GATE", gate_str, gate_clr);
+      if(g_nsym > 0)
+      {
+         bool a_ok = false;
+         double a_rg = g_syms[0].RangePts(InpActWindowSec, TimeCurrent(), a_ok);
+         if(!InpUseActivityFilter)
+            g_panel.KV("ATIVIDADE", StringFormat("faixa %ds = %.0f pt (filtro OFF)", InpActWindowSec, a_rg), LZ_MUTED);
+         else if(!a_ok)
+            g_panel.KV("ATIVIDADE", "aquecendo a janela", LZ_WARN);
+         else
+            g_panel.KV("ATIVIDADE", StringFormat("faixa %ds = %.0f / min %.0f pt", InpActWindowSec, a_rg, InpActMinRangePts),
+                       a_rg >= InpActMinRangePts ? LZ_PROFIT : LZ_WARN);
+      }
 
       // --- POSICAO
       int oi = -1;
@@ -818,6 +1121,13 @@ void DrawPanel()
                      "VOLUME", StringFormat("%.2f", g_syms[oi].pending_lots), LZ_TEXT);
          g_panel.KV2("P&L", StringFormat("%s %+.2f", g_ccy, pnl), (pnl >= 0) ? LZ_PROFIT : LZ_LOSS,
                      "TP", StringFormat("%s %.2f", g_ccy, g_syms[oi].tp_money), LZ_GOLD);
+         bool presa = (InpStuckAlertSec > 0 && g_syms[oi].age_s >= InpStuckAlertSec && g_syms[oi].cur_pts <= -InpStuckAlertPts);
+         g_panel.KV2("FLUTUANTE", StringFormat("%+.0f pt", g_syms[oi].cur_pts), g_syms[oi].cur_pts >= 0 ? LZ_PROFIT : (presa ? LZ_LOSS : LZ_WARN),
+                     "PIOR (MAE)", StringFormat("%+.0f pt", g_syms[oi].mae_pts), g_syms[oi].mae_pts <= -InpStuckAlertPts ? LZ_LOSS : LZ_TEXT);
+         long ag = g_syms[oi].age_s;
+         g_panel.KV2("TEMPO ABERTA", ag >= 3600 ? StringFormat("%dh%02dm", (int)(ag / 3600), (int)((ag % 3600) / 60))
+                                                : StringFormat("%dm%02ds", (int)(ag / 60), (int)(ag % 60)), presa ? LZ_LOSS : LZ_TEXT,
+                     "STATUS", presa ? "PRESA" : "normal", presa ? LZ_LOSS : LZ_MUTED);
       }
       else
          g_panel.KV("ABERTA", "flat", LZ_MUTED);
@@ -1008,6 +1318,7 @@ bool OpenTrade(CSymbolContext &ctx, ENUM_SIG sig)
       ctx.entry_time = TimeCurrent();
       ctx.exit_reason = "TP/SL servidor";
       ctx.pending_lots = lots;
+      ctx.ResetExcursion();
       ReanchorToFill(ctx, type, lots);
       LogEvent("ORDER_SENT", "ENTRANDO", "EM POSICAO",
          StringFormat("%s lots=%.2f price=%.*f sl=%.*f tp=%.*f", ctx.sym, lots,
@@ -1148,9 +1459,11 @@ int OnInit()
 {
    g_log.Init();
    HardResetAggregates();
+   string sess_err = SessionValidate();
+   if(sess_err != "") { Print("[HFT] ", sess_err); return INIT_FAILED; }
 
    g_ccy = AccountInfoString(ACCOUNT_CURRENCY);
-   g_panel.Init("LZP_HFT" + IntegerToString(InpMagic) + "_", InpPanelX, InpPanelY, 400);
+   g_panel.Init("LZP_HFT" + IntegerToString(InpMagic) + "_", InpPanelX, InpPanelY, PANEL_W);
 
    // 1) cria pastas de logs IMEDIATAMENTE (HFT_Logs\v25\<data>)
    g_log.RollIfNeeded();
@@ -1194,6 +1507,37 @@ int OnInit()
 
    g_state = InpUseGate ? STATE_GATE : STATE_IDLE;
 
+   // v2.71: posicao ja aberta deste magic (EA recarregado) e adotada; sem isso o EA abria outra por cima
+   // e a saida da antiga entrava no CSV sem entrada/lote
+   bool adotou = false;
+   for(int i = 0; i < g_nsym; i++)
+   {
+      for(int k = PositionsTotal() - 1; k >= 0; k--)
+      {
+         ulong pt = PositionGetTicket(k);
+         if(pt == 0) continue;
+         if(PositionGetString(POSITION_SYMBOL) != g_syms[i].sym || PositionGetInteger(POSITION_MAGIC) != InpMagic) continue;
+         g_syms[i].ticket       = pt;
+         g_syms[i].entry_price  = PositionGetDouble(POSITION_PRICE_OPEN);
+         g_syms[i].entry_type   = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) ? (int)ORDER_TYPE_BUY : (int)ORDER_TYPE_SELL;
+         g_syms[i].entry_time   = (datetime)PositionGetInteger(POSITION_TIME);
+         g_syms[i].pending_lots = PositionGetDouble(POSITION_VOLUME);
+         g_syms[i].tp_price     = PositionGetDouble(POSITION_TP);
+         g_syms[i].sl_price     = PositionGetDouble(POSITION_SL);
+         g_syms[i].tp_money     = (InpTP_UsePointsInstead && InpTP_PointsPerTrade > 0)
+                                  ? g_syms[i].PointsToMoney(g_syms[i].pending_lots, InpTP_PointsPerTrade) : InpTP_MoneyPerTrade;
+         g_syms[i].exit_reason  = "TP/SL servidor";
+         g_syms[i].ResetExcursion();
+         adotou = true;
+         LogEvent("POS_ADOTADA", "-", g_syms[i].sym,
+            StringFormat("ticket=%I64u lado=%s preco=%.*f lote=%.2f tp=%.*f (EA recarregado com posicao aberta)", pt,
+               g_syms[i].entry_type == (int)ORDER_TYPE_BUY ? "COMPRA" : "VENDA", g_syms[i].digits, g_syms[i].entry_price,
+               g_syms[i].pending_lots, g_syms[i].digits, g_syms[i].tp_price));
+         break;
+      }
+   }
+   if(adotou && !InpUseGate) g_state = STATE_IN_POSITION;
+
    g_log.ReportPath();
    LogEvent("INIT", "NENHUM", StateToStr(g_state),
       StringFormat("ver=%s schema=%s magic=%I64d symbols=%s gate=%s strict=%s ccy=%s "
@@ -1206,6 +1550,22 @@ int OnInit()
          InpUseKillSwitch ? "on" : "off", InpKillSwitchDrawdownPct, InpKillSwitchClosePos ? "sim" : "nao",
          InpFixedLots, InpTradeLondon, InpTradeNY, InpTradeAsia, InpBlockRollover,
          (int)(TimeCurrent() - TimeGMT())));
+   LogEvent("SESSAO", "-", "-",
+      StringFormat("modo=%s relogio=%s janelas=%s semNovas=%s(%d min) fechaNoFim=%s deslocamentoLocal=%+d min",
+         InpSessionMode == SESSAO_JANELAS ? "janelas" : "blocos_gmt", InpSessionClock == SESSION_CLOCK_GMT ? "gmt" : "servidor",
+         InpSessionMode == SESSAO_JANELAS ? SessionWindowsText() : "-", InpUseNoNewBeforeEnd ? "on" : "off", InpNoNewMinBeforeEnd,
+         InpUseFlattenAtEnd ? "on" : "off", ClockToLocalMin()));
+   // inputs efetivos no CSV (sem isso nao da para saber com qual preset cada rodada operou)
+   LogEvent("PARAMS", "-", "-",
+      StringFormat("tp=%.2f(%s) meta=%.2f bloqMeta=%s maxloss=%s(%.2f) sl=%s(%.2f) kill=%s(%.1f%%,close=%s) lote=%.2f "
+                   "conf=%.2f ofiJan=%d ofiLim=%.2f wOFI=%.2f wMR=%.2f wMom=%.2f spreadMax=%.1f spreadPctTP=%.1f "
+                   "ativ=%s(%ds,%.0fpt) alertaPresa=%ds/%.0fpt sessao=L%d/NY%d/AS%d/roll%d gate=%s/%ds/%.1fpt",
+         InpTP_MoneyPerTrade, InpTP_UsePointsInstead ? "pts" : "moeda", InpDailyTargetMoney, InpBlockOnDailyTarget ? "on" : "off",
+         InpUseMaxDailyLoss ? "on" : "off", InpMaxDailyLossMoney, InpUseStopLoss ? "on" : "off", InpSL_MoneyPerTrade,
+         InpUseKillSwitch ? "on" : "off", InpKillSwitchDrawdownPct, InpKillSwitchClosePos ? "sim" : "nao", InpFixedLots,
+         InpMinConfidence, InpOFIWindow, InpOFIThreshold, InpW_OFI, InpW_MeanRev, InpW_Momentum, InpMaxSpreadPoints, InpMaxSpreadPctOfTP,
+         InpUseActivityFilter ? "on" : "off", InpActWindowSec, InpActMinRangePts, InpStuckAlertSec, InpStuckAlertPts,
+         InpTradeLondon, InpTradeNY, InpTradeAsia, InpBlockRollover, InpUseGate ? "on" : "off", InpGateSeconds, InpGateMaxAvgSpread));
    for(int i = 0; i < g_nsym; i++)
    {
       double tpp = TpPoints(g_syms[i]);
@@ -1297,12 +1657,31 @@ void OnTick()
       if(!PositionSelectByTicket(g_syms[i].ticket)) { g_syms[i].ticket = 0; continue; }
       if(PositionGetString(POSITION_SYMBOL) != g_syms[i].sym) { g_syms[i].ticket = 0; continue; }
 
+      g_syms[i].TrackPosition();
       double pnl = g_syms[i].PositionPnLMoney();
       if(g_syms[i].tp_money > 0 && pnl >= g_syms[i].tp_money)
       { if(CloseSymbol(g_syms[i], "TP_MONEY")) g_state = STATE_EXITING; continue; }
       if(InpUseStopLoss && g_syms[i].sl_money > 0 && pnl <= -g_syms[i].sl_money)
       { if(CloseSymbol(g_syms[i], "SL_MONEY")) g_state = STATE_EXITING; continue; }
+      // v2.72: fim da janela com InpUseFlattenAtEnd ligado: fecha a mercado (nao e stop de perda: tambem realiza lucro aberto)
+      if(FlattenDue())
+      {
+         static ulong flat_ticket = 0;
+         if(flat_ticket != g_syms[i].ticket)
+         {
+            flat_ticket = g_syms[i].ticket;
+            LogEvent("SESSION_FLATTEN", "EM POSICAO", "SAINDO",
+               StringFormat("%s: fim da janela (%s), fecha ticket %I64u, flutuante %+.2f", g_syms[i].sym, SessionWindowsText(), g_syms[i].ticket, pnl));
+         }
+         if(CloseSymbol(g_syms[i], "SESSION_CLOSE")) g_state = STATE_EXITING;
+         continue;
+      }
    }
+
+   // posicao adotada ao recarregar o EA (ou aberta fora do fluxo): o estado precisa refletir isso
+   if(g_state == STATE_IDLE)
+      for(int i = 0; i < g_nsym; i++)
+         if(g_syms[i].ticket != 0) { g_state = STATE_IN_POSITION; break; }
 
    string reason = "";
    if(g_state == STATE_IN_POSITION || g_state == STATE_EXITING || g_state == STATE_ENTERING)
@@ -1347,9 +1726,21 @@ void OnTick()
          { loop_block = "spread alto vs TP"; continue; }
       }
 
+      bool act_ready = false;
+      double act_rng = g_syms[i].RangePts(InpActWindowSec, tk.time, act_ready);
+      if(InpUseActivityFilter)
+      {
+         if(!act_ready)
+         { loop_block = "atividade: aquecendo a janela de " + IntegerToString(InpActWindowSec) + " s"; continue; }
+         if(act_rng < InpActMinRangePts)
+         { loop_block = StringFormat("mercado parado: faixa %ds = %.0f < %.0f pt", InpActWindowSec, act_rng, InpActMinRangePts); continue; }
+      }
+
       double conf = 0;
       ENUM_SIG sig = EnsembleVote(g_syms[i], conf);
       if(sig == SIG_NONE) continue;
+      g_syms[i].range_entry = act_rng;
+      g_syms[i].spread_entry = sp;
 
       g_log.Append(LF_DECISIONS, StringFormat("%I64d;%s;%s;%.3f;true;aprovado",
          GetTickCount64(), g_syms[i].sym, SigToStr(sig), conf));
@@ -1455,11 +1846,41 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
    double net    = profit + swap + comm;
 
    double price_out = HistoryDealGetDouble(deal, DEAL_PRICE);
+   datetime t_out   = (datetime)HistoryDealGetInteger(deal, DEAL_TIME);
+   long deal_reason = HistoryDealGetInteger(deal, DEAL_REASON);
+   ulong pid        = (ulong)HistoryDealGetInteger(deal, DEAL_POSITION_ID);
+
+   // v2.71: entrada lida do HISTORICO da posicao (o contexto do EA ficava velho/vazio apos recarga
+   // ou troca de posicao e gerava linhas com entrada errada, lote 0 e duracao -1)
+   double   e_price = 0, e_vol = 0;
+   datetime e_time = 0;
+   int      e_type = -1;
+   bool     e_ok = false;
+   if(pid > 0 && HistorySelectByPosition(pid))
+   {
+      int nd = HistoryDealsTotal();
+      for(int k = 0; k < nd; k++)
+      {
+         ulong dk = HistoryDealGetTicket(k);
+         if(dk == 0 || HistoryDealGetInteger(dk, DEAL_ENTRY) != DEAL_ENTRY_IN) continue;
+         e_price = HistoryDealGetDouble(dk, DEAL_PRICE);
+         e_time  = (datetime)HistoryDealGetInteger(dk, DEAL_TIME);
+         e_vol   = HistoryDealGetDouble(dk, DEAL_VOLUME);
+         e_type  = (HistoryDealGetInteger(dk, DEAL_TYPE) == DEAL_TYPE_BUY) ? (int)ORDER_TYPE_BUY : (int)ORDER_TYPE_SELL;
+         e_ok = true;
+         break;
+      }
+   }
+   if(!e_ok)
+   {
+      e_price = g_syms[si].entry_price; e_time = g_syms[si].entry_time;
+      e_vol = g_syms[si].pending_lots;  e_type = g_syms[si].entry_type;
+   }
    double pts = 0;
-   if(g_syms[si].entry_price > 0)
-      pts = (g_syms[si].entry_type == (int)ORDER_TYPE_BUY)
-            ? (price_out - g_syms[si].entry_price) / g_syms[si].point
-            : (g_syms[si].entry_price - price_out) / g_syms[si].point;
+   if(e_price > 0 && e_type >= 0)
+      pts = (e_type == (int)ORDER_TYPE_BUY)
+            ? (price_out - e_price) / g_syms[si].point
+            : (e_price - price_out) / g_syms[si].point;
 
    g_daily_money   += net;
    g_daily_points  += pts;
@@ -1474,18 +1895,18 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
    if(win) { g_wins++; g_syms[si].wins++; }
    else    { g_losses++; g_syms[si].losses++; g_total_loss_money += MathAbs(net); }
 
-   string side_str = (g_syms[si].entry_type == (int)ORDER_TYPE_BUY) ? "COMPRA" : "VENDA";
+   string side_str = (e_type == (int)ORDER_TYPE_BUY) ? "COMPRA" : (e_type == (int)ORDER_TYPE_SELL ? "VENDA" : "?");
    PushRecent(g_syms[si].sym, side_str, net, pts, win);
 
    g_log.Append(LF_FILLS, StringFormat("%I64d;%s;%I64u;%s;%.2f;%.2f;%.1f;%.2f;%.1f",
-      GetTickCount64(), g_syms[si].sym, deal, side_str, g_syms[si].pending_lots,
+      GetTickCount64(), g_syms[si].sym, deal, side_str, e_vol,
       net, pts, g_syms[si].daily_money, g_syms[si].daily_points));
 
    // motivo real da saida: o EA marca quando fecha por software; senao usa DEAL_REASON do servidor
    string why = g_syms[si].exit_reason;
    if(why == "" || why == "TP/SL servidor")
    {
-      long dr = HistoryDealGetInteger(deal, DEAL_REASON);
+      long dr = deal_reason;
       if(dr == DEAL_REASON_TP)       why = "TP_SERVIDOR";
       else if(dr == DEAL_REASON_SL)  why = "SL_SERVIDOR";
       else if(dr == DEAL_REASON_SO)  why = "STOP_OUT";
@@ -1493,12 +1914,15 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
                                      why = "MANUAL";
       else                           why = "OUTRO_" + IntegerToString((int)dr);
    }
-   long dur = (g_syms[si].entry_time > 0) ? (long)(TimeCurrent() - g_syms[si].entry_time) : -1;
-   g_log.Append(LF_TRADES, StringFormat("%I64d;%s;%s;%.2f;%s;%.*f;%.*f;%.2f;%.1f;%s;%I64d;%s",
-      GetTickCount64(), g_syms[si].sym, side_str, g_syms[si].pending_lots,
-      g_syms[si].entry_time > 0 ? TimeToString(g_syms[si].entry_time, TIME_DATE | TIME_SECONDS) : "",
-      g_syms[si].digits, g_syms[si].entry_price, g_syms[si].digits, price_out,
-      net, pts, win ? "WIN" : "LOSS", dur, why));
+   long dur = (e_time > 0) ? (long)(t_out - e_time) : -1;
+   // excursao final: considera tambem o preco de saida
+   double mae = MathMin(g_syms[si].mae_pts, pts), mfe = MathMax(g_syms[si].mfe_pts, pts);
+   g_log.Append(LF_TRADES, StringFormat("%I64d;%s;%s;%.2f;%s;%.*f;%.*f;%.2f;%.1f;%s;%I64d;%s;%.0f;%.0f;%.0f;%.1f",
+      GetTickCount64(), g_syms[si].sym, side_str, e_vol,
+      e_time > 0 ? TimeToString(e_time, TIME_DATE | TIME_SECONDS) : "",
+      g_syms[si].digits, e_price, g_syms[si].digits, price_out,
+      net, pts, win ? "WIN" : "LOSS", dur, why, mae, mfe,
+      g_syms[si].range_entry, g_syms[si].spread_entry));
 
    SaveAggregates();
 
@@ -1509,6 +1933,8 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
    g_syms[si].entry_time = 0;
    g_syms[si].exit_reason = "";
    g_syms[si].close_req_ms = 0;
+   g_syms[si].ResetExcursion();
+   g_syms[si].range_entry = 0; g_syms[si].spread_entry = 0;
 
    if(g_state == STATE_KILL_SWITCH) return;   // kill switch nao e desfeito por um fechamento
 

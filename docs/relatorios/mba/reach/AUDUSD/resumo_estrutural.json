@@ -1,0 +1,124 @@
+{
+ "M15_W240": {
+  "tests": 25560,
+  "bh_disc": 35,
+  "validated": 34,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 34
+  },
+  "placebo_validated": {
+   "17": 31,
+   "29": 33,
+   "41": 30,
+   "53": 35,
+   "67": 18,
+   "79": 6,
+   "97": 12,
+   "113": 32
+  },
+  "placebo_mean": 24.625,
+  "placebo_max": 35,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 65,
+   "gap_med_abs": 135.99999999999167,
+   "fechou_no_dia_pct": 84.61538461538461
+  }
+ },
+ "M15_W60": {
+  "tests": 25644,
+  "bh_disc": 5,
+  "validated": 1,
+  "validated_by_outcome": {
+   "race": 1
+  },
+  "placebo_validated": {
+   "17": 2,
+   "29": 3,
+   "41": 2,
+   "53": 7,
+   "67": 6,
+   "79": 4,
+   "97": 4,
+   "113": 9
+  },
+  "placebo_mean": 4.625,
+  "placebo_max": 9,
+  "k_tested": [
+   50,
+   100
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 65,
+   "gap_med_abs": 135.99999999999167,
+   "fechou_no_dia_pct": 84.61538461538461
+  }
+ },
+ "M5_W60": {
+  "tests": 25218,
+  "bh_disc": 8,
+  "validated": 4,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 2,
+   "race": 2
+  },
+  "placebo_validated": {
+   "17": 5,
+   "29": 4,
+   "41": 4,
+   "53": 11,
+   "67": 10,
+   "79": 0,
+   "97": 8,
+   "113": 16
+  },
+  "placebo_mean": 7.25,
+  "placebo_max": 16,
+  "k_tested": [
+   50,
+   100
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 37,
+   "gap_med_abs": 151.0000000000011,
+   "fechou_no_dia_pct": 81.08108108108108
+  }
+ },
+ "M5_W240": {
+  "tests": 25074,
+  "bh_disc": 35,
+  "validated": 33,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 29,
+   "race": 4
+  },
+  "placebo_validated": {
+   "17": 26,
+   "29": 14,
+   "41": 27,
+   "53": 18,
+   "67": 68,
+   "79": 35,
+   "97": 122,
+   "113": 181
+  },
+  "placebo_mean": 61.375,
+  "placebo_max": 181,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 37,
+   "gap_med_abs": 151.0000000000011,
+   "fechou_no_dia_pct": 81.08108108108108
+  }
+ }
+}

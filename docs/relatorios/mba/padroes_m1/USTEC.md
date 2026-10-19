@@ -1,0 +1,19 @@
+# USTEC — padrões por horário (hora do servidor), para validar no gráfico
+
+Entrada na **abertura** da vela do horário indicado (hora do servidor MT5 = UTC+3 no verão dos EUA / UTC+2 no inverno = Nova York+7h; Londres = servidor−2h). Saída `dur_min` minutos depois. Custo = spread medido nos ticks (perfil por horário). **Comissão e slippage não estão incluídos.** Só entram padrões que passaram na descoberta (primeiros 60% do tempo, t líquido ≥ 2,0) **e** na validação (últimos 40%, t líquido ≥ 1,645, mesmo sinal). 1 operação por dia útil.
+
+| tf | eventos | inicio | fim | testes | passaram | placebo_media | placebo_max |
+|---|---|---|---|---|---|---|---|
+| M1 | 970,036 | 2024-01-22 | 2026-10-16 | 13,820 | 0 | 0.0 | 0 |
+
+`passaram` = padrões que cumpriram os critérios. `placebo_media/max` = quantos o mesmo filtro aceita quando o retorno é deslocado aleatoriamente no tempo (o que é puro acaso). Se `passaram` não é bem maior que o placebo, o tipo de padrão daquele timeframe não é confiável.
+
+**Nenhum padrão de horário passou nos critérios para este ativo.**
+
+
+## Como validar no gráfico
+
+1. No MT5, abra o timeframe da coluna `tf`. 2. Use as datas dos arquivos `*_ocorrencias_<TF>.csv` (hora do servidor): vá até a data, marque a vela de `entrada_servidor` e veja onde o preço está `dur_min` minutos depois. 3. Conte quantas vezes foi a favor. Compare com `pct_acerto_bruto`. 4. Para anotar o próximo dia, o horário de entrada é o da coluna `entrada_servidor` (hora do servidor).
+
+
+_(tempo 348s)_

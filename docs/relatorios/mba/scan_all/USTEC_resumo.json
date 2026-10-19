@@ -1,0 +1,1 @@
+{"symbol": "USTEC", "contract": 1.0, "usd_pt": 0.01, "dias": 681, "ini": "2024-01-23", "fim": "2026-10-16", "point": 0.01, "spread": 100.0, "targets": [1000, 1500, 2000, 3000, 5000, 7500], "combos": 1020, "real": 26, "pl_med": 35.975, "pl_max": 51, "rob": 2, "pr_med": 8.15, "pr_max": 18, "placebos": 40, "atr": 2884.285714285722}

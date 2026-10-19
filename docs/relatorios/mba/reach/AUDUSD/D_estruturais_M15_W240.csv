@@ -1,0 +1,59 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+150,EV_SELL_Ak,streak*weekday,sess,streak=2 baixas & weekday=SEX & Tarde(20-24),83,47,30,59.457,6.478,55.541,3.370,26.283,24.273,0.000,True,True
+100,EV_SELL_Ak,prev1,hour,prev1=forte_baixa & hora=00h,492,197,199,-22.938,-6.465,-26.497,-8.254,-76.446,-82.496,0.000,False,False
+150,EV_SELL_Ak,prev1*weekday,sess,prev1=baixa & weekday=SEX & Tarde(20-24),280,78,52,51.990,6.364,66.336,5.780,18.735,35.337,0.000,True,True
+100,EV_SELL_Ak,prev1*weekday,sess,prev1=baixa & weekday=SEX & Tarde(20-24),280,78,52,43.989,6.038,53.979,5.422,15.541,26.408,0.000,True,True
+150,EV_SELL_Ak,tickvol*weekday,sess,tickvol=baixo & weekday=SEX & Tarde(20-24),312,42,41,57.771,5.806,74.660,7.960,24.523,42.260,0.000,True,True
+150,EV_SELL_Ak,spread*weekday,sess,spread=normal & weekday=SEX & Tarde(20-24),713,84,58,42.383,5.656,73.271,7.422,9.564,40.431,0.000,True,True
+150,EV_SELL_Ak,weekday,hour,weekday=SEX & hora=20h,568,84,58,43.137,5.585,71.429,6.991,11.077,39.369,0.000,True,True
+150,EV_SELL_Ak,brk*weekday,sess,brk=dentro & weekday=SEX & Tarde(20-24),619,82,58,44.092,5.489,75.129,7.386,11.187,42.404,0.000,True,True
+150,EV_SELL_Ak,extreme*weekday,sess,extreme=normal & weekday=SEX & Tarde(20-24),663,82,57,41.022,5.366,69.703,7.014,8.457,36.880,0.000,True,True
+100,EV_SELL_Ak,streak*weekday,sess,streak=3+ baixas & weekday=SEX & Tarde(20-24),110,35,21,50.906,5.261,61.221,5.448,22.740,33.532,0.000,True,True
+150,EV_SELL_Ak,weekday,hour,weekday=SEX & hora=21h,144,84,57,41.400,5.207,80.768,7.911,5.584,44.754,0.000,True,True
+100,EV_SELL_Ak,brk*tickvol,sess,brk=rompeu_min_falhou & tickvol=baixo & Tarde(20-24),114,33,35,-37.014,-5.207,-27.536,-2.617,-71.630,-61.144,0.000,False,False
+100,EV_SELL_Ak,weekday,hour,weekday=SEX & hora=20h,568,84,58,34.350,5.206,48.224,5.344,7.799,21.673,0.000,True,True
+150,EV_SELL_Ak,streak*weekday,sess,streak=3+ baixas & weekday=SEX & Tarde(20-24),110,35,21,64.687,5.134,66.360,4.972,31.043,34.123,0.000,True,True
+100,EV_SELL_Ak,spread*weekday,sess,spread=normal & weekday=SEX & Tarde(20-24),713,84,58,33.163,5.015,50.973,5.795,4.982,22.883,0.000,True,True
+100,EV_SELL_Ak,brk*weekday,sess,brk=dentro & weekday=SEX & Tarde(20-24),619,82,58,34.951,5.003,55.035,6.060,6.727,27.067,0.000,True,True
+100,EV_SELL_Ak,streak*weekday,sess,streak=2 baixas & weekday=SEX & Tarde(20-24),83,47,30,45.356,4.979,40.837,2.680,17.284,12.850,0.000,True,True
+150,EV_SELL_Ak,compress*weekday,sess,compress=comprimido & weekday=SEX & Tarde(20-24),446,74,49,42.402,4.954,74.103,7.057,9.528,41.050,0.000,True,True
+100,EV_SELL_Ak,extreme*weekday,sess,extreme=normal & weekday=SEX & Tarde(20-24),663,82,57,32.344,4.732,49.756,5.536,4.336,21.700,0.000,True,True
+100,EV_SELL_Ak,pdpos*tickvol,sess,pdpos=abaixo_PDL & tickvol=baixo & Tarde(20-24),766,70,40,-20.775,-4.663,-4.636,-0.533,-54.528,-38.334,0.000,False,False
+100,EV_SELL_Ak,tickvol*weekday,sess,tickvol=baixo & weekday=SEX & Tarde(20-24),312,42,41,46.206,4.540,60.427,6.188,17.827,32.754,0.000,True,True
+100,EV_SELL_Ak,brk,hour,brk=rompeu_min_fechou_fora & hora=00h,158,51,86,-28.694,-4.446,-29.778,-7.920,-86.782,-91.150,0.000,False,False
+100,EV_BUY_Ak,compress*weekday,sess,compress=expandido & weekday=SEG & Tarde(20-24),458,69,39,-21.133,-4.420,-18.733,-1.597,-51.251,-46.446,0.000,False,False
+150,EV_SELL_Ak,prevday*weekday,sess,prevday=dia_ant_alta & weekday=SEX & Tarde(20-24),350,46,24,44.844,4.407,82.814,5.237,11.994,49.964,0.000,True,True
+150,EV_SELL_Ak,tickvol*weekday,sess,tickvol=normal & weekday=SEX & Tarde(20-24),193,53,25,45.217,4.345,65.595,2.348,12.455,32.502,0.000,True,True
+100,EV_SELL_Ak,compress*weekday,sess,compress=comprimido & weekday=SEX & Tarde(20-24),446,74,49,33.359,4.214,56.282,5.770,5.188,27.946,0.000,True,True
+150,EV_SELL_Ak,ret4*weekday,sess,ret4=Q2 & weekday=SEX & Tarde(20-24),159,51,35,48.098,4.188,70.228,4.916,16.375,38.890,0.000,True,True
+100,race,ret4*dopen,sess,ret4=Q1(caiu+) & dopen=Q1(bem abaixo) & Tarde(20-24),604,115,68,0.174,4.144,-0.015,-0.221,0.052,-0.138,0.000,False,False
+100,EV_SELL_Ak,prev1*dopen,sess,prev1=forte_baixa & dopen=Q4 & Tarde(20-24),156,58,43,-27.853,-4.066,4.003,0.447,-61.830,-29.873,0.000,False,False
+150,EV_BUY_Ak,compress*brk,sess,compress=normal & brk=rompeu_max_fechou_fora & Asia(00-09),371,173,92,-31.951,-4.047,-12.050,-1.098,-43.398,-22.728,0.000,False,False
+100,EV_BUY_Ak,streak*weekday,sess,streak=3+ baixas & weekday=SEX & Tarde(20-24),110,35,21,-31.369,-3.989,-37.727,-3.601,-56.151,-61.762,0.000,False,False
+100,EV_SELL_Ak,prev1*weekday,sess,prev1=forte_baixa & weekday=TER & Tarde(20-24),271,75,50,-23.081,-3.960,-3.349,-0.460,-57.760,-37.741,0.000,False,False
+100,EV_SELL_Ak,ret4*weekday,sess,ret4=Q2 & weekday=SEX & Tarde(20-24),159,51,35,37.240,3.918,42.680,2.996,9.496,15.647,0.000,True,True
+150,EV_SELL_Ak,prev1,hour,prev1=forte_baixa & hora=00h,492,197,199,-24.310,-3.915,-39.609,-6.398,-65.387,-82.995,0.000,False,False
+150,EV_SELL_Ak,streak*weekday,sess,streak=1 baixa & weekday=SEX & Tarde(20-24),169,73,50,36.876,3.850,72.376,5.884,3.479,39.378,0.000,True,True
+100,EV_BUY_Ak,streak*tickvol,sess,streak=3+ altas & tickvol=baixo & Tarde(20-24),493,130,118,-19.006,-3.832,-33.878,-6.559,-47.234,-60.889,0.000,False,False
+150,race,compress*brk,sess,compress=normal & brk=rompeu_max_fechou_fora & Asia(00-09),371,173,92,-0.178,-3.790,-0.034,-0.557,-0.172,-0.029,0.000,False,False
+150,EV_SELL_Ak,pdpos*weekday,sess,pdpos=metade_sup & weekday=SEX & Tarde(20-24),238,33,22,55.053,3.780,69.104,4.004,22.500,36.315,0.000,True,True
+150,EV_SELL_Ak,streak*weekday,sess,streak=2 altas & weekday=SEX & Tarde(20-24),89,45,38,41.241,3.775,90.123,7.543,9.403,57.185,0.000,True,True
+100,EV_BUY_Ak,weekday,hour,weekday=TER & hora=00h,572,86,57,-16.509,-3.758,-11.780,-1.909,-74.751,-70.022,0.000,False,False
+100,EV_SELL_Ak,prevday*weekday,sess,prevday=dia_ant_baixa & weekday=SEX & Tarde(20-24),363,38,34,37.267,3.733,43.280,3.652,9.005,15.205,0.000,True,True
+150,race,streak*brk,sess,streak=2 altas & brk=rompeu_max_fechou_fora & Asia(00-09),407,191,114,-0.162,-3.720,-0.061,-1.154,-0.158,-0.054,0.000,False,False
+100,EV_SELL_Ak,ret4*weekday,sess,ret4=Q3 & weekday=SEX & Tarde(20-24),184,60,43,33.126,3.675,51.861,4.308,5.650,24.647,0.000,True,True
+100,EV_SELL_Ak,tickvol*weekday,sess,tickvol=normal & weekday=SEX & Tarde(20-24),193,53,25,34.775,3.656,31.940,1.676,6.651,3.206,0.000,True,True
+100,EV_SELL_Ak,weekday,hour,weekday=SEX & hora=21h,144,84,57,29.760,3.648,62.162,6.456,-4.658,27.806,0.000,True,False
+150,EV_SELL_Ak,prev1*weekday,sess,prev1=alta & weekday=SEX & Tarde(20-24),274,75,53,32.014,3.640,79.065,6.914,0.214,45.757,0.000,True,True
+150,race,weekday,hour,weekday=SEG & hora=01h,568,85,57,0.214,3.626,0.170,2.246,0.215,0.171,0.000,False,False
+100,race,ret4,hour,ret4=Q2 & hora=17h,457,196,116,-0.213,-3.625,0.041,0.503,-0.247,0.006,0.000,False,False
+150,EV_SELL_Ak,ret4*weekday,sess,ret4=Q3 & weekday=SEX & Tarde(20-24),184,60,43,35.961,3.613,72.164,6.689,4.879,40.857,0.000,True,True
+150,EV_SELL_Ak,compress*weekday,sess,compress=normal & weekday=SEX & Tarde(20-24),175,52,30,39.605,3.585,79.271,4.466,7.331,45.930,0.000,True,True
+100,EV_SELL_Ak,streak*weekday,sess,streak=1 baixa & weekday=SEX & Tarde(20-24),169,73,50,30.300,3.583,57.736,5.594,1.519,29.192,0.000,True,True
+100,EV_SELL_Ak,ret4,hour,ret4=Q1(caiu+) & hora=00h,751,180,177,-17.338,-3.572,-30.054,-8.344,-66.819,-80.387,0.000,False,False
+150,EV_SELL_Ak,ret4,hour,ret4=Q2 & hora=01h,354,166,97,-30.839,-3.568,-25.089,-2.027,-52.325,-46.497,0.000,False,False
+100,race,ret4*pdpos,sess,ret4=Q1(caiu+) & pdpos=abaixo_PDL & Tarde(20-24),426,77,49,0.187,3.541,0.052,0.590,0.063,-0.075,0.000,False,False
+150,EV_SELL_Ak,prevday*weekday,sess,prevday=dia_ant_baixa & weekday=SEX & Tarde(20-24),363,38,34,39.465,3.531,66.494,5.242,6.683,33.662,0.000,True,True
+100,race,prev1,hour,prev1=forte_baixa & hora=00h,492,197,199,0.202,3.517,0.271,5.438,0.375,0.448,0.000,False,False
+150,EV_BUY_Ak,streak*pdpos,sess,streak=2 baixas & pdpos=metade_inf & Tarde(20-24),315,109,83,24.414,3.507,-6.935,-0.841,4.354,-27.154,0.000,False,False
+100,EV_BUY_Ak,ret4*tickvol,sess,ret4=Q5(subiu+) & tickvol=baixo & Tarde(20-24),588,135,117,-18.452,-3.503,-34.643,-6.402,-47.531,-61.877,0.000,False,False

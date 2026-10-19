@@ -1,0 +1,2 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+1000,EV_BUY_Ak,streak*tickvol,sess,streak=1 baixa & tickvol=alto & NY(15-20),2967,133,147,-133.024,-3.508,-82.154,-2.530,-118.082,-61.599,0.000,False,False

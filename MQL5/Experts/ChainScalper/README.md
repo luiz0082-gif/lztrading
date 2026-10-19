@@ -1,4 +1,6 @@
-# ChainScalper v1.07
+# ChainScalper v1.13
+
+> Versão atual: **1.13** (janelas de horário, fechamento no fim da janela e painel com hora local). As seções abaixo foram escritas na v1.07; veja "Versões" para o que mudou desde então (1.08–1.13).
 
 Scalper de **corrente de posições** para XAUUSD em M1. Arquivo: `ChainScalper.mq5` (+ `Include/LZ/LZPanel.mqh`, já existente).
 
@@ -79,7 +81,7 @@ Arquivo: `presets/ChainScalper_v107_teste_XAUUSD.set` (UTF-16, formato do MT5). 
 | `InpPullbackDistPoints` / `InpPullbackAdvancePoints` / `InpMaxPullbackOrders` / `InpPullbackTpPoints` | 15 / 15 / 4 / 30 | 20 / 40 / 3 / 40 | Recuos proporcionais ao degrau novo (um recuo por degrau; TP maior que o custo) |
 | `InpChainLossMoney` / `InpDailyLossMoney` | 10 / 30 | 15 / 40 | Com o piso de volatilidade (2× ATR) o limite efetivo é o maior dos dois |
 
-Mantidos: sem SL (perfil do operador), lote 0,01, sessão 7–20 GMT, guarda de M15/H1 ligada, validade 120 s.
+Mantidos: sem SL (perfil do operador), lote 0,01, guarda de M15/H1 ligada, validade 120 s. Sessão (desde a v1.10): janelas A 01–05 e B 12–15 do servidor.
 
 **Faixas de sensibilidade** (flag `N` no arquivo; troque por `Y` para varrer, só para ver a *forma* do resultado, não para escolher o melhor ponto): `InpStepPoints` 30–60 (passo 10), `InpTrailBaseSteps` 1,0–2,5 (0,5), `InpChainLossAtrMult` 1,5–3,0 (0,5).
 
@@ -120,7 +122,14 @@ Regra do projeto: **todo stop/proteção tem o seu próprio `true/false`; nunca 
 
 **OUTROS TFs**: `InpUseHtfShockGuard` true, `InpHtfShockMult` 2,0.
 
-**SESSÃO**: `InpUseSession`, início e fim em GMT.
+**SESSÃO (janelas de horário, v1.10)**: `InpUseSession` liga o controle; `InpSessionClock` escolhe o relógio das janelas (`SERVER` = hora do servidor, padrão; `GMT`). Duas janelas, cada uma com o seu `true/false` e hora cheia de início (inclusive, 0–23) e fim (exclusive, 0–24; início > fim cruza a meia-noite):
+
+| Janela | Padrão (servidor) | Motivo |
+|---|---|---|
+| A (`InpUseWindowA`, `InpWindowAStartHour`/`EndHour`) | 01–05 | Melhor faixa nos logs (14 correntes, 100% de acerto, +US$ 43) e recuos médios menores no M1 do ouro. Hipótese, amostra pequena. |
+| B (`InpUseWindowB`, `InpWindowBStartHour`/`EndHour`) | 12–15 | Faixa secundária, neutra nos logs; termina antes da abertura/dados dos EUA (15:30 do servidor = 08:30 em NY). Desligue se preferir só a A. |
+
+Fora das janelas o EA não abre correntes novas e cancela pendentes (`SESSION_CLOSED` / `SESSION_CLOSE`). **Desde a v1.11**, com `InpUseFlattenAtEnd = true` (padrão) ele também fecha todas as posições abertas no fim da janela, para não deixar lucro ou perda flutuando; nos últimos `InpNoNewMinBeforeEnd` minutos (padrão 10) não abre corrente nova (`SESSION_ENDING`). Com `InpUseFlattenAtEnd = false`, posições abertas seguem com TP, trava de lucro e saídas lógicas. Evitados de propósito: 15:00–18:59 (recuos grandes e muitos bloqueios por risco) e 23:00–00:59 (spread de 20–40 pts na virada do dia). O servidor é UTC+3 no horário de verão dos EUA e UTC+2 no resto do ano; em GMT a janela A é 22–02 (UTC+3) ou 23–03 (UTC+2). O EA recusa iniciar se a sessão estiver ligada sem nenhuma janela ligada ou com hora inválida.
 
 **MANUTENÇÃO**: `InpResetDailyPnl` (false). Marque `true`, carregue o EA uma vez e volte para `false`: o resultado do dia passa a contar de zero (e a trava de perda/meta do dia é liberada). Se ficar `true`, zera a cada carga.
 
@@ -132,10 +141,10 @@ Camadas: `lote fixo → margem (50% da livre, fixo no código) → guarda de M15
 - Uma instância = um símbolo = um timeframe = uma corrente por vez. Magic identifica a corrente.
 - Reinício com posições abertas: o EA reconstrói e gerencia a corrente (ver seção própria). Só posições **sem comentário do EA** ficam órfãs e bloqueiam novas correntes.
 - **Com `InpUseStopLoss = false`:** queda do terminal/VPS ou gap deixa as posições sem SL de servidor até o EA voltar; as proteções por software (perda da corrente, perda diária, travas) só valem com o EA rodando e conectado.
-- Fim de sessão por padrão só impede novas correntes e cancela pendentes (`InpFlattenAtEnd` zera tudo).
+- Fim de sessão (v1.11): cancela pendentes e fecha todas as posições (`InpUseFlattenAtEnd`, padrão true). Fechamento é a mercado, com o spread e a possível derrapagem do momento; só funciona com o terminal conectado e o mercado aberto.
 - Sem filtro de notícias (decisão do projeto). Spread no tester pode ser irreal em XAUUSD: use spread variável/real.
 - Comissão flutuante de posições abertas não entra no P/L diário em tempo real (entra ao fechar).
-- Horário de sessão em GMT via `TimeGMT()`; virada do dia pela data do servidor.
+- Janelas de sessão em hora do servidor (`TimeCurrent()`) por padrão, ou em GMT (`TimeGMT()`) com `InpSessionClock`; virada do dia pela data do servidor. Os horários padrão vêm de 83 correntes em ~10 dias (IC e FP, 5 versões misturadas): é hipótese, não evidência.
 - Não testado: execução real, rejeições de `OrderSend` por stops/freeze level da Exness, comportamento com `SYMBOL_EXPIRATION_MODE`.
 
 ## Telemetria — schema `1.1` (1.0 + coluna `final_lock_price` no fim de `trades`)
@@ -161,6 +170,11 @@ Estado e motivo de bloqueio no topo; análise (tendência, score, ATR, nível de
 5. Demo antes de qualquer capital real.
 
 ## Versões
+- **1.13 (2026-10-19)** — painel sem informação cortada: largura 480 px e quebra de linha por palavras nas faixas de BLOQUEIO, CORRENTE e ATENCAO (função `StripWrap`; a v1.12 cortava com `~`, removido). Textos completos de `SESSION_CLOSED` (janelas em forma curta `A 01-05, B 12-15 srv`) e `SESSION_ENDING`. Só interface; lógica igual à v1.11. Compilada na IC e na FP (0 erros, 0 avisos); painel não conferido no gráfico.
+- **1.12 (2026-10-19)** — painel: textos de bloqueio/alerta mais curtos e cortados para caber na linha (função `PFit`), rótulo `POSICOES` sem sobreposição; detalhe do bloqueio `SESSION_CLOSED` agora remete à seção HORARIO. Só interface; lógica igual à v1.11. Compilada na IC e na FP (0 erros, 0 avisos); painel não conferido no gráfico.
+- **1.11 (2026-10-19)** — **nada fica flutuando fora da janela:** `InpUseFlattenAtEnd` (padrão true) cancela as pendentes e fecha todas as posições a mercado no fim de cada janela (`exit_reason`/`end_reason` = `SESSION_CLOSE`; evento `RISK`/`SESSION_FLATTEN`). `InpUseNoNewBeforeEnd`/`InpNoNewMinBeforeEnd` (true / 10 min): nos minutos finais da janela não abre corrente nem novos recuos (`SESSION_ENDING`, estado `FIM JANELA`). **Painel:** seção HORARIO com **hora local** (a do PC) e do servidor, janela atual, tempo restante ou próxima janela, as janelas A/B em hora do servidor e em hora local, e se o fim fecha tudo; linha de SPREAD (atual / máximo), FLUTUANTE total, POSICOES ABERTAS e PENDENTES; faixa ATENCAO se houver posição aberta fora da janela. Log `INIT_SESSION`. Compilada na IC e na FP (0 erros, 0 avisos); **não testada no testador nem em conta**. Ao carregar o EA fora da janela com posições abertas, elas são fechadas (por isso o fechamento no fim vale também para posições adotadas).
+- **1.10 (2026-10-19)** — sessão em janelas de horário: A (01–05) e B (12–15), cada uma com `true/false`, em hora do servidor (padrão) ou GMT (`InpSessionClock`). Substitui `InpSessionStartGMT`/`InpSessionEndGMT` (removidos; presets atualizados). Validação de inputs e log INIT com as janelas. Compilada na IC e na FP (0 erros, 0 avisos); **não testada no testador nem em conta**.
+- **1.09** — saídas lógicas (não são SL): perna de recuo no prejuízo fecha quando a tendência vira contra (`InpUseTrendFlipExit`) ou após o tempo máximo (`InpUseLegMaxTime`, `InpLegMaxMin`); `end_reason` deixa de chamar de SL o que não foi SL (`TREND_FLIP_EXIT`, `LEG_TIMEOUT`, `LOSS`). Já estava nas cópias da IC e da FP; o arquivo do projeto foi sincronizado com ela em 2026-10-19.
 - **1.07 (2026-10-07)** — `InpResetDailyPnl`: zera o resultado do dia ao carregar o EA (base gravada em variável global do terminal, vale só para o dia atual; histórico e CSV não são alterados).
 - **1.06 (2026-10-07)** — entradas LIMIT de recuo programadas conforme o preço estica a favor; perda da corrente com piso de volatilidade; TTL por ordem; `NO_OPEN_LEGS` cancela só a escada a favor.
 - **1.05 (2026-10-07)** — após a corrente 2 de 07/10 ficar sem limite de perda: EA recusa iniciar sem ao menos um limite de perda ligado; reinício assume e gerencia as posições abertas (`CHAIN_ADOPTED`); contexto de M15/H1 (`HTF_SHOCK`) que só segura em vela forte e rápida contra.

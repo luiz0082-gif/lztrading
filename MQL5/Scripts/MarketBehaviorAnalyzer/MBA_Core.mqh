@@ -4,10 +4,17 @@
 //+------------------------------------------------------------------+
 #property strict
 
-#define MBA_TF_COUNT 8
+#define MBA_TF_COUNT 9
 #define MBA_MAX_FORWARD 10
-#define MBA_SCHEMA_VERSION "2"
-#define MBA_VERSION "1.22"
+#define MBA_MAX_TFWD_H 16       // max time-based forward horizons
+#define MBA_SCHEMA_VERSION "3"
+#define MBA_VERSION "1.23"
+
+// Server->UTC rule (resolved): 1 = NY-close server (UTC+2 winter / UTC+3 US-DST), 2 = fixed current offset, 3 = fixed input offset
+#define MBA_DST_AUTO 0
+#define MBA_DST_US_NY_CLOSE 1
+#define MBA_DST_FIXED_CURRENT 2
+#define MBA_DST_FIXED_INPUT 3
 
 enum MBA_SESSION
   {
@@ -37,6 +44,11 @@ struct MBA_TickAgg
    long   tick_interval_count;
    ulong  first_time_msc;
    ulong  last_time_msc;
+   double bid_first;
+   double bid_last;
+   double ask_first;
+   double ask_last;
+   double max_interval_ms;
   };
 
 struct MBA_Stat
@@ -73,10 +85,10 @@ struct MBA_Discovery
 
 // Timeframes requested by the project.
 ENUM_TIMEFRAMES MBA_TFs[MBA_TF_COUNT]=
-  {PERIOD_M1,PERIOD_M5,PERIOD_M15,PERIOD_M30,PERIOD_H1,PERIOD_H4,PERIOD_W1,PERIOD_MN1};
+  {PERIOD_M1,PERIOD_M5,PERIOD_M15,PERIOD_M30,PERIOD_H1,PERIOD_H4,PERIOD_D1,PERIOD_W1,PERIOD_MN1};
 
 string MBA_TFNames[MBA_TF_COUNT]=
-  {"M1","M5","M15","M30","H1","H4","W1","MN1"};
+  {"M1","M5","M15","M30","H1","H4","D1","W1","MN1"};
 
 string MBA_SafeName(string s)
   {
@@ -533,6 +545,7 @@ void MBA_ResetTickAgg(MBA_TickAgg &a)
    a.spread_min=DBL_MAX; a.spread_max=-DBL_MAX; a.spread_sum=0;
    a.tick_interval_sum_ms=0; a.tick_interval_count=0;
    a.first_time_msc=0; a.last_time_msc=0;
+   a.bid_first=0; a.bid_last=0; a.ask_first=0; a.ask_last=0; a.max_interval_ms=0;
   }
 
 void MBA_AccumulateTick(MBA_TickAgg &a,const MqlTick &tk,double prev_price,bool has_prev)
@@ -546,10 +559,11 @@ void MBA_AccumulateTick(MBA_TickAgg &a,const MqlTick &tk,double prev_price,bool 
       ulong dt=tk.time_msc-a.last_time_msc;
       a.tick_interval_sum_ms+=(double)dt;
       a.tick_interval_count++;
+      if((double)dt>a.max_interval_ms) a.max_interval_ms=(double)dt;
      }
    a.last_time_msc=tk.time_msc;
-   if(tk.bid>0){a.bid_min=MathMin(a.bid_min,tk.bid);a.bid_max=MathMax(a.bid_max,tk.bid);}
-   if(tk.ask>0){a.ask_min=MathMin(a.ask_min,tk.ask);a.ask_max=MathMax(a.ask_max,tk.ask);}
+   if(tk.bid>0){a.bid_min=MathMin(a.bid_min,tk.bid);a.bid_max=MathMax(a.bid_max,tk.bid);if(a.bid_first<=0)a.bid_first=tk.bid;a.bid_last=tk.bid;}
+   if(tk.ask>0){a.ask_min=MathMin(a.ask_min,tk.ask);a.ask_max=MathMax(a.ask_max,tk.ask);if(a.ask_first<=0)a.ask_first=tk.ask;a.ask_last=tk.ask;}
    double lp=tk.last>0?tk.last:mid;
    if(lp>0){a.last_min=MathMin(a.last_min,lp);a.last_max=MathMax(a.last_max,lp);}
    if(spread>0){a.spread_min=MathMin(a.spread_min,spread);a.spread_max=MathMax(a.spread_max,spread);a.spread_sum+=spread;}
@@ -581,22 +595,101 @@ bool MBA_CopyTickAggregate(string symbol,datetime from_time,datetime to_time,MBA
 
 string MBA_TickAggHeader()
   {
-   return "symbol,timeframe,start_time,end_time,tick_count,up_ticks,down_ticks,unchanged_ticks,up_ratio,down_ratio,bid_min,bid_max,ask_min,ask_max,last_min,last_max,spread_min_points,spread_max_points,spread_avg_points,avg_tick_interval_ms,tick_density_per_minute,source";
+   return "symbol,timeframe,start_time,end_time,tick_count,up_ticks,down_ticks,unchanged_ticks,up_ratio,down_ratio,bid_min,bid_max,ask_min,ask_max,last_min,last_max,bid_first,bid_last,ask_first,ask_last,spread_min_points,spread_max_points,spread_avg_points,avg_tick_interval_ms,max_tick_interval_ms,first_tick_offset_ms,last_tick_to_end_ms,tick_density_per_minute,source,schema_version";
+  }
+
+// One tick-aggregate row (shared by the live EA and the history script).
+void MBA_FillTickAggRow(string &f[],string symbol,string tf_name,datetime from_time,datetime to_time,const MBA_TickAgg &a,string source)
+  {
+   ArrayResize(f,0);
+   long den=MathMax(1,a.up_ticks+a.down_ticks+a.unchanged_ticks);
+   int dg=MBA_Digits();
+   MBA_Add(f,symbol);MBA_Add(f,tf_name);MBA_Add(f,MBA_DT(from_time,true));MBA_Add(f,MBA_DT(to_time,true));
+   MBA_AddL(f,a.tick_count);MBA_AddL(f,a.up_ticks);MBA_AddL(f,a.down_ticks);MBA_AddL(f,a.unchanged_ticks);
+   MBA_AddD(f,MBA_SafeRatio((double)a.up_ticks,(double)den),6);MBA_AddD(f,MBA_SafeRatio((double)a.down_ticks,(double)den),6);
+   MBA_AddD(f,(a.bid_min==DBL_MAX?0:a.bid_min),dg);MBA_AddD(f,(a.bid_max==-DBL_MAX?0:a.bid_max),dg);
+   MBA_AddD(f,(a.ask_min==DBL_MAX?0:a.ask_min),dg);MBA_AddD(f,(a.ask_max==-DBL_MAX?0:a.ask_max),dg);
+   MBA_AddD(f,(a.last_min==DBL_MAX?0:a.last_min),dg);MBA_AddD(f,(a.last_max==-DBL_MAX?0:a.last_max),dg);
+   MBA_AddD(f,a.bid_first,dg);MBA_AddD(f,a.bid_last,dg);MBA_AddD(f,a.ask_first,dg);MBA_AddD(f,a.ask_last,dg);
+   MBA_AddD(f,(a.spread_min==DBL_MAX?0:a.spread_min),2);MBA_AddD(f,(a.spread_max==-DBL_MAX?0:a.spread_max),2);
+   MBA_AddD(f,MBA_SafeRatio(a.spread_sum,(double)MathMax(1,a.tick_count)),2);
+   MBA_AddD(f,MBA_SafeRatio(a.tick_interval_sum_ms,(double)MathMax(1,a.tick_interval_count)),2);
+   MBA_AddD(f,a.max_interval_ms,0);
+   if(a.tick_count>0)
+     {
+      MBA_AddD(f,(double)a.first_time_msc-(double)from_time*1000.0,0);
+      MBA_AddD(f,(double)to_time*1000.0+999.0-(double)a.last_time_msc,0);
+     }
+   else {MBA_Add(f,"");MBA_Add(f,"");}
+   double minutes=MathMax(1.0,(double)((to_time-from_time)+1)/60.0);
+   MBA_AddD(f,(double)a.tick_count/minutes,4);MBA_Add(f,source);MBA_Add(f,MBA_SCHEMA_VERSION);
   }
 
 string MBA_CandleHeader()
   {
-   return "run_id,event_id,event_key,broker,server,symbol,timeframe,data_source,server_time,analysis_time,utc_time,server_utc_offset_sec,utc_basis,day_of_week,hour,minute,minute_of_day,slot_hhmm,week_start,session,open,high,low,close,range,body,upper_wick,lower_wick,body_pct,upper_wick_pct,lower_wick_pct,close_position,direction,true_range,atr,range_atr,tick_volume,real_volume,volume_avg,volume_ratio,tick_count,tick_data_ok,tick_density_per_minute,tick_density_ratio,spread_avg_points,spread_max_points,spread_min_points,range_bucket,body_bucket,volume_bucket,pattern,structure_before,structure_at_close,volatility_state,gap_bars,source,schema_version";
+   return "run_id,event_id,event_key,broker,server,symbol,timeframe,data_source,server_time,analysis_time,utc_time,server_utc_offset_sec,utc_basis,day_of_week,hour,minute,minute_of_day,slot_hhmm,week_start,session,open,high,low,close,range,body,upper_wick,lower_wick,body_pct,upper_wick_pct,lower_wick_pct,close_position,direction,true_range,atr,range_atr,tick_volume,real_volume,volume_avg,volume_ratio,tick_count,tick_data_ok,tick_density_per_minute,tick_density_ratio,spread_avg_points,spread_max_points,spread_min_points,bar_spread_points,ohlc_vs_ticks,ohlc_dev_points,range_bucket,body_bucket,volume_bucket,pattern,structure_before,structure_at_close,volatility_state,gap_bars,source,schema_version";
   }
 
 string MBA_EventHeader()
   {
-   return "run_id,event_id,event_key,broker,server,symbol,timeframe,data_source,server_time,analysis_time,day_of_week,hour,minute,slot_hhmm,week_start,session,direction,body_pct,upper_wick_pct,lower_wick_pct,close_position,range_atr,volume_ratio,tick_density_ratio,spread_avg_points,pattern,structure_before,structure_at_close,volatility_state,price_position_daily_open,price_position_weekly_open,price_position_monthly_open,previous_high_distance_atr,previous_low_distance_atr,prev_day_high_distance_atr,prev_day_low_distance_atr,session_high_distance_atr,session_low_distance_atr,swing_high_distance_atr,swing_low_distance_atr,mtf_M1,mtf_M5,mtf_M15,mtf_M30,mtf_H1,mtf_H4,mtf_W1,mtf_MN1,mtf_basis,news_state,news_events_60m,news_high_events_60m,news_min_to_next_high,news_min_since_last_high,gap_bars,source,schema_version";
+   string h="run_id,event_id,event_key,broker,server,symbol,timeframe,data_source,server_time,analysis_time,day_of_week,hour,minute,slot_hhmm,week_start,session,direction,body_pct,upper_wick_pct,lower_wick_pct,close_position,range_atr,volume_ratio,tick_density_ratio,spread_avg_points,pattern,structure_before,structure_at_close,volatility_state,price_position_daily_open,price_position_weekly_open,price_position_monthly_open,previous_high_distance_atr,previous_low_distance_atr,prev_day_high_distance_atr,prev_day_low_distance_atr,session_high_distance_atr,session_low_distance_atr,swing_high_distance_atr,swing_low_distance_atr";
+   for(int i=0;i<MBA_TF_COUNT;i++) h+=",mtf_"+MBA_TFNames[i];
+   h+=",mtf_basis,news_state,news_events_60m,news_high_events_60m,news_min_to_next_high,news_min_since_last_high,gap_bars,source,schema_version";
+   return h;
   }
 
+// v3 convention: mfe_points and mae_points are POSITIVE distances (>=0) measured from the event close, relative to the EVENT CANDLE
+// direction (favorable = same direction as the event candle). max_up_points / max_down_points are direction-independent (>=0).
+// time_to_* = bar index (1..h) of the extreme, -1 when the excursion never happened. Doji events: mfe=max(up,down), mae=min(up,down), basis DOJI_SYMMETRIC.
 string MBA_ForwardHeader()
   {
-   return "run_id,forward_key,event_key,event_id,broker,server,symbol,timeframe,data_source,event_time,horizon_bars,future_time,future_close,future_return_points,future_return_atr,future_high,future_low,mfe_points,mae_points,mfe_atr,mae_atr,time_to_mfe_bars,time_to_mae_bars,direction_after,mfe_mae_basis,source,schema_version";
+   return "run_id,forward_key,event_key,event_id,broker,server,symbol,timeframe,data_source,event_time,horizon_bars,future_time,future_close,future_return_points,future_return_atr,future_high,future_low,max_up_points,max_down_points,mfe_points,mae_points,mfe_atr,mae_atr,time_to_mfe_bars,time_to_mae_bars,direction_after,mfe_mae_basis,source,schema_version";
+  }
+
+struct MBA_Exc
+  {
+   double mfe,mae,max_up,max_down,high,low;
+   int    t_mfe,t_mae;
+  };
+
+// Excursions over bars ei+1..ei+h relative to rr[ei].close. dir = event candle direction.
+void MBA_Excursion(const MqlRates &rr[],int ei,int h,int dir,MBA_Exc &x)
+  {
+   double ref=rr[ei].close;
+   x.high=-DBL_MAX;x.low=DBL_MAX;x.max_up=0;x.max_down=0;x.mfe=0;x.mae=0;x.t_mfe=-1;x.t_mae=-1;
+   for(int k=1;k<=h;k++)
+     {
+      const MqlRates b=rr[ei+k];
+      x.high=MathMax(x.high,b.high);x.low=MathMin(x.low,b.low);
+      double up=(b.high-ref)/_Point,dn=(ref-b.low)/_Point;
+      if(up>x.max_up) x.max_up=up;
+      if(dn>x.max_down) x.max_down=dn;
+      if(dir==0) continue;
+      double fav=(dir>0?up:dn),adv=(dir>0?dn:up);
+      if(fav>x.mfe){x.mfe=fav;x.t_mfe=k;}
+      if(adv>x.mae){x.mae=adv;x.t_mae=k;}
+     }
+   if(dir==0){x.mfe=MathMax(x.max_up,x.max_down);x.mae=MathMin(x.max_up,x.max_down);}
+  }
+
+// Fills the forward row for horizon h. rr[ei] = event bar, rr[ei+h] = horizon bar.
+void MBA_FillForwardRow(string &f[],string run_id,string ekey,string eid,string broker,string server,string data_source,
+                        string tf_name,const MqlRates &rr[],int ei,int h,double atr,string source)
+  {
+   ArrayResize(f,0);
+   int dir=MBA_Direction(rr[ei]);
+   MBA_Exc x;MBA_Excursion(rr,ei,h,dir,x);
+   double event_close=rr[ei].close;
+   const MqlRates fb=rr[ei+h];
+   double fc=fb.close;double ret=(fc-event_close)/_Point;
+   int d=fc>event_close?1:(fc<event_close?-1:0);
+   MBA_Add(f,run_id);MBA_Add(f,ekey+"|"+IntegerToString(h));MBA_Add(f,ekey);MBA_Add(f,eid);
+   MBA_Add(f,broker);MBA_Add(f,server);MBA_Add(f,_Symbol);MBA_Add(f,tf_name);MBA_Add(f,data_source);
+   MBA_Add(f,MBA_DT(rr[ei].time,true));MBA_AddL(f,h);MBA_Add(f,MBA_DT(fb.time,true));MBA_AddD(f,fc,MBA_Digits());
+   MBA_AddD(f,ret,2);MBA_AddD(f,atr>0?(fc-event_close)/atr:0,6);MBA_AddD(f,x.high,MBA_Digits());MBA_AddD(f,x.low,MBA_Digits());
+   MBA_AddD(f,x.max_up,2);MBA_AddD(f,x.max_down,2);
+   MBA_AddD(f,x.mfe,2);MBA_AddD(f,x.mae,2);MBA_AddD(f,atr>0?x.mfe*_Point/atr:0,6);MBA_AddD(f,atr>0?x.mae*_Point/atr:0,6);
+   MBA_AddL(f,x.t_mfe);MBA_AddL(f,x.t_mae);MBA_Add(f,MBA_Dir(d));MBA_Add(f,dir==0?"DOJI_SYMMETRIC":"EVENT_CANDLE_DIRECTION");MBA_Add(f,source);MBA_Add(f,MBA_SCHEMA_VERSION);
   }
 
 string MBA_RunHeader()
@@ -696,6 +789,7 @@ private:
    int    m_part;
    long   m_rows;
    long   m_total_rows;
+   long   m_write_fail;
 
    string PartName(int part)
      {
@@ -735,7 +829,7 @@ private:
      }
 
 public:
-   CMBAWriter(){m_handle=INVALID_HANDLE;m_part=0;m_rows=0;m_total_rows=0;m_common=false;m_max_bytes=25*1024*1024;}
+   CMBAWriter(){m_handle=INVALID_HANDLE;m_part=0;m_rows=0;m_total_rows=0;m_write_fail=0;m_common=false;m_max_bytes=25*1024*1024;}
    ~CMBAWriter(){Close();}
 
    bool Init(string root,string base,string header,long max_bytes,bool common)
@@ -828,7 +922,6 @@ public:
 
    bool WriteFields(string &fields[])
      {
-      if(m_handle==INVALID_HANDLE) return false;
       string line="";
       int n=ArraySize(fields);
       for(int i=0;i<n;i++)
@@ -839,25 +932,95 @@ public:
       return WriteLine(line);
      }
 
+   // Returns false (and counts a failure) when the row could not be written; one reopen attempt is made before giving up.
    bool WriteLine(string line)
      {
-      if(m_handle==INVALID_HANDLE) return false;
+      if(m_handle==INVALID_HANDLE && !OpenPart(MathMax(1,m_part),true)){m_write_fail++;return false;}
       long current=(long)FileGetInteger(m_handle,FILE_SIZE);
       long projected=current+(long)StringLen(line)+2;
       if(m_max_bytes>0 && current>0 && projected>m_max_bytes)
         {
-         if(!OpenPart(m_part+1,false)) return false;
-         current=(long)FileGetInteger(m_handle,FILE_SIZE);
+         if(!OpenPart(m_part+1,false)){m_write_fail++;return false;}
         }
-      FileWriteString(m_handle,line+"\r\n");
+      uint w=FileWriteString(m_handle,line+"\r\n");
+      if(w==0)
+        {
+         if(!OpenPart(m_part,true)){m_write_fail++;return false;}
+         w=FileWriteString(m_handle,line+"\r\n");
+         if(w==0){m_write_fail++;return false;}
+        }
       m_rows++;m_total_rows++;
       return true;
+     }
+
+   // First data line (after the header) of the first part that has the current header. Empty when none.
+   string FirstDataLine()
+     {
+      for(int p=1;p<=m_part;p++)
+        {
+         if(FirstLine(p)!=m_header) continue;
+         int h=FileOpen(PartName(p),FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE|(m_common?FILE_COMMON:0),0,CP_UTF8);
+         if(h==INVALID_HANDLE) continue;
+         string out="";
+         bool first=true;
+         while(!FileIsEnding(h))
+           {
+            string ln=FileReadString(h);
+            if(first){first=false;continue;}
+            StringReplace(ln,"\r","");
+            if(StringLen(ln)>0){out=ln;break;}
+           }
+         FileClose(h);
+         if(StringLen(out)>0) return out;
+        }
+      return "";
+     }
+
+   // Last max_lines data lines of the newest part with the current header (oldest first).
+   int TailLines(string &out[],int max_lines)
+     {
+      ArrayResize(out,0);
+      for(int p=m_part;p>=1;p--)
+        {
+         if(FirstLine(p)!=m_header) continue;
+         int h=FileOpen(PartName(p),FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE|(m_common?FILE_COMMON:0),0,CP_UTF8);
+         if(h==INVALID_HANDLE) continue;
+         string ring[];ArrayResize(ring,max_lines);
+         long cnt=0;bool first=true;
+         while(!FileIsEnding(h))
+           {
+            string ln=FileReadString(h);
+            if(first){first=false;continue;}
+            StringReplace(ln,"\r","");
+            if(StringLen(ln)==0) continue;
+            ring[(int)(cnt%max_lines)]=ln;cnt++;
+           }
+         FileClose(h);
+         if(cnt<=0) continue;
+         int k=(int)MathMin((long)max_lines,cnt);
+         ArrayResize(out,k);
+         for(int i=0;i<k;i++) out[i]=ring[(int)((cnt-k+i)%max_lines)];
+         return k;
+        }
+      return 0;
+     }
+
+   // True when some part of this series was written with a different header (schema change).
+   bool HasForeignParts()
+     {
+      for(int p=1;p<=m_part;p++)
+        {
+         string fl=FirstLine(p);
+         if(StringLen(fl)>0 && fl!=m_header) return true;
+        }
+      return false;
      }
 
    void Flush(){if(m_handle!=INVALID_HANDLE) FileFlush(m_handle);}
    int Part(){return m_part;}
    long Rows(){return m_rows;}
    long TotalRows(){return m_total_rows;}
+   long WriteFailures(){return m_write_fail;}
   };
 
 string MBA_MTFStateString(const string &m1,const string &m5,const string &m15,const string &m30,const string &h1,const string &h4,const string &w1,const string &mn1)
@@ -1111,7 +1274,10 @@ struct MBA_BarCtx
    string   pattern,structure_before,structure_at_close,vol_state;
    double   d_open_pts,w_open_pts,m_open_pts;
    double   prev_high_atr,prev_low_atr,pdh_atr,pdl_atr,sess_high_atr,sess_low_atr,swing_high_atr,swing_low_atr;
-   string   mtf[8];
+   string   mtf[MBA_TF_COUNT];
+   double   bar_spread;       // MqlRates.spread of the bar (points, as recorded by the server)
+   string   ohlc_status;      // OK | DIFF | NA  (server candle vs candle rebuilt from ticks)
+   double   ohlc_dev;         // max |server OHLC - tick OHLC| in points (NaN when NA)
    string   news_state;
    int      news_n,news_high_n;
    double   news_min_next,news_min_since;
@@ -1134,6 +1300,7 @@ void MBA_FillCandleRow(string &f[],const MBA_BarCtx &c)
    MBA_AddL(f,c.tick_ok?c.tick_count:0);MBA_Add(f,MBA_Bool(c.tick_ok));
    MBA_AddD(f,c.tick_density,4);MBA_AddD(f,c.tick_density_ratio,4);
    MBA_AddD(f,c.spread_avg,2);MBA_AddD(f,c.spread_max,2);MBA_AddD(f,c.spread_min,2);
+   MBA_AddD(f,c.bar_spread,0);MBA_Add(f,c.ohlc_status);MBA_AddD(f,c.ohlc_dev,2);
    MBA_Add(f,MBA_BucketRatio(MBA_SafeRatio(c.range,c.atr)));MBA_Add(f,MBA_BucketPct(MBA_SafeRatio(c.body,c.range)));MBA_Add(f,MBA_BucketVolume(c.vr));
    MBA_Add(f,c.pattern);MBA_Add(f,c.structure_before);MBA_Add(f,c.structure_at_close);MBA_Add(f,c.vol_state);
    MBA_AddL(f,c.gap_bars);MBA_Add(f,c.source);MBA_Add(f,MBA_SCHEMA_VERSION);
@@ -1155,7 +1322,7 @@ void MBA_FillEventRow(string &f[],const MBA_BarCtx &c)
    MBA_AddD(f,c.prev_high_atr,6);MBA_AddD(f,c.prev_low_atr,6);
    MBA_AddD(f,c.pdh_atr,6);MBA_AddD(f,c.pdl_atr,6);MBA_AddD(f,c.sess_high_atr,6);MBA_AddD(f,c.sess_low_atr,6);
    MBA_AddD(f,c.swing_high_atr,6);MBA_AddD(f,c.swing_low_atr,6);
-   for(int s=0;s<8;s++) MBA_Add(f,c.mtf[s]);
+   for(int s=0;s<MBA_TF_COUNT;s++) MBA_Add(f,c.mtf[s]);
    MBA_Add(f,"CLOSED_BARS_BEFORE_EVENT_OPEN");
    MBA_Add(f,c.news_state);MBA_AddL(f,c.news_n);MBA_AddL(f,c.news_high_n);MBA_AddD(f,c.news_min_next,1);MBA_AddD(f,c.news_min_since,1);
    MBA_AddL(f,c.gap_bars);MBA_Add(f,c.source);MBA_Add(f,MBA_SCHEMA_VERSION);
@@ -1177,6 +1344,178 @@ int MBA_ServerOffsetUSDST(datetime server_time)
    int nov_sun=1+((7-n.day_of_week)%7);
    datetime dst_end=nov1+(datetime)((nov_sun-1)*86400);
    return (server_time>=dst_start && server_time<dst_end)?10800:7200;
+  }
+
+//+------------------------------------------------------------------+
+//| v1.23: historical server->UTC conversion                         |
+//+------------------------------------------------------------------+
+// mode: 0 AUTO, 1 NY-close rule, 2 fixed (current offset), 3 fixed (input). Returns the resolved mode (1..3).
+// AUTO picks the NY-close rule when the live offset is +2h/+3h AND matches the rule today; otherwise the current offset is kept.
+int MBA_ResolveDstMode(int mode)
+  {
+   if(mode>=1 && mode<=3) return mode;
+   int cur=MBA_ServerOffsetSec();
+   if((cur==7200 || cur==10800) && MBA_ServerOffsetUSDST(TimeTradeServer())==cur) return MBA_DST_US_NY_CLOSE;
+   return MBA_DST_FIXED_CURRENT;
+  }
+
+// Offset (seconds, server = UTC + offset) that applied at server_time.
+int MBA_OffsetAt(datetime server_time,int resolved_mode,int fixed_input_sec)
+  {
+   if(resolved_mode==MBA_DST_US_NY_CLOSE) return MBA_ServerOffsetUSDST(server_time);
+   if(resolved_mode==MBA_DST_FIXED_INPUT) return fixed_input_sec;
+   return MBA_ServerOffsetSec();
+  }
+
+string MBA_DstBasisName(int resolved_mode)
+  {
+   if(resolved_mode==MBA_DST_US_NY_CLOSE) return "RULE_NY_CLOSE_US_DST";
+   if(resolved_mode==MBA_DST_FIXED_INPUT) return "FIXED_INPUT";
+   return "FIXED_CURRENT_OFFSET";
+  }
+
+//+------------------------------------------------------------------+
+//| v1.23: time-based forward (horizons in minutes, any source TF)   |
+//+------------------------------------------------------------------+
+// Parses "1,3,5,10" into an ascending unique list (1..1440 minutes, at most MBA_MAX_TFWD_H entries).
+int MBA_ParseHorizons(string s,int &hz[])
+  {
+   ArrayResize(hz,0);
+   string p[];
+   int n=StringSplit(s,',',p);
+   for(int i=0;i<n;i++)
+     {
+      string t=p[i];StringTrimLeft(t);StringTrimRight(t);
+      int v=(int)StringToInteger(t);
+      if(v<=0 || v>1440) continue;
+      bool dup=false;
+      for(int k=0;k<ArraySize(hz);k++) if(hz[k]==v){dup=true;break;}
+      if(dup || ArraySize(hz)>=MBA_MAX_TFWD_H) continue;
+      int m=ArraySize(hz);ArrayResize(hz,m+1);hz[m]=v;
+      for(int k=m;k>0 && hz[k-1]>hz[k];k--){int tmp=hz[k];hz[k]=hz[k-1];hz[k-1]=tmp;}
+     }
+   return ArraySize(hz);
+  }
+
+string MBA_TimeFwdHeader()
+  {
+   return "run_id,forward_key,event_key,event_id,broker,server,symbol,timeframe,data_source,event_time,horizon_min,end_time,m1_bars_found,m1_bars_expected,complete,ref_price,future_close,future_return_points,future_return_atr,max_up_points,max_down_points,mfe_points,mae_points,mfe_atr,mae_atr,time_to_mfe_min,time_to_mae_min,direction_event,event_spread_points,cost_points,net_return_dir_points,hit_up_a050_min,hit_dn_a050_min,hit_up_a100_min,hit_dn_a100_min,hit_up_a200_min,hit_dn_a200_min,hit_up_p1_min,hit_dn_p1_min,hit_up_p2_min,hit_dn_p2_min,hit_up_p3_min,hit_dn_p3_min,mfe_mae_basis,source,schema_version";
+  }
+
+struct MBA_TFwdEvent
+  {
+   string   run_id,event_key,event_id,broker,server,symbol,tf_name,data_source,source;
+   datetime event_open;      // open time of the event bar
+   datetime event_close;     // = open time of the next bar; the future starts here
+   double   ref;             // event close
+   double   atr;             // ATR of the event timeframe (price units)
+   double   spread_points;   // spread at the event (bar spread, points)
+   double   commission_points; // declared round-turn commission converted to points (0 = unknown)
+   int      dir;             // event candle direction
+  };
+
+// Writes one row per horizon, measured on M1 bars (m1 ascending) from event_close. Path-dependent hits have 1-minute resolution
+// (bar end). hit_*_min = minutes after event_close until the first M1 bar whose high/low touched the target (blank = not touched within the horizon).
+// Targets: 0.5/1/2 x ATR of the event timeframe and three absolute point targets (ptgt[0..2]; <=0 disables). Returns rows written or -1 on write failure.
+int MBA_WriteTimeForward(CMBAWriter &w,const MBA_TFwdEvent &e,const MqlRates &m1[],const int &hz[],const double &ptgt[])
+  {
+   int nh=ArraySize(hz);
+   if(nh<=0) return 0;
+   int n1=ArraySize(m1);
+   double pt=_Point;
+   double thr[6];
+   thr[0]=(e.atr>0?0.5*e.atr/pt:-1);thr[1]=(e.atr>0?1.0*e.atr/pt:-1);thr[2]=(e.atr>0?2.0*e.atr/pt:-1);
+   thr[3]=(ArraySize(ptgt)>0?ptgt[0]:-1);thr[4]=(ArraySize(ptgt)>1?ptgt[1]:-1);thr[5]=(ArraySize(ptgt)>2?ptgt[2]:-1);
+   double hu[6],hd[6];
+   for(int g=0;g<6;g++){hu[g]=-1;hd[g]=-1;}
+   int s_found[MBA_MAX_TFWD_H],s_tfav[MBA_MAX_TFWD_H],s_tadv[MBA_MAX_TFWD_H];
+   double s_close[MBA_MAX_TFWD_H],s_up[MBA_MAX_TFWD_H],s_dn[MBA_MAX_TFWD_H],s_fav[MBA_MAX_TFWD_H],s_adv[MBA_MAX_TFWD_H];
+   double s_hu[MBA_MAX_TFWD_H*6],s_hd[MBA_MAX_TFWD_H*6];
+   double max_up=0,max_dn=0,best_fav=0,best_adv=0,last_close=e.ref;
+   int t_fav=-1,t_adv=-1,found=0,j=0;
+   long hmax_sec=(long)hz[nh-1]*60;
+   int start=MBA_IdxAtOrBefore(m1,e.event_close-1)+1;
+   for(int k=start;;k++)
+     {
+      long off;bool last=false;
+      if(k>=n1){off=hmax_sec;last=true;}
+      else
+        {
+         off=(long)(m1[k].time-e.event_close);
+         if(off>=hmax_sec){off=hmax_sec;last=true;}
+        }
+      while(j<nh && off>=(long)hz[j]*60)
+        {
+         s_found[j]=found;s_close[j]=last_close;s_up[j]=max_up;s_dn[j]=max_dn;s_fav[j]=best_fav;s_adv[j]=best_adv;s_tfav[j]=t_fav;s_tadv[j]=t_adv;
+         for(int g=0;g<6;g++){s_hu[j*6+g]=hu[g];s_hd[j*6+g]=hd[g];}
+         j++;
+        }
+      if(last) break;
+      int tmin=(int)(off/60)+1;
+      double up=(m1[k].high-e.ref)/pt,dn=(e.ref-m1[k].low)/pt;
+      found++;last_close=m1[k].close;
+      if(up>max_up) max_up=up;
+      if(dn>max_dn) max_dn=dn;
+      if(e.dir!=0)
+        {
+         double fav=(e.dir>0?up:dn),adv=(e.dir>0?dn:up);
+         if(fav>best_fav){best_fav=fav;t_fav=tmin;}
+         if(adv>best_adv){best_adv=adv;t_adv=tmin;}
+        }
+      for(int g=0;g<6;g++)
+        {
+         if(thr[g]<=0) continue;
+         if(hu[g]<0 && up>=thr[g]) hu[g]=tmin;
+         if(hd[g]<0 && dn>=thr[g]) hd[g]=tmin;
+        }
+     }
+   int written=0;
+   for(int q=0;q<nh;q++)
+     {
+      if(s_found[q]<=0) continue;
+      double mfe=s_fav[q],mae=s_adv[q];
+      if(e.dir==0){mfe=MathMax(s_up[q],s_dn[q]);mae=MathMin(s_up[q],s_dn[q]);}
+      double ret=(s_close[q]-e.ref)/pt;
+      double cost=e.spread_points+e.commission_points;
+      string f[];
+      MBA_Add(f,e.run_id);MBA_Add(f,e.event_key+"|T"+IntegerToString(hz[q]));MBA_Add(f,e.event_key);MBA_Add(f,e.event_id);
+      MBA_Add(f,e.broker);MBA_Add(f,e.server);MBA_Add(f,e.symbol);MBA_Add(f,e.tf_name);MBA_Add(f,e.data_source);
+      MBA_Add(f,MBA_DT(e.event_open,true));MBA_AddL(f,hz[q]);MBA_Add(f,MBA_DT(e.event_close+(datetime)(hz[q]*60),true));
+      MBA_AddL(f,s_found[q]);MBA_AddL(f,hz[q]);MBA_Add(f,MBA_Bool(s_found[q]>=hz[q]));
+      MBA_AddD(f,e.ref,MBA_Digits());MBA_AddD(f,s_close[q],MBA_Digits());MBA_AddD(f,ret,2);MBA_AddD(f,e.atr>0?(s_close[q]-e.ref)/e.atr:0,6);
+      MBA_AddD(f,s_up[q],2);MBA_AddD(f,s_dn[q],2);MBA_AddD(f,mfe,2);MBA_AddD(f,mae,2);
+      MBA_AddD(f,e.atr>0?mfe*pt/e.atr:0,6);MBA_AddD(f,e.atr>0?mae*pt/e.atr:0,6);
+      MBA_AddL(f,s_tfav[q]);MBA_AddL(f,s_tadv[q]);MBA_Add(f,MBA_Dir(e.dir));
+      MBA_AddD(f,e.spread_points,1);MBA_AddD(f,cost,2);
+      if(e.dir!=0) MBA_AddD(f,e.dir*ret-cost,2); else MBA_Add(f,"");
+      for(int g=0;g<6;g++)
+        {
+         MBA_Add(f,s_hu[q*6+g]>=0?IntegerToString((int)s_hu[q*6+g]):"");
+         MBA_Add(f,s_hd[q*6+g]>=0?IntegerToString((int)s_hd[q*6+g]):"");
+        }
+      MBA_Add(f,e.dir==0?"DOJI_SYMMETRIC":"EVENT_CANDLE_DIRECTION");MBA_Add(f,e.source);MBA_Add(f,MBA_SCHEMA_VERSION);
+      if(!w.WriteFields(f)) return -1;
+      written++;
+     }
+   return written;
+  }
+
+// Server candle vs candle rebuilt from ticks (bid charts only): status OK | DIFF | NA, dev = max |difference| in points.
+void MBA_OhlcCheck(const MqlRates &bar,const MBA_TickAgg &ta,bool tick_ok,double tol_points,string &status,double &dev)
+  {
+   status="NA";dev=MBA_NaN();
+   if(!tick_ok || ta.bid_first<=0) return;
+   if(SymbolInfoInteger(_Symbol,SYMBOL_CHART_MODE)!=SYMBOL_CHART_MODE_BID) return;
+   dev=MathMax(MathMax(MathAbs(bar.open-ta.bid_first),MathAbs(bar.high-ta.bid_max)),MathMax(MathAbs(bar.low-ta.bid_min),MathAbs(bar.close-ta.bid_last)))/_Point;
+   status=(dev<=tol_points?"OK":"DIFF");
+  }
+
+//+------------------------------------------------------------------+
+//| v1.23: data-quality snapshot                                     |
+//+------------------------------------------------------------------+
+string MBA_QualityHeader()
+  {
+   return "run_id,time_server,time_utc,symbol,timeframe,first_bar_run,last_bar_run,expected_bars_run,candles_written_run,missing_vs_terminal,events_written_run,forward_rows_run,tickagg_rows_run,tfwd_rows_run,tfwd_skipped_no_m1,bar_retries,bars_skipped,write_failures,tick_ok_bars,tick_missing_bars,ohlc_checked,ohlc_diff,ohlc_max_dev_points,gap_events,max_gap_bars,dst_rule_mismatch,raw_ticks_run,raw_cursor,raw_lag_ms,raw_read_errors,status";
   }
 
 string MBA_SpecHeader()

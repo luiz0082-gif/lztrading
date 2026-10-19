@@ -1,0 +1,124 @@
+{
+ "M15_W240": {
+  "tests": 25686,
+  "bh_disc": 28,
+  "validated": 28,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 28
+  },
+  "placebo_validated": {
+   "17": 40,
+   "29": 13,
+   "41": 18,
+   "53": 21,
+   "67": 115,
+   "79": 119,
+   "97": 259,
+   "113": 437
+  },
+  "placebo_mean": 127.75,
+  "placebo_max": 437,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 120,
+   "gap_med_abs": 76.499999999996,
+   "fechou_no_dia_pct": 88.33333333333333
+  }
+ },
+ "M15_W60": {
+  "tests": 25794,
+  "bh_disc": 1,
+  "validated": 1,
+  "validated_by_outcome": {
+   "race": 1
+  },
+  "placebo_validated": {
+   "17": 2,
+   "29": 6,
+   "41": 0,
+   "53": 6,
+   "67": 18,
+   "79": 12,
+   "97": 25,
+   "113": 59
+  },
+  "placebo_mean": 16.0,
+  "placebo_max": 59,
+  "k_tested": [
+   50,
+   100
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 120,
+   "gap_med_abs": 76.499999999996,
+   "fechou_no_dia_pct": 88.33333333333333
+  }
+ },
+ "M5_W240": {
+  "tests": 25188,
+  "bh_disc": 51,
+  "validated": 24,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 13,
+   "race": 11
+  },
+  "placebo_validated": {
+   "17": 14,
+   "29": 12,
+   "41": 7,
+   "53": 0,
+   "67": 0,
+   "79": 0,
+   "97": 0,
+   "113": 2
+  },
+  "placebo_mean": 4.375,
+  "placebo_max": 14,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 68,
+   "gap_med_abs": 76.499999999996,
+   "fechou_no_dia_pct": 94.11764705882352
+  }
+ },
+ "M5_W60": {
+  "tests": 25302,
+  "bh_disc": 10,
+  "validated": 8,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 1,
+   "race": 7
+  },
+  "placebo_validated": {
+   "17": 0,
+   "29": 5,
+   "41": 1,
+   "53": 1,
+   "67": 0,
+   "79": 4,
+   "97": 2,
+   "113": 12
+  },
+  "placebo_mean": 3.125,
+  "placebo_max": 12,
+  "k_tested": [
+   50,
+   100
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 68,
+   "gap_med_abs": 76.499999999996,
+   "fechou_no_dia_pct": 94.11764705882352
+  }
+ }
+}

@@ -1,0 +1,19 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+150,race,weekday,hour,weekday=QUA & hora=23h,556,84,55,-0.378,-6.566,-0.313,-4.258,-0.652,-0.586,0.000,True,True
+150,EV_BUY_Ak,weekday,hour,weekday=QUA & hora=23h,556,84,55,-47.640,-5.783,-36.141,-3.623,-82.743,-71.243,0.000,False,False
+150,EV_SELL_Ak,weekday,hour,weekday=QUA & hora=23h,556,84,55,45.860,4.997,24.721,2.003,46.322,25.183,0.000,True,True
+150,EV_SELL_Ak,weekday,hour,weekday=QUI & hora=00h,564,85,56,57.631,4.415,24.553,1.587,34.392,1.313,0.000,True,False
+150,race,weekday,hour,weekday=QUI & hora=00h,564,85,56,-0.366,-4.247,-0.166,-1.575,-0.312,-0.112,0.000,True,False
+150,EV_SELL_Ak,weekday,hour,weekday=SEG & hora=00h,567,85,57,-46.499,-4.190,-67.900,-5.172,-69.739,-91.151,0.000,False,False
+300,EV_BUY_Ak,weekday,hour,weekday=QUA & hora=23h,556,84,55,-80.933,-4.110,-32.203,-1.598,-115.657,-66.927,0.000,False,False
+300,EV_SELL_Ak,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=QUI & Asia(00-09),338,60,40,83.524,4.022,-38.999,-1.296,79.571,-44.683,0.000,False,False
+300,EV_BUY_Ak,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=QUI & Asia(00-09),338,60,40,-80.107,-3.980,39.917,1.353,-85.964,35.444,0.000,False,False
+150,EV_BUY_Ak,weekday,hour,weekday=QUI & hora=00h,564,85,56,-40.471,-3.975,-24.853,-1.891,-94.018,-78.401,0.000,False,False
+300,race,brk*weekday,sess,brk=rompeu_min_fechou_fora & weekday=QUI & Asia(00-09),338,60,40,-0.254,-3.920,0.082,0.889,-0.274,0.069,0.000,False,False
+150,EV_BUY_Ak,streak*prevday,sess,streak=3+ baixas & prevday=dia_ant_alta & Tarde(20-24),540,163,113,31.298,3.630,5.407,0.535,20.925,-7.699,0.000,False,False
+300,EV_BUY_Ak,ret4*weekday,sess,ret4=Q1(caiu+) & weekday=QUI & Asia(00-09),1264,85,56,-56.425,-3.601,14.983,0.836,-66.764,4.222,0.000,False,False
+300,race,weekday,hour,weekday=QUA & hora=23h,556,84,55,-0.231,-3.580,-0.085,-1.501,-0.360,-0.214,0.000,False,False
+300,EV_SELL_Ak,ret4*weekday,sess,ret4=Q1(caiu+) & weekday=QUI & Asia(00-09),1264,85,56,59.597,3.540,-15.376,-0.835,51.225,-25.317,0.000,False,False
+300,race,ret4*pdpos,sess,ret4=Q1(caiu+) & pdpos=acima_PDH & Tarde(20-24),277,73,49,0.183,3.527,0.098,3.204,0.140,0.050,0.000,False,False
+300,EV_SELL_Ak,ret4*pdpos,sess,ret4=Q1(caiu+) & pdpos=acima_PDH & Tarde(20-24),277,73,49,-65.859,-3.515,-30.932,-1.990,-82.140,-43.757,0.000,False,False
+150,EV_SELL_Ak,prev1*ret4,sess,prev1=forte_baixa & ret4=Q4 & Asia(00-09),459,207,154,32.174,3.500,4.856,0.465,26.699,-0.315,0.000,False,False

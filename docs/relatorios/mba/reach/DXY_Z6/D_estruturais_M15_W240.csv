@@ -1,0 +1,7 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+100,EV_SELL_Ak,dopen*weekday,sess,dopen=Q3 & weekday=QUI & Londres(09-15),420,39,32,-34.425,-4.494,4.119,0.260,-68.017,-29.032,0.000,False,False
+100,EV_BUY_Ak,ret4*extreme,sess,ret4=Q4 & extreme=extremo_alta & Asia(00-09),114,40,24,-31.047,-3.987,10.678,0.499,-63.397,-21.543,0.000,False,False
+150,race,dopen*tickvol,sess,dopen=Q3 & tickvol=alto & Asia(00-09),1067,189,75,-0.196,-3.620,0.068,0.665,-0.231,0.028,0.000,False,False
+100,race,streak*dopen,sess,streak=2 baixas & dopen=Q3 & NY(15-20),161,79,45,0.331,3.608,0.153,1.339,0.340,0.164,0.000,False,False
+150,EV_SELL_Ak,compress*dopen,sess,compress=comprimido & dopen=Q3 & NY(15-20),390,73,50,-45.116,-3.597,-17.671,-1.172,-78.111,-50.531,0.000,False,False
+150,EV_SELL_Ak,ret4*tickvol,sess,ret4=Q2 & tickvol=normal & Asia(00-09),765,223,120,-21.140,-3.502,-8.444,-1.037,-48.688,-37.233,0.000,False,False

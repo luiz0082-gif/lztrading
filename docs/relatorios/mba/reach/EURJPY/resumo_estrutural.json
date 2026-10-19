@@ -1,0 +1,120 @@
+{
+ "M15_W240": {
+  "tests": 25242,
+  "bh_disc": 3,
+  "validated": 0,
+  "validated_by_outcome": {},
+  "placebo_validated": {
+   "17": 0,
+   "29": 0,
+   "41": 2,
+   "53": 0,
+   "67": 2,
+   "79": 1,
+   "97": 0,
+   "113": 0
+  },
+  "placebo_mean": 0.625,
+  "placebo_max": 2,
+  "k_tested": [
+   200,
+   300
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 128,
+   "gap_med_abs": 201.4999999999958,
+   "fechou_no_dia_pct": 89.84375
+  }
+ },
+ "M15_W60": {
+  "tests": 25404,
+  "bh_disc": 5,
+  "validated": 3,
+  "validated_by_outcome": {
+   "race": 3
+  },
+  "placebo_validated": {
+   "17": 3,
+   "29": 1,
+   "41": 2,
+   "53": 1,
+   "67": 2,
+   "79": 5,
+   "97": 0,
+   "113": 1
+  },
+  "placebo_mean": 1.875,
+  "placebo_max": 5,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 128,
+   "gap_med_abs": 201.4999999999958,
+   "fechou_no_dia_pct": 89.84375
+  }
+ },
+ "M5_W60": {
+  "tests": 25212,
+  "bh_disc": 4,
+  "validated": 1,
+  "validated_by_outcome": {
+   "race": 1
+  },
+  "placebo_validated": {
+   "17": 1,
+   "29": 0,
+   "41": 0,
+   "53": 2,
+   "67": 2,
+   "79": 1,
+   "97": 1,
+   "113": 8
+  },
+  "placebo_mean": 1.875,
+  "placebo_max": 8,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 66,
+   "gap_med_abs": 199.50000000000045,
+   "fechou_no_dia_pct": 89.39393939393939
+  }
+ },
+ "M5_W240": {
+  "tests": 25110,
+  "bh_disc": 22,
+  "validated": 5,
+  "validated_by_outcome": {
+   "race": 5
+  },
+  "placebo_validated": {
+   "17": 0,
+   "29": 0,
+   "41": 1,
+   "53": 0,
+   "67": 0,
+   "79": 1,
+   "97": 1,
+   "113": 1
+  },
+  "placebo_mean": 0.5,
+  "placebo_max": 1,
+  "k_tested": [
+   150,
+   300
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 66,
+   "gap_med_abs": 199.50000000000045,
+   "fechou_no_dia_pct": 89.39393939393939
+  }
+ }
+}

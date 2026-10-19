@@ -1,0 +1,124 @@
+{
+ "M15_W240": {
+  "tests": 25680,
+  "bh_disc": 26,
+  "validated": 22,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 1,
+   "race": 21
+  },
+  "placebo_validated": {
+   "17": 33,
+   "29": 1,
+   "41": 5,
+   "53": 2,
+   "67": 1,
+   "79": 4,
+   "97": 2,
+   "113": 3
+  },
+  "placebo_mean": 6.375,
+  "placebo_max": 33,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 140,
+   "gap_med_abs": 120.99999999999888,
+   "fechou_no_dia_pct": 90.71428571428571
+  }
+ },
+ "M15_W60": {
+  "tests": 25806,
+  "bh_disc": 32,
+  "validated": 22,
+  "validated_by_outcome": {
+   "race": 22
+  },
+  "placebo_validated": {
+   "17": 2,
+   "29": 4,
+   "41": 5,
+   "53": 5,
+   "67": 7,
+   "79": 4,
+   "97": 2,
+   "113": 3
+  },
+  "placebo_mean": 4.0,
+  "placebo_max": 7,
+  "k_tested": [
+   50,
+   100
+  ],
+  "monday_gap": {
+   "mondays": 142,
+   "gaps_relevantes": 140,
+   "gap_med_abs": 120.99999999999888,
+   "fechou_no_dia_pct": 90.71428571428571
+  }
+ },
+ "M5_W60": {
+  "tests": 25158,
+  "bh_disc": 55,
+  "validated": 26,
+  "validated_by_outcome": {
+   "race": 26
+  },
+  "placebo_validated": {
+   "17": 3,
+   "29": 1,
+   "41": 10,
+   "53": 1,
+   "67": 14,
+   "79": 4,
+   "97": 16,
+   "113": 26
+  },
+  "placebo_mean": 9.375,
+  "placebo_max": 26,
+  "k_tested": [
+   50,
+   100
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 74,
+   "gap_med_abs": 112.49999999999315,
+   "fechou_no_dia_pct": 87.83783783783784
+  }
+ },
+ "M5_W240": {
+  "tests": 25044,
+  "bh_disc": 123,
+  "validated": 33,
+  "validated_by_outcome": {
+   "EV_SELL_Ak": 1,
+   "race": 32
+  },
+  "placebo_validated": {
+   "17": 16,
+   "29": 7,
+   "41": 3,
+   "53": 0,
+   "67": 18,
+   "79": 2,
+   "97": 10,
+   "113": 6
+  },
+  "placebo_mean": 7.75,
+  "placebo_max": 18,
+  "k_tested": [
+   100,
+   150
+  ],
+  "monday_gap": {
+   "mondays": 74,
+   "gaps_relevantes": 74,
+   "gap_med_abs": 112.49999999999315,
+   "fechou_no_dia_pct": 87.83783783783784
+  }
+ }
+}

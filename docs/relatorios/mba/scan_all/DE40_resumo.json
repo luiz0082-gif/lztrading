@@ -1,0 +1,1 @@
+{"symbol": "DE40", "min_last": "22:45", "contract": 1.0, "usd_pt": 0.011225, "dias": 695, "ini": "2024-01-23", "fim": "2026-10-16", "point": 0.01, "spread": 80.0, "targets": [800, 1200, 1600, 2400, 4000, 6000], "combos": 1020, "real": 53, "pl_med": 67.825, "pl_max": 83, "rob": 19, "pr_med": 34.175, "pr_max": 53, "placebos": 40, "atr": 2453.5714285714284}

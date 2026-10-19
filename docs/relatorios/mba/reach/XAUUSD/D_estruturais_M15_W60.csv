@@ -1,0 +1,8 @@
+k_pts,outcome,family,kind,cond,n_entries,days_disc,days_val,excess_disc,t_disc,excess_val,t_val,raw_disc,raw_val,p_disc,bh_disc,validated
+800,race,ret4,hour,ret4=Q3 & hora=23h,139,85,54,-0.005,-17181626228303278.000,-0.172,-2.331,0.000,-0.167,0.000,True,True
+400,EV_BUY_Ak,prev1,hour,prev1=forte_alta & hora=01h,587,270,174,-61.322,-4.433,-77.176,-3.122,-51.661,-67.633,0.000,False,False
+400,EV_SELL_Ak,ret4*weekday,sess,ret4=Q4 & weekday=SEX & Tarde(20-24),354,74,52,92.157,4.145,-32.583,-0.789,73.721,-52.409,0.000,False,False
+400,EV_BUY_Ak,ret4*weekday,sess,ret4=Q4 & weekday=SEX & Tarde(20-24),354,74,52,-86.413,-3.912,-3.875,-0.097,-88.079,-4.582,0.000,False,False
+400,EV_SELL_Ak,prev1,hour,prev1=forte_alta & hora=01h,587,270,174,53.050,3.699,-66.440,-2.742,12.985,-106.432,0.000,False,False
+800,race,pdpos,hour,pdpos=acima_PDH & hora=04h,385,66,57,0.180,3.676,0.170,2.128,0.176,0.167,0.000,False,False
+400,race,ret4*weekday,sess,ret4=Q4 & weekday=SEX & Tarde(20-24),354,74,52,-0.179,-3.622,0.061,0.625,-0.165,0.077,0.000,False,False

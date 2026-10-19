@@ -1,0 +1,11 @@
+de,para,periodo,dias,mesmo_sinal_pct,z,corr
+Asia(01-09),Londres(09-15),descoberta,425,53.882,1.601,-0.035
+Asia(01-09),Londres(09-15),validacao,285,53.684,1.244,0.003
+Londres(09-15),NY(15-20),descoberta,425,51.059,0.437,0.027
+Londres(09-15),NY(15-20),validacao,285,55.789,1.955,0.111
+Asia(01-09),NY(15-20),descoberta,424,50.708,0.291,-0.068
+Asia(01-09),NY(15-20),validacao,285,53.684,1.244,0.009
+NY(15-20),Tarde(20-24),descoberta,425,46.588,-1.407,0.024
+NY(15-20),Tarde(20-24),validacao,284,44.366,-1.899,0.089
+Dia anterior,Dia,descoberta,425,47.294,-1.116,-0.071
+Dia anterior,Dia,validacao,284,54.577,1.543,-0.000
