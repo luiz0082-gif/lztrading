@@ -16,17 +16,20 @@
 //|  Piramidagem e decisao EXPLICITA (nao e martingale: a exposicao  |
 //|  so cresce depois que o preco anda a favor).                     |
 //|  Exige conta HEDGING. Execucao SINCRONA nesta versao.            |
+//|  v1.02: trocar parametro / recompilar / trocar grafico NAO zera   |
+//|  mais nada: corrente, travas e contadores do dia sao salvos e    |
+//|  restaurados; sem estado salvo adota as posicoes abertas.        |
 //|  Doc: MQL5/Experts/AccelChain/README.md                          |
 //+------------------------------------------------------------------+
 #property copyright "LZ Trading"
-#property version   "1.01"
+#property version   "1.02"
 #property description "AccelChain - aceleracao de ticks/estrutura M1 + corrente de 4-8 pernas"
 
 #include <Trade/Trade.mqh>
 #include <LZ/LZPanel.mqh>
 
 #define EA_NAME     "AccelChain"
-#define EA_VERSION  "1.01"
+#define EA_VERSION  "1.02"
 #define CSV_SCHEMA  "1.0"
 #define MAXL        12
 #define TICKBUF     8192
@@ -111,7 +114,7 @@ input double          InpSoloArmSteps     = 1.5;        // Arma a trava quando a
 input double          InpSoloTrailSteps   = 1.0;        // Distancia da trava ao preco, em degraus - lido se true
 
 input group "=== INICIO ==="
-input bool            InpResetOnLoad      = true;       // [true/false] Ao carregar o EA zera o dia: resultado, correntes, pausa e travas (recomeca limpo)
+input bool            InpResetOnLoad      = true;       // [true/false] Zera o dia SO quando o EA e REMOVIDO do grafico e colocado de novo. Trocar parametro/recompilar NAO zera
 
 input group "=== SESSAO ==="
 input bool            InpUseSession       = true;       // [true/false] Operar so na janela (GMT)
@@ -1472,6 +1475,222 @@ void ScanOrphans()
 }
 
 //==================================================================
+// ESTADO PERSISTENTE (sobrevive a troca de parametro, recompilacao e troca de grafico)
+//==================================================================
+string StatePath() { return "LZTrading\\" + EA_NAME + "\\state_" + IntegerToString((long)InpMagic) + ".txt"; }
+
+string g_sk[];
+string g_sv[];
+
+string SGet(const string k)
+{
+   for(int i = ArraySize(g_sk) - 1; i >= 0; i--) if(g_sk[i] == k) return g_sv[i];
+   return "";
+}
+double SD(const string k) { return StringToDouble(SGet(k)); }
+long   SL(const string k) { return StringToInteger(SGet(k)); }
+
+string SKV(const string k, const string v) { return k + "=" + v + "\n"; }
+string SKD(const string k, const double v) { return k + "=" + DoubleToString(v, 8) + "\n"; }
+string SKL(const string k, const long v)   { return k + "=" + IntegerToString(v) + "\n"; }
+
+void SaveState()
+{
+   if(!g_ready) return;
+   FolderCreate("LZTrading");
+   FolderCreate("LZTrading\\" + EA_NAME);
+   string t = "";
+   t += SKV("ea", EA_NAME) + SKL("magic", (long)InpMagic) + SKL("saved", (long)TimeCurrent());
+   t += SKL("dayStart", (long)g_dayStart) + SKD("dayStartEquity", g_dayStartEquity) + SKD("dayRealized", g_dayRealized);
+   t += SKL("dayChains", g_dayChains) + SKL("dayWinChains", g_dayWinChains);
+   t += SKL("haltDay", g_haltDay ? 1 : 0) + SKV("haltReason", g_haltReason) + SKL("targetHit", g_targetHit ? 1 : 0);
+   t += SKL("pauseUntil", (long)g_pauseUntil) + SKL("lastChainEnd", (long)g_lastChainEnd);
+   t += SKL("ch_active", g_ch.active ? 1 : 0);
+   if(g_ch.active)
+   {
+      t += SKL("ch_setupDone", g_ch.setupDone ? 1 : 0) + SKL("ch_id", (long)g_ch.id) + SKL("ch_dir", g_ch.dir) + SKL("ch_n", g_ch.n);
+      t += SKL("ch_t0", (long)g_ch.t0) + SKL("ch_tLast", (long)g_ch.tLast);
+      t += SKD("ch_e0", g_ch.e0) + SKD("ch_step", g_ch.step) + SKD("ch_lot", g_ch.lot) + SKD("ch_tp", g_ch.tp) + SKD("ch_invalid", g_ch.invalid);
+      t += SKD("ch_spreadPts", g_ch.spreadPts) + SKD("ch_activity", g_ch.activity) + SKD("ch_sD", g_ch.sD) + SKD("ch_sM", g_ch.sM);
+      t += SKD("ch_sE", g_ch.sE) + SKD("ch_score", g_ch.score);
+      t += SKL("ch_filled", g_ch.filled) + SKL("ch_closed", g_ch.closed) + SKL("ch_cancelled", g_ch.cancelled) + SKL("ch_maxLevel", g_ch.maxLevel);
+      t += SKD("ch_gross", g_ch.gross) + SKD("ch_comm", g_ch.comm) + SKD("ch_swap", g_ch.swap) + SKD("ch_net", g_ch.net);
+      t += SKD("ch_peak", g_ch.peakFloat) + SKD("ch_trough", g_ch.troughFloat);
+      t += SKV("ch_trigger", g_ch.trigger) + SKV("ch_cancelReason", g_ch.cancelReason) + SKV("ch_endReason", g_ch.endReason);
+      t += SKV("ch_flatten", g_ch.flatten) + SKV("ch_softReason", g_ch.softReason);
+      for(int i = 0; i < MAXL; i++)
+      {
+         SLeg lg = g_ch.leg[i];
+         if(!lg.planned && !lg.placed && !lg.filled) continue;
+         string r = IntegerToString(lg.planned) + "," + IntegerToString(lg.placed) + "," + IntegerToString(lg.filled) + "," +
+                    IntegerToString(lg.open) + "," + IntegerToString(lg.cancelled) + "," + IntegerToString(lg.closeDone) + "," +
+                    IntegerToString((long)lg.order) + "," + IntegerToString((long)lg.pos) + "," +
+                    DoubleToString(lg.lot, 8) + "," + DoubleToString(lg.planPrice, 8) + "," + DoubleToString(lg.openPrice, 8) + "," +
+                    DoubleToString(lg.slInit, 8) + "," + DoubleToString(lg.tpInit, 8) + "," + DoubleToString(lg.slLast, 8) + "," +
+                    DoubleToString(lg.tpLast, 8) + "," + DoubleToString(lg.lockPx, 8) + "," + DoubleToString(lg.mfe, 8) + "," +
+                    DoubleToString(lg.mae, 8) + "," + IntegerToString((long)lg.openTime) + "," + IntegerToString((long)lg.closeSeen) + "," +
+                    IntegerToString(lg.lockMods) + "," + IntegerToString(lg.closeReq);
+         t += SKV("leg" + IntegerToString(i), r);
+      }
+   }
+   int h = FileOpen(StatePath(), FILE_WRITE | FILE_TXT | FILE_ANSI);
+   if(h == INVALID_HANDLE) return;
+   FileWriteString(h, t);
+   FileClose(h);
+}
+
+bool LoadStateFile()
+{
+   ArrayResize(g_sk, 0); ArrayResize(g_sv, 0);
+   if(!FileIsExist(StatePath())) return false;
+   int h = FileOpen(StatePath(), FILE_READ | FILE_TXT | FILE_ANSI | FILE_SHARE_READ | FILE_SHARE_WRITE);
+   if(h == INVALID_HANDLE) return false;
+   while(!FileIsEnding(h))
+   {
+      string ln = FileReadString(h);
+      int e = StringFind(ln, "=");
+      if(e <= 0) continue;
+      int n = ArraySize(g_sk);
+      ArrayResize(g_sk, n + 1); ArrayResize(g_sv, n + 1);
+      g_sk[n] = StringSubstr(ln, 0, e);
+      g_sv[n] = StringSubstr(ln, e + 1);
+   }
+   FileClose(h);
+   return (SGet("ea") == EA_NAME && SL("magic") == (long)InpMagic);
+}
+
+//--- a corrente (id) ainda tem posicao ou ordem viva?
+bool ChainLive(const ulong id)
+{
+   for(int k = PositionsTotal() - 1; k >= 0; k--)
+   {
+      ulong t = PositionGetTicket(k);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym || (ulong)PositionGetInteger(POSITION_MAGIC) != InpMagic) continue;
+      ulong cid; int idx;
+      if(ParseComment(PositionGetString(POSITION_COMMENT), cid, idx) && cid == id) return true;
+   }
+   for(int k = OrdersTotal() - 1; k >= 0; k--)
+   {
+      ulong t = OrderGetTicket(k);
+      if(t == 0) continue;
+      if(OrderGetString(ORDER_SYMBOL) != g_sym || (ulong)OrderGetInteger(ORDER_MAGIC) != InpMagic) continue;
+      ulong cid; int idx;
+      if(ParseComment(OrderGetString(ORDER_COMMENT), cid, idx) && cid == id) return true;
+   }
+   return false;
+}
+
+//--- true = dia e/ou corrente restaurados do arquivo
+bool RestoreState()
+{
+   if(!LoadStateFile()) return false;
+   bool any = false;
+   if((datetime)SL("dayStart") == g_dayStart && g_dayStart != 0)
+   {
+      g_dayStartEquity = SD("dayStartEquity"); g_dayRealized = SD("dayRealized");
+      g_dayChains = (int)SL("dayChains"); g_dayWinChains = (int)SL("dayWinChains");
+      g_haltDay = (SL("haltDay") == 1); g_haltReason = SGet("haltReason"); g_targetHit = (SL("targetHit") == 1);
+      g_pauseUntil = (datetime)SL("pauseUntil"); g_lastChainEnd = (datetime)SL("lastChainEnd");
+      any = true;
+   }
+   if(SL("ch_active") == 1)
+   {
+      ulong id = (ulong)SL("ch_id");
+      if(!ChainLive(id)) return any;               // a corrente terminou enquanto o EA estava fora
+      ResetChain();
+      g_ch.active = true; g_ch.setupDone = (SL("ch_setupDone") == 1); g_ch.id = id; g_ch.dir = (int)SL("ch_dir"); g_ch.n = (int)SL("ch_n");
+      g_ch.t0 = (datetime)SL("ch_t0"); g_ch.tLast = (datetime)SL("ch_tLast");
+      g_ch.e0 = SD("ch_e0"); g_ch.step = SD("ch_step"); g_ch.lot = SD("ch_lot"); g_ch.tp = SD("ch_tp"); g_ch.invalid = SD("ch_invalid");
+      g_ch.spreadPts = SD("ch_spreadPts"); g_ch.activity = SD("ch_activity"); g_ch.sD = SD("ch_sD"); g_ch.sM = SD("ch_sM");
+      g_ch.sE = SD("ch_sE"); g_ch.score = SD("ch_score");
+      g_ch.filled = (int)SL("ch_filled"); g_ch.closed = (int)SL("ch_closed"); g_ch.cancelled = (int)SL("ch_cancelled"); g_ch.maxLevel = (int)SL("ch_maxLevel");
+      g_ch.gross = SD("ch_gross"); g_ch.comm = SD("ch_comm"); g_ch.swap = SD("ch_swap"); g_ch.net = SD("ch_net");
+      g_ch.peakFloat = SD("ch_peak"); g_ch.troughFloat = SD("ch_trough");
+      g_ch.trigger = SGet("ch_trigger"); g_ch.cancelReason = SGet("ch_cancelReason"); g_ch.endReason = SGet("ch_endReason");
+      g_ch.flatten = SGet("ch_flatten"); g_ch.softReason = SGet("ch_softReason");
+      for(int i = 0; i < MAXL; i++)
+      {
+         string r = SGet("leg" + IntegerToString(i));
+         if(r == "") continue;
+         string f[];
+         if(StringSplit(r, ',', f) < 22) continue;
+         g_ch.leg[i].planned = (StringToInteger(f[0]) != 0); g_ch.leg[i].placed = (StringToInteger(f[1]) != 0);
+         g_ch.leg[i].filled = (StringToInteger(f[2]) != 0);  g_ch.leg[i].open = (StringToInteger(f[3]) != 0);
+         g_ch.leg[i].cancelled = (StringToInteger(f[4]) != 0); g_ch.leg[i].closeDone = (StringToInteger(f[5]) != 0);
+         g_ch.leg[i].order = (ulong)StringToInteger(f[6]); g_ch.leg[i].pos = (ulong)StringToInteger(f[7]);
+         g_ch.leg[i].lot = StringToDouble(f[8]); g_ch.leg[i].planPrice = StringToDouble(f[9]); g_ch.leg[i].openPrice = StringToDouble(f[10]);
+         g_ch.leg[i].slInit = StringToDouble(f[11]); g_ch.leg[i].tpInit = StringToDouble(f[12]); g_ch.leg[i].slLast = StringToDouble(f[13]);
+         g_ch.leg[i].tpLast = StringToDouble(f[14]); g_ch.leg[i].lockPx = StringToDouble(f[15]); g_ch.leg[i].mfe = StringToDouble(f[16]);
+         g_ch.leg[i].mae = StringToDouble(f[17]); g_ch.leg[i].openTime = (datetime)StringToInteger(f[18]);
+         g_ch.leg[i].closeSeen = (datetime)StringToInteger(f[19]); g_ch.leg[i].lockMods = (int)StringToInteger(f[20]);
+         g_ch.leg[i].closeReq = (int)StringToInteger(f[21]);
+      }
+      any = true;
+      LogEvent("INFO", "INFO", "PASS", "STATE_RESTORED", StringFormat("corrente %I64u restaurada (%d pernas, net %.2f, dia %.2f)", g_ch.id, g_ch.filled, g_ch.net, g_dayRealized));
+   }
+   else if(any)
+      LogEvent("INFO", "INFO", "PASS", "STATE_RESTORED", StringFormat("dia restaurado (realizado %.2f, %d correntes)", g_dayRealized, g_dayChains));
+   return any;
+}
+
+//--- sem estado salvo mas com posicoes/ordens da corrente: reconstroi a partir dos comentarios "AC<id>_<perna>"
+void AdoptFromOrders()
+{
+   if(g_ch.active) return;
+   ulong best = 0;
+   for(int k = PositionsTotal() - 1; k >= 0; k--)
+   {
+      ulong t = PositionGetTicket(k);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym || (ulong)PositionGetInteger(POSITION_MAGIC) != InpMagic) continue;
+      ulong cid; int idx;
+      if(ParseComment(PositionGetString(POSITION_COMMENT), cid, idx) && cid > best) best = cid;
+   }
+   if(best == 0) return;
+   ResetChain();
+   g_ch.active = true; g_ch.setupDone = true; g_ch.id = best;
+   g_ch.step = CeilTick(InpStepPoints * g_point); g_ch.t0 = TimeCurrent(); g_ch.tLast = g_ch.t0;
+   g_ch.trigger = "ADOTADA"; g_ch.maxLevel = -1; g_ch.n = 1;
+   for(int k = PositionsTotal() - 1; k >= 0; k--)
+   {
+      ulong t = PositionGetTicket(k);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym || (ulong)PositionGetInteger(POSITION_MAGIC) != InpMagic) continue;
+      ulong cid; int idx;
+      if(!ParseComment(PositionGetString(POSITION_COMMENT), cid, idx) || cid != best || idx < 0 || idx >= MAXL) continue;
+      g_ch.dir = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) ? 1 : -1;
+      g_ch.leg[idx].planned = true; g_ch.leg[idx].placed = true; g_ch.leg[idx].filled = true; g_ch.leg[idx].open = true;
+      g_ch.leg[idx].pos = t; g_ch.leg[idx].lot = PositionGetDouble(POSITION_VOLUME);
+      g_ch.leg[idx].openPrice = PositionGetDouble(POSITION_PRICE_OPEN); g_ch.leg[idx].planPrice = g_ch.leg[idx].openPrice;
+      g_ch.leg[idx].openTime = (datetime)PositionGetInteger(POSITION_TIME);
+      g_ch.leg[idx].tpInit = PositionGetDouble(POSITION_TP); g_ch.leg[idx].tpLast = g_ch.leg[idx].tpInit;
+      g_ch.lot = g_ch.leg[idx].lot;
+      if(g_ch.tp == 0) g_ch.tp = g_ch.leg[idx].tpInit;
+      g_ch.filled++;
+      g_ch.maxLevel = MathMax(g_ch.maxLevel, idx);
+      g_ch.n = MathMax(g_ch.n, idx + 1);
+      if(g_ch.leg[idx].openTime < g_ch.t0) g_ch.t0 = g_ch.leg[idx].openTime;
+      if(idx == 0) g_ch.e0 = g_ch.leg[idx].openPrice;
+   }
+   if(g_ch.e0 == 0) g_ch.e0 = g_ch.leg[g_ch.maxLevel >= 0 ? g_ch.maxLevel : 0].openPrice;
+   g_ch.invalid = NormPrice(g_ch.e0 - g_ch.dir * InpInvalidationMaxSteps * g_ch.step);
+   for(int k = OrdersTotal() - 1; k >= 0; k--)
+   {
+      ulong t = OrderGetTicket(k);
+      if(t == 0) continue;
+      if(OrderGetString(ORDER_SYMBOL) != g_sym || (ulong)OrderGetInteger(ORDER_MAGIC) != InpMagic) continue;
+      ulong cid; int idx;
+      if(!ParseComment(OrderGetString(ORDER_COMMENT), cid, idx) || cid != best || idx < 0 || idx >= MAXL || g_ch.leg[idx].filled) continue;
+      g_ch.leg[idx].planned = true; g_ch.leg[idx].placed = true; g_ch.leg[idx].order = t;
+      g_ch.leg[idx].lot = OrderGetDouble(ORDER_VOLUME_CURRENT); g_ch.leg[idx].planPrice = OrderGetDouble(ORDER_PRICE_OPEN);
+      g_ch.n = MathMax(g_ch.n, idx + 1);
+   }
+   if(g_chainCounter < best) g_chainCounter = best;
+   LogEvent("WARNING", "WARN", "PASS", "CHAIN_ADOPTED", StringFormat("corrente %I64u reconstruida das posicoes abertas (travas de lucro recomecam do zero)", best));
+}
+
+//==================================================================
 // PAINEL
 //==================================================================
 void DrawPanel()
@@ -1646,14 +1865,17 @@ int OnInit()
    ResetChain();
    SymbolInfoTick(g_sym, g_tick);
    NewDayCheck();
-   if(InpResetOnLoad)
+   g_ready = true;                                   // SaveState/LogEvent usam g_ready
+   bool restored = RestoreState();
+   if(!restored && InpResetOnLoad)
    {
-      // recomeca limpo ao carregar: nada do dia anterior (resultado, contagem, pausa, trava) pesa na sessao nova
+      // EA colocado de novo no grafico (sem estado salvo): recomeca limpo
       g_dayRealized = 0; g_dayChains = 0; g_dayWinChains = 0;
       g_haltDay = false; g_haltReason = ""; g_targetHit = false;
       g_pauseUntil = 0; g_lastChainEnd = 0;
-      LogEvent("DAY_RESET", "INFO", "PASS", "RESET_ON_LOAD", "EA carregado: resultado do dia, contagem de correntes, pausa e travas zerados");
+      LogEvent("DAY_RESET", "INFO", "PASS", "RESET_ON_LOAD", "EA recolocado no grafico: resultado do dia, contagem de correntes, pausa e travas zerados");
    }
+   AdoptFromOrders();
    ScanOrphans();
    UpdateStructure();
 
@@ -1686,6 +1908,11 @@ int OnInit()
 void OnDeinit(const int reason)
 {
    EventKillTimer();
+   // REMOVE/CHARTCLOSE = o EA foi fechado de verdade: recomeca limpo na proxima vez (se InpResetOnLoad).
+   // Qualquer outro motivo (parametros, recompilacao, troca de grafico/timeframe, template...) preserva tudo.
+   if(InpResetOnLoad && (reason == REASON_REMOVE || reason == REASON_CHARTCLOSE))
+   { if(FileIsExist(StatePath())) FileDelete(StatePath()); }
+   else SaveState();
    if(g_ready) LogEvent("DEINIT", "INFO", "PASS", "DEINIT", StringFormat("motivo %d; corrente ativa=%s", reason, B(g_ch.active)));
    if(g_ch.active)
       Print(EA_NAME, ": ATENCAO - corrente ", g_ch.id, " ativa no DEINIT; sem o EA nao ha trava de lucro por software. Verifique as posicoes.");
@@ -1737,6 +1964,8 @@ void OnTimer()
       }
    }
    datetime now = TimeCurrent();
+   static datetime lastSave = 0;
+   if(now - lastSave >= 5) { lastSave = now; SaveState(); }
    if(now - g_lastHeartbeat >= 300)
    {
       g_lastHeartbeat = now;
