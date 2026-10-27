@@ -6,11 +6,11 @@
 //| docs/HFT-M1-ESTUDO-2026-10-23.md). Hipótese NÃO provada.         |
 //+------------------------------------------------------------------+
 #property copyright "LZ Trading"
-#property version   "1.00"
+#property version   "1.01"
 #property description "Modo sombra: sem ordens. Registra sinais de ticks e resultado virtual (ask/bid + atraso)."
 #property strict
 
-#define HS_VERSION "1.00"
+#define HS_VERSION "1.01"
 #define HS_SCHEMA  "HS1"
 #define NSIG 5
 #define NL   4
@@ -34,16 +34,18 @@ input double InpThrMom1000    = 1.21;       // Limiar |Δmid| em preço
 input bool   InpSigMom5000    = true;       // Sinal momentum 5 s
 input double InpThrMom5000    = 2.355;      // Limiar |Δmid| em preço
 input bool   InpSigImb10      = true;       // Sinal desequilíbrio de ticks (últimos 10)
-input double InpThrImb10      = 0.90;       // Limiar |(altas−baixas)/10|
+input double InpThrImb10      = 1.00;       // Limiar |(altas−baixas)/10| (1,0 = 10 ticks seguidos; 0,9 disparava ~4.500x/dia)
 input bool   InpSigImb30      = true;       // Sinal desequilíbrio de ticks (últimos 30)
 input double InpThrImb30      = 0.733;      // Limiar |(altas−baixas)/30|
-input int    InpCooldownMs    = 2000;       // Intervalo mínimo entre sinais do mesmo tipo (ms)
+input int    InpCooldownMs    = 2000;       // Intervalo mínimo entre sinais de momentum (ms)
+input int    InpCooldownImbMs = 10000;      // Intervalo mínimo entre sinais de desequilíbrio (ms)
 
 //--- 04 -------------------------------------------------------------
 input group "══════ 04 | FILTROS ══════"
 input double InpMaxSpreadPts  = 15.0;       // Spread máximo na entrada (pontos)
 input int    InpMaxStaleMs    = 3000;       // Idade máxima do tick usado como preço virtual (ms)
 input int    InpWarmupTicks   = 300;        // Ticks mínimos no buffer antes de gerar sinais
+input int    InpMaxPending    = 4096;       // Capacidade da fila de sinais aguardando resultado
 
 //--- 05 -------------------------------------------------------------
 input group "══════ 05 | HORÁRIOS (relógio do servidor) ══════"
@@ -166,12 +168,13 @@ void TryFire(int sig,double val,long msc,double bid,double ask)
 {
    if(!g_en[sig]) return;
    if(MathAbs(val)<g_thr[sig]) return;
-   if(msc-g_lastFire[sig]<InpCooldownMs) return;
+   int cd=(sig>=3)? InpCooldownImbMs : InpCooldownMs;
+   if(msc-g_lastFire[sig]<cd) return;
    double sp=(ask-bid)/_Point;
    if(sp>InpMaxSpreadPts){ g_block="SPREAD_ALTO"; return; }
    if(InBlock(msc)){ g_block="ROLAGEM"; return; }
    g_lastFire[sig]=msc; g_fired[sig]++;
-   if(g_np>=ArraySize(g_p)){ g_dropped++; return; }
+   if(g_np>=ArraySize(g_p)){ g_dropped++; if(g_dropped==1 || g_dropped%100==0) Event("DROP","fila de pendentes cheia ("+(string)g_np+") sinal="+g_sn[sig]+" descartados="+(string)g_dropped); return; }
    int i0=(int)LastIdxAtOrBefore(msc-500); int rate=(i0>=0)? (int)(g_n-1-i0) : 0;
    Pend p; p.id=g_nextId++; p.sig=sig; p.sgn=(val>0)?1:-1; p.t0=msc; p.bid0=bid; p.ask0=ask; p.val=val; p.thr=g_thr[sig]; p.spr=sp; p.rate=rate;
    p.ping=TerminalInfoInteger(TERMINAL_PING_LAST);
@@ -337,7 +340,7 @@ int OnInit()
    if(StringLen(InpSymbolFilter)>0 && StringFind(_Symbol,InpSymbolFilter)<0)
    { Alert("HFTShadow: símbolo ",_Symbol," não contém '",InpSymbolFilter,"'."); return INIT_PARAMETERS_INCORRECT; }
    if(!SymbolSelect(_Symbol,true)) { Print("HFTShadow: SymbolSelect falhou ",_Symbol); return INIT_FAILED; }
-   ArrayResize(g_p,512); g_np=0;
+   ArrayResize(g_p,MathMax(512,InpMaxPending)); g_np=0;
    g_en[0]=InpSigMom250; g_en[1]=InpSigMom1000; g_en[2]=InpSigMom5000; g_en[3]=InpSigImb10; g_en[4]=InpSigImb30;
    g_thr[0]=InpThrMom250; g_thr[1]=InpThrMom1000; g_thr[2]=InpThrMom5000; g_thr[3]=InpThrImb10; g_thr[4]=InpThrImb30;
    for(int i=0;i<NSIG;i++){ g_lastFire[i]=0; g_stN[i]=0; g_stFollow[i]=0; g_stFade[i]=0; g_stWin[i]=0; g_fired[i]=0; }
@@ -347,7 +350,7 @@ int OnInit()
    string pr="INIT v"+HS_VERSION+" symbol="+_Symbol+" digits="+(string)_Digits+" point="+DoubleToString(_Point,_Digits)
      +" | 03 sinais mom250="+(string)InpSigMom250+"/"+DoubleToString(InpThrMom250,3)+" mom1000="+(string)InpSigMom1000+"/"+DoubleToString(InpThrMom1000,3)
      +" mom5000="+(string)InpSigMom5000+"/"+DoubleToString(InpThrMom5000,3)+" imb10="+(string)InpSigImb10+"/"+DoubleToString(InpThrImb10,3)
-     +" imb30="+(string)InpSigImb30+"/"+DoubleToString(InpThrImb30,3)+" cooldown="+(string)InpCooldownMs
+     +" imb30="+(string)InpSigImb30+"/"+DoubleToString(InpThrImb30,3)+" cooldown="+(string)InpCooldownMs+"/imb="+(string)InpCooldownImbMs+" maxPending="+(string)InpMaxPending
      +" | 04 maxSpread="+DoubleToString(InpMaxSpreadPts,1)+" maxStale="+(string)InpMaxStaleMs+" warmup="+(string)InpWarmupTicks
      +" | 05 rolagem="+(string)InpBlockRollover+" "+(string)InpBlockStartMin+"-"+(string)InpBlockEndMin
      +" | 13 csv="+(string)InpWriteCsv+" flush="+(string)InpFlushSec+"s hb="+(string)InpHeartbeatSec+"s | conta="+(string)AccountInfoInteger(ACCOUNT_LOGIN)
