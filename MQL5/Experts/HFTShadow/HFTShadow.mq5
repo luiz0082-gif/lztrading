@@ -6,11 +6,11 @@
 //| docs/HFT-M1-ESTUDO-2026-10-23.md). Hipótese NÃO provada.         |
 //+------------------------------------------------------------------+
 #property copyright "LZ Trading"
-#property version   "1.01"
+#property version   "1.02"
 #property description "Modo sombra: sem ordens. Registra sinais de ticks e resultado virtual (ask/bid + atraso)."
 #property strict
 
-#define HS_VERSION "1.01"
+#define HS_VERSION "1.02"
 #define HS_SCHEMA  "HS1"
 #define NSIG 5
 #define NL   4
@@ -46,6 +46,7 @@ input double InpMaxSpreadPts  = 15.0;       // Spread máximo na entrada (pontos
 input int    InpMaxStaleMs    = 3000;       // Idade máxima do tick usado como preço virtual (ms)
 input int    InpWarmupTicks   = 300;        // Ticks mínimos no buffer antes de gerar sinais
 input int    InpMaxPending    = 4096;       // Capacidade da fila de sinais aguardando resultado
+input int    InpMaxCatchupMs  = 10000;      // Ao (re)iniciar/reconectar, só ingere ticks dos últimos N ms (evita reprocessar histórico)
 
 //--- 05 -------------------------------------------------------------
 input group "══════ 05 | HORÁRIOS (relógio do servidor) ══════"
@@ -191,7 +192,8 @@ void Evaluate(long msc,double bid,double ask)
    {
       if(!g_en[w]) continue;
       long j=LastIdxAtOrBefore(msc-Ws[w]); if(j<0) continue;
-      int q=(int)(j%RB); double m0=(g_bid[q]+g_ask[q])/2.0;
+      int q=(int)(j%RB); if(msc-Ws[w]-g_tm[q]>InpMaxStaleMs) continue;   // referência velha demais
+      double m0=(g_bid[q]+g_ask[q])/2.0;
       TryFire(w,mid-m0,msc,bid,ask);
    }
    TryFire(3,ImbN(10),msc,bid,ask);
@@ -263,16 +265,29 @@ void FlushSignals(bool force)
 }
 
 //--- ingestão de ticks --------------------------------------------------------
+void ResetStream(const string why)
+{
+   g_n=0; g_sgnN=0; g_sgnPos=0; g_np=0; g_lastMsc=0; g_lastCnt=0; g_prevMsc=0;
+   for(int i=0;i<NSIG;i++) g_lastFire[i]=0;
+   Event("STREAM_RESET",why);
+}
+
 void Poll()
 {
    MqlTick arr[];
-   ulong from=(g_lastMsc>0)? (ulong)g_lastMsc : (ulong)MathMax(0,TickMs()-2000);
+   long nowMs=(long)TimeTradeServer()*1000;                 // relógio do servidor (não depende do último tick em cache)
+   long floorMs=nowMs-InpMaxCatchupMs;
+   // cursor muito antigo (reinício/reconexão/mercado fechado): descarta o passado e recomeça do presente
+   if(g_lastMsc>0 && g_lastMsc<nowMs-60000 && g_n>0) ResetStream("cursor antigo ("+MsToStr(g_lastMsc)+"); recomeçando de "+MsToStr(floorMs));
+   ulong from=(g_lastMsc>0)? (ulong)g_lastMsc : (ulong)MathMax(0,floorMs);
    int n=CopyTicksRange(_Symbol,arr,COPY_TICKS_INFO,from,0);
    if(n<=0) return;
+   if(n>200000){ ResetStream("lote de "+(string)n+" ticks; ingerindo só os últimos "+(string)InpMaxCatchupMs+" ms"); from=(ulong)MathMax(0,arr[n-1].time_msc-InpMaxCatchupMs); n=CopyTicksRange(_Symbol,arr,COPY_TICKS_INFO,from,0); if(n<=0) return; }
    long lm=g_lastMsc; int lc=g_lastCnt; int seen=0;
    for(int i=0;i<n;i++)
    {
       long m=arr[i].time_msc;
+      if(g_lastMsc==0 && lm==0 && m<floorMs) continue;       // 1º lote: ignora ticks anteriores à janela de catch-up
       if(m<lm) continue;
       if(arr[i].bid<=0 || arr[i].ask<=0 || arr[i].ask<arr[i].bid) continue;
       if(m==lm){ seen++; if(seen<=lc) continue; lc++; }
@@ -350,7 +365,7 @@ int OnInit()
    string pr="INIT v"+HS_VERSION+" symbol="+_Symbol+" digits="+(string)_Digits+" point="+DoubleToString(_Point,_Digits)
      +" | 03 sinais mom250="+(string)InpSigMom250+"/"+DoubleToString(InpThrMom250,3)+" mom1000="+(string)InpSigMom1000+"/"+DoubleToString(InpThrMom1000,3)
      +" mom5000="+(string)InpSigMom5000+"/"+DoubleToString(InpThrMom5000,3)+" imb10="+(string)InpSigImb10+"/"+DoubleToString(InpThrImb10,3)
-     +" imb30="+(string)InpSigImb30+"/"+DoubleToString(InpThrImb30,3)+" cooldown="+(string)InpCooldownMs+"/imb="+(string)InpCooldownImbMs+" maxPending="+(string)InpMaxPending
+     +" imb30="+(string)InpSigImb30+"/"+DoubleToString(InpThrImb30,3)+" catchup="+(string)InpMaxCatchupMs+" cooldown="+(string)InpCooldownMs+"/imb="+(string)InpCooldownImbMs+" maxPending="+(string)InpMaxPending
      +" | 04 maxSpread="+DoubleToString(InpMaxSpreadPts,1)+" maxStale="+(string)InpMaxStaleMs+" warmup="+(string)InpWarmupTicks
      +" | 05 rolagem="+(string)InpBlockRollover+" "+(string)InpBlockStartMin+"-"+(string)InpBlockEndMin
      +" | 13 csv="+(string)InpWriteCsv+" flush="+(string)InpFlushSec+"s hb="+(string)InpHeartbeatSec+"s | conta="+(string)AccountInfoInteger(ACCOUNT_LOGIN)
