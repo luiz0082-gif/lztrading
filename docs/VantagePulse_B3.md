@@ -1,4 +1,4 @@
-# VantagePulse B3 v1.05
+# VantagePulse B3 (v1.03 a v1.08)
 
 EA tick-driven para WIN (B3). Fonte: `MQL5/Experts/VantagePulse_B3/VantagePulse_B3_v1.05.mq5`. Presets em `MQL5/Experts/VantagePulse_B3/presets/`.
 
@@ -127,6 +127,12 @@ No teste da plataforma do usuário (v107 LOTE1 STOP80 TP240, 13/10–02/11), o l
 Conclusão: o lucro do backtest vem dos ticks gerados (o preço anda "em linha reta" entre os pontos da barra, criando continuidade artificial que o sinal de momentum captura). Com ticks reais o EA ganha ~+30 pts e perde ~−86 pts e fica negativo — igual à demo ao vivo (0 alvos, −R$ 617 em 13/11). Não é sequência ruim nem recuo/stop: **a estratégia, como está, não tem vantagem em ticks reais**.
 
 Caminho de solução: (1) criar um símbolo customizado com 100% dos ticks reais da Clear (barras reconstruídas dos próprios ticks, para o tester não descartar nada); (2) reavaliar o EA só em ticks reais (jun–nov/2026); (3) só então redesenhar entrada/saída. Não operar conta real até lá.
+
+## v1.08 e auditoria de integridade (13/11/2026, 19h) - ver `auditoria/LEIA-ME.md`
+
+- v1.08 = v1.07 + diagnostico (manifesto, detalhe de entrada/saida com MAE/tempo ate o pico/slippage/spread/janelas/buffer, BUFFER_SATURATION, custo estimado) e duas protecoes opcionais DESLIGADAS (`InpManageOnTimer`, `InpPersistState`). Cabecalho do fonte corrigido (achado F-08). Validada na plataforma do usuario: 11.142 operacoes, +R$ 43.639, 9/14 dias, entradas e saidas identicas a v1.07 (preset `v108_LOTE1_STOP80_TP240`).
+- Script `MQL5/Scripts/VantagePulse_TickAudit.mq5`: auditoria de ticks por dia dentro do terminal.
+- Resultado: os 9 dias positivos tem assinatura de ticks sinteticos (spread 5,00 constante, ~51 ticks/s, 0% de sinal oposto) e os 5 negativos de dado real (spread variavel, ~110 ticks/s, buffer saturado). O backtest positivo nao e confiavel; o EA com dado real perde ~4,6 pts/operacao. Custos: o tester registra comissao 0; a v1.08 tem `InpCostPerContractRT` (0 = desconhecido) para estimativa.
 
 ## Limitações (não omitir)
 

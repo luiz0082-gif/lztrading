@@ -1,0 +1,5 @@
+A) auditoria de ticks: CSV gerado (15s)
+B) v1.08 referencia: ops 11142 liquido 43639 PF 1.73 | dias positivos 9/14 | {'10.13': 3226, '10.14': 4397, '10.15': 4014, '10.16': -557, '10.19': -1207, '10.20': -1828, '10.21': -966, '10.22': -738, '10.23': 1869, '10.26': 18786, '10.27': 5132, '10.28': 6294, '10.29': 3102, '10.30': 2115} (181s)
+   referencia v1.07 na mesma plataforma: ops 11142 liquido 43639 PF 1.73 | dias positivos 9/14
+   CSV v1.08 copiado 11669456 bytes
+FIM13 terminal reaberto
