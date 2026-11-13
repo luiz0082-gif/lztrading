@@ -134,6 +134,13 @@ Caminho de solução: (1) criar um símbolo customizado com 100% dos ticks reais
 - Script `MQL5/Scripts/VantagePulse_TickAudit.mq5`: auditoria de ticks por dia dentro do terminal.
 - Resultado: os 9 dias positivos tem assinatura de ticks sinteticos (spread 5,00 constante, ~51 ticks/s, 0% de sinal oposto) e os 5 negativos de dado real (spread variavel, ~110 ticks/s, buffer saturado). O backtest positivo nao e confiavel; o EA com dado real perde ~4,6 pts/operacao. Custos: o tester registra comissao 0; a v1.08 tem `InpCostPerContractRT` (0 = desconhecido) para estimativa.
 
+## CONCLUSÃO EM DADOS REAIS (13/11/2026, noite) - ver `MQL5/Experts/VantagePulse_B3/auditoria/RESULTADO_DADO_REAL.md`
+
+- Símbolo customizado `WINZ26_R` (44,5 M ticks reais, `MQL5/Scripts/VantagePulse_BuildRealSymbol.mq5`): v1.08 STOP80/TP240, 1 contrato, 14/10-11/11: **-R$ 24.464, PF 0,83, 0/20 dias positivos** (antes de custos). O ganho dos testes anteriores vinha de ticks sintéticos do tester.
+- Estudo de sinais em ticks reais (`tools/vp/study1-4.py`): nenhuma de 450 combinações passa t>=3; a única hipótese consistente (operar contra rajadas de atividade) foi reprovada fora da amostra (94 pregões, -2,57 pts/op, t -2,52).
+- Custos Clear/B3 não confirmados em fonte primária; usar custo de equilíbrio (1 ponto = R$ 0,20/contrato) e a nota de corretagem do usuário.
+- Conclusão: sem borda demonstrada. Não operar em conta real.
+
 ## Limitações (não omitir)
 
 - **Sem custos**: o tester não cobra corretagem/emolumentos; são ~460 operações/dia.

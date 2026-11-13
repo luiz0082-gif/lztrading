@@ -1,0 +1,9 @@
+C:\Users\luiz_\OneDrive\Área de Trabalho Luiz\EA & INDICADOR\EA MT5\lztrading\tools\vp\run_export_ticks.py:9: SyntaxWarning: "\V" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\V"? A raw string is also an option.
+  for f in files: shutil.move(f, os.path.join('C:\VP_data',os.path.basename(f)))
+C:\Users\luiz_\OneDrive\Área de Trabalho Luiz\EA & INDICADOR\EA MT5\lztrading\tools\vp\run_export_ticks.py:10: SyntaxWarning: "\V" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\V"? A raw string is also an option.
+  if csv: shutil.copy(csv, os.path.join('C:\VP_data','VP_export_ticks.csv'))
+C:\Users\luiz_\OneDrive\Área de Trabalho Luiz\EA & INDICADOR\EA MT5\lztrading\tools\vp\run_export_ticks.py:11: SyntaxWarning: "\V" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\V"? A raw string is also an option.
+  print('arquivos movidos para C:\VP_data:',len(files),flush=True)
+exportacao: OK (30s)
+arquivos movidos para C:\VP_data: 20
+FIM17

@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\luiz_\OneDrive\Área de Trabalho Luiz\EA & INDICADOR\EA MT5\lztrading\tools\vp\run_build_real.py", line 6, in <module>
+    csv=U.run_script('VantagePulse_BuildRealSymbol',{'InpSource':'WINZ26','InpTarget':'WINZ26_R','InpFrom':'2026.10.13','InpTo':'2026.11.12','InpExitTerminal':'false'},'VP_real_symbol_build.csv',timeout=2400)
+  File "C:\Users\luiz_\OneDrive\Área de Trabalho Luiz\EA & INDICADOR\EA MT5\lztrading\tools\vp\userplat.py", line 57, in run_script
+    if os.path.exists(csv) and done_marker in read16(csv) and time.time() - os.path.getmtime(csv) > 10:
+                                              ~~~~~~^^^^^
+  File "C:\Users\luiz_\OneDrive\Área de Trabalho Luiz\EA & INDICADOR\EA MT5\lztrading\tools\vp\vp_run.py", line 8, in read16
+    b = open(p, "rb").read(); return b.decode("utf-16" if b[:2] in (b"\xff\xfe", b"\xfe\xff") else "utf-8", errors="ignore")
+        ~~~~^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 'C:\\Users\\luiz_\\AppData\\Roaming\\MetaQuotes\\Terminal\\698B86206820B42976F30D28CAC50412\\MQL5\\Files\\VP_real_symbol_build.csv'

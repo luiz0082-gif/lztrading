@@ -1,0 +1,4 @@
+v1.08 referencia no simbolo REAL (WINZ26_R): ops   611 | liquido      -714 | PF 0.82 | dias +  0/ 1 | pior dia    -714 | saldo min    -14 | queda max     832 | acerto 63% | 468s | manifesto OK
+   por dia: {'10.14': -714}
+   mesmo teste no simbolo original: ops 11142 | liquido 43639 | dias + 9/14
+FIM15

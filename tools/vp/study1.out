@@ -1,0 +1,27 @@
+dias carregados: ['20261014', '20261015', '20261016', '20261019', '20261020', '20261021', '20261022', '20261023', '20261026', '20261027', '20261028', '20261029', '20261030', '20261103', '20261104', '20261105', '20261106', '20261109', '20261110', '20261111']
+spread medio na sessao: 5.35 pts | 1 ponto = R$0,20 por contrato | R$1 de custo = 5 pts
+
+combinacoes testadas: 450 (correcao de multiplicidade: com 5% de falso positivo esperam-se ~11 "significativas" por acaso)
+
+MELHORES NO TREINO (media liquida em pts, t) e o que aconteceu no TESTE:
+fam      N   thr    H modo |   n_tr   pts/op      t |   n_te   pts/op      t
+BURST   10     4   30 contra |    281   +17.76    2.4 |    289   +12.73    2.2
+BURST   10     2   60 contra |   1658    +9.03    2.2 |   1657    -1.92   -0.7
+BURST    5     4   60 contra |    489   +16.32    2.0 |    515   +11.18    2.0
+BURST   10     4   15 contra |    324   +11.44    2.0 |    328    +7.99    1.9
+BURST   30     4   15 contra |     77   +26.49    2.0 |     63    +1.43    0.1
+BURST    1     4   60 contra |   1283    +8.46    1.7 |   1206    -3.24   -1.0
+BURST    2     4  120 contra |    651   +14.90    1.7 |    672    -7.07   -1.1
+BURST    2     4   60 contra |    895   +10.06    1.7 |    900    -5.21   -1.3
+BURST   30     4   30 contra |     51   +39.02    1.6 |     45    +5.33    0.3
+BURST   30     4   60 contra |     43   +55.81    1.5 |     40   +45.88    2.4
+FLOW    30   0.5  120 contra |    690   +23.65    1.5 |    724    -4.94   -1.2
+BURST    2     4   30 contra |   1163    +5.09    1.3 |   1141    -4.74   -1.8
+BURST   30     2   60 contra |    903    +7.03    1.3 |    965    +3.15    0.8
+BURST   10     4   60 contra |    238   +14.26    1.3 |    263   +13.08    1.8
+BURST    5     4  120 contra |    378   +13.74    1.2 |    406   +16.97    2.1
+
+combinacoes com media>0 e t>=3 no TREINO: 0
+  das quais positivas tambem no TESTE (media>0 e t>=2): 0
+
+maior media LIQUIDA no teste entre todas as 450: +45.88 pts (R$ 9.18 por contrato)
