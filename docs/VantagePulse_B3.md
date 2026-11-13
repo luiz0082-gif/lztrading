@@ -94,6 +94,23 @@ Rodando o preset `v107_LOTE1_STOP80_TP240` **na plataforma do usuário** (Clear 
 
 Causa: a base de ticks convertida pelo tester do harness (`C:\ClearMM_Tester\Tester\bases\...\WINZ26\202610.tkc`, 85,6 MB) tem ~3 MB a menos que a do tester do usuário (88,6 MB), embora venham do mesmo arquivo do terminal. Faltavam ticks em 16–22/10 e o sinal lucrava com os "saltos". **Todos os resultados do harness que incluem 16–22/10 (e possivelmente outros dias) estão superestimados**, inclusive "21/21 dias positivos". Os resultados válidos são os da plataforma do usuário; o harness precisa usar a base do tester do usuário antes de qualquer novo teste.
 
+## Testes na PLATAFORMA DO USUÁRIO (13/11/2026, 18h) — resultados de referência
+
+Terminal Clear do usuário, presets da pasta dele, 13/10–11/11 (ToDate 12/11), R$700, 12 ms, sem visual (`tools/vp/run_user_batch.py`, saída em `tools/vp/rub.out`; relatórios HTML 04–08 em `Downloads\VantagePulse_relatorios_plataforma`).
+
+| Preset | Ops | Líquido | PF | Dias + | Pior dia | Queda máx. |
+|---|---|---|---|---|---|---|
+| v107 LOTE1 STOP100 TP160 | 12.476 | +R$ 36.643 | 1,48 | 16/21 | −R$ 1.788 | R$ 6.154 |
+| v107 LOTE1 STOP80 TP240 | 12.775 | +R$ 51.543 | 1,76 | 16/21 | −R$ 1.828 | R$ 5.610 |
+| v107 LOTE1 STOP60 TP240 | 14.121 | +R$ 56.481 | 1,83 | 16/21 | −R$ 1.562 | R$ 6.176 |
+| v105 LOTE1 STOP100 | 13.717 | +R$ 45.168 | 1,64 | 16/21 | −R$ 1.480 | R$ 6.507 |
+| v107 ESCADA STOP100 TP160 | 12.476 | +R$ 206.254 | 1,50 | 16/21 | −R$ 10.642 | R$ 35.879 |
+| v107 ESCADA STOP80 TP240 | 12.775 | +R$ 289.322 | 1,78 | 16/21 | −R$ 10.773 | R$ 31.863 |
+| v107 ESCADA STOP60 TP240 | 14.121 | +R$ 317.324 | 1,85 | 16/21 | −R$ 7.602 | R$ 27.618 |
+| v105 ESCADA STOP100 | 13.717 | +R$ 249.875 | 1,65 | 16/21 | −R$ 8.561 | R$ 36.993 |
+
+Os 5 dias negativos são sempre os mesmos (16, 19, 20, 21 e 22/10). **Qualidade dos dados:** o próprio tester do usuário descartou os ticks reais em 8.988 de 11.839 minutos (76%) e em 14 dias inteiros, usando ticks gerados a partir das barras ("tick prices mismatch" entre ticks e barras M1 da Clear). Portanto nenhum backtest deste scalper de ticks no WINZ26 da Clear é confiável como previsão; a evidência válida é a operação ao vivo/demo (CSV).
+
 ## Limitações (não omitir)
 
 - **Sem custos**: o tester não cobra corretagem/emolumentos; são ~460 operações/dia.
