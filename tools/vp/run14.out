@@ -1,0 +1,28 @@
+PERIODO 13/10 a 11/11 (30 dias corridos), R$700, atraso 12ms
+--- 1 CONTRATO ---
+1ctr-a) stop 100 pts, tempo-lucro 25 s: ops 9528 net 51225 PF 1.87 acerto 72% medG 16.1 medP -22.3 DD 389 saldoMin 679 preco0 0
+   pts/op 26.9 | dias 21 positivos 21 | pior dia 349 | maior posicao aberta 0:06:11
+1ctr-b) stop 100 pts, tempo-lucro 60 s: ops 8843 net 46336 PF 1.73 acerto 67% medG 18.5 medP -22.2 DD 422 saldoMin 659 preco0 0
+   pts/op 26.2 | dias 21 positivos 21 | pior dia 328 | maior posicao aberta 0:06:44
+1ctr-c) stop 80 pts, tempo-lucro 25 s: ops 9961 net 58869 PF 2.05 acerto 69% medG 16.7 medP -18.1 DD 292 saldoMin 677 preco0 0
+   pts/op 29.5 | dias 21 positivos 21 | pior dia 363 | maior posicao aberta 0:06:11
+1ctr-d) stop 120 pts, tempo-lucro 25 s: ops 9142 net 43777 PF 1.71 acerto 74% medG 15.6 medP -26.3 DD 536 saldoMin 666 preco0 0
+   pts/op 23.9 | dias 21 positivos 21 | pior dia 262 | maior posicao aberta 0:06:49
+1ctr-e) stop 100 pts, TP 240, tempo-lucro 25 s: ops 8711 net 62891 PF 2.28 acerto 75% medG 17.2 medP -22.2 DD 354 saldoMin 679 preco0 0
+   pts/op 36.1 | dias 21 positivos 21 | pior dia 427 | maior posicao aberta 0:06:11
+1ctr-f) SEM stop, tempo-lucro 25 s: ops 1052 net 4394 PF 1.60 acerto 98% medG 11.4 medP -386.9 DD 2181 saldoMin 700 preco0 0
+   pts/op 20.9 | dias 21 positivos 13 | pior dia -1988 | maior posicao aberta 7:59:17
+--- ESCADA 1-10 ---
+esc-a) stop 100 pts, tempo-lucro 25 s: ops 9528 net 271958 PF 1.82 acerto 72% medG 87.5 medP -124.2 DD 2511 saldoMin 644 preco0 0
+   pts/op 142.7 | dias 21 positivos 21 | pior dia 2363 | maior posicao aberta 0:06:11
+esc-b) stop 100 pts, tempo-lucro 60 s: ops 8843 net 253030 PF 1.72 acerto 67% medG 101.4 medP -122.3 DD 3090 saldoMin 544 preco0 0
+   pts/op 143.1 | dias 21 positivos 21 | pior dia 575 | maior posicao aberta 0:06:44
+esc-c) stop 80 pts, tempo-lucro 25 s: ops 9961 net 326846 PF 2.06 acerto 69% medG 92.5 medP -100.1 DD 2236 saldoMin 605 preco0 0
+   pts/op 164.1 | dias 21 positivos 21 | pior dia 1045 | maior posicao aberta 0:06:11
+esc-d) stop 120 pts, tempo-lucro 25 s: ops 9142 net 237039 PF 1.70 acerto 74% medG 85.1 medP -144.6 DD 2836 saldoMin 604 preco0 0
+   pts/op 129.6 | dias 21 positivos 21 | pior dia 1950 | maior posicao aberta 0:06:49
+esc-e) stop R$200 (posicao inteira), tempo-lucro 25 s: ops 6 net -816 PF 0.01 acerto 33% medG 3.5 medP -205.8 DD 823 saldoMin -116 preco0 0
+   pts/op -680.0 | dias 1 positivos 0 | pior dia -816 | maior posicao aberta 0:08:38
+esc-f) SEM stop, tempo-lucro 25 s: ops 480 net -5293 PF 0.86 acerto 98% medG 68.0 medP -3723.2 DD 21810 saldoMin -4593 preco0 0
+   pts/op -55.1 | dias 10 positivos 7 | pior dia -20429 | maior posicao aberta 7:59:17
+FIM

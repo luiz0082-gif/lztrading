@@ -1,0 +1,21 @@
+import sys; sys.path.insert(0,'.')
+import run12
+from run12 import *
+run12.A,run12.B='2026.10.13','2026.11.12'
+print('PERIODO 13/10 a 11/11 (30 dias corridos), R$700, atraso 12ms',flush=True)
+print('--- 1 CONTRATO ---',flush=True)
+go('1ctr-a) stop 100 pts, tempo-lucro 25 s',InpStopType=1,InpStopPoints=100,InpTimeExitSeconds=25)
+go('1ctr-b) stop 100 pts, tempo-lucro 60 s',InpStopType=1,InpStopPoints=100,InpTimeExitSeconds=60)
+go('1ctr-c) stop 80 pts, tempo-lucro 25 s',InpStopType=1,InpStopPoints=80,InpTimeExitSeconds=25)
+go('1ctr-d) stop 120 pts, tempo-lucro 25 s',InpStopType=1,InpStopPoints=120,InpTimeExitSeconds=25)
+go('1ctr-e) stop 100 pts, TP 240, tempo-lucro 25 s',InpStopType=1,InpStopPoints=100,InpTakeProfitPoints=240,InpTimeExitSeconds=25)
+go('1ctr-f) SEM stop, tempo-lucro 25 s',InpStopType=0,InpTimeExitSeconds=25)
+print('--- ESCADA 1-10 ---',flush=True)
+L=dict(InpLadderEnable='true')
+go('esc-a) stop 100 pts, tempo-lucro 25 s',InpStopType=1,InpStopPoints=100,InpTimeExitSeconds=25,**L)
+go('esc-b) stop 100 pts, tempo-lucro 60 s',InpStopType=1,InpStopPoints=100,InpTimeExitSeconds=60,**L)
+go('esc-c) stop 80 pts, tempo-lucro 25 s',InpStopType=1,InpStopPoints=80,InpTimeExitSeconds=25,**L)
+go('esc-d) stop 120 pts, tempo-lucro 25 s',InpStopType=1,InpStopPoints=120,InpTimeExitSeconds=25,**L)
+go('esc-e) stop R$200 (posicao inteira), tempo-lucro 25 s',InpStopType=2,InpStopMoney=200,InpTimeExitSeconds=25,**L)
+go('esc-f) SEM stop, tempo-lucro 25 s',InpStopType=0,InpTimeExitSeconds=25,**L)
+print('FIM',flush=True)

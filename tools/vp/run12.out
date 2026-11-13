@@ -1,0 +1,6 @@
+N1) stop 100 pts, tempo no lucro 25 s, 1 ctr: ops 8173 net 47020 PF 1.92 acerto 72% medG 16.7 medP -22.4 DD 389 saldoMin 679 preco0 0
+   pts/op 28.8 | dias 15 positivos 15 | pior dia 981 | maior posicao aberta 0:06:00
+N2) stop 100 pts, tempo no lucro 10 s, 1 ctr: ops 463 net -709 PF 0.73 acerto 75% medG 5.5 medP -22.2 DD 735 saldoMin -9 preco0 0
+   pts/op -7.7 | dias 1 positivos 0 | pior dia -709 | maior posicao aberta 0:01:00
+N3) stop 100 pts, tempo no lucro 5 s, 1 ctr: ops 231 net -705 PF 0.40 acerto 77% medG 2.6 medP -21.7 DD 711 saldoMin -5 preco0 0
+   pts/op -15.3 | dias 1 positivos 0 | pior dia -705 | maior posicao aberta 0:01:00

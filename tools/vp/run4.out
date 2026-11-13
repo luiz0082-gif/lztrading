@@ -1,0 +1,5 @@
+1) lote 1 FIXO, R$20k SEM RELATORIO
+2) escada 1-10, R$700, sem limite diario: ops 9651 net 295937 PF 2.09 acerto 57% medG 102.6 medP -70.6 DD 1081 saldoMin 586 preco0 0
+   pts/op 153.3 | dias 21, positivos 21, pior dia 2948, melhor dia 69292
+3) escada 1-10, R$700, limite diario R$300: ops 8462 net 261043 PF 2.08 acerto 57% medG 104.0 medP -71.0 DD 1081 saldoMin 586 preco0 0
+   pts/op 154.2 | dias 21, positivos 18, pior dia -415, melhor dia 67527

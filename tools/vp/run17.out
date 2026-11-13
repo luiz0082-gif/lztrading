@@ -1,0 +1,5 @@
+A) CONFIG QUE EU TESTEI (stop 80, TP 240, 1 ctr): ops 7370 net 62086 PF 2.68 acerto 72% medG 18.6 medP -18.1 DD 283 saldoMin 682 preco0 0
+   dias positivos 14/14 | liquido por dia: {'10.13': 3231, '10.14': 4397, '10.15': 4014, '10.16': 3340, '10.19': 2384, '10.20': 3719, '10.21': 2003, '10.22': 1700, '10.23': 1869, '10.26': 18786, '10.27': 5132, '10.28': 6294, '10.29': 3102, '10.30': 2115}
+B) PRESET ENTREGUE, como esta no arquivo: ops 0 net 0 PF 999.00 acerto 0% medG 0.0 medP 0.0 DD 0 saldoMin 700 preco0 0
+   dias positivos 0/0 | liquido por dia: {}
+FIM4

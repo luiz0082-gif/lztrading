@@ -1,0 +1,8 @@
+lote1 fixo, atraso 0ms: ops 9651 net 296636 PF 2.09 acerto 57% medG 102.7 medP -69.9 DD 1103 saldoMin 19894 preco0 0
+   pts/op (lote medio): 153.7 | dias 21 positivos 21
+lote1 fixo, atraso 12ms: ops 9651 net 295937 PF 2.09 acerto 57% medG 102.6 medP -70.6 DD 1081 saldoMin 19886 preco0 0
+   pts/op (lote medio): 153.3 | dias 21 positivos 21
+lote1 fixo, atraso 60ms: ops 9672 net 296781 PF 2.09 acerto 58% medG 101.9 medP -70.5 DD 974 saldoMin 19899 preco0 0
+   pts/op (lote medio): 153.4 | dias 21 positivos 21
+escada 1-10, atraso 12ms: ops 9651 net 295937 PF 2.09 acerto 57% medG 102.6 medP -70.6 DD 1081 saldoMin 19886 preco0 0
+   pts/op (lote medio): 153.3 | dias 21 positivos 21

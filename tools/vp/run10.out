@@ -1,0 +1,4 @@
+F) positivo apos 25s; se negativo espera voltar ate 90s, 1 ctr: ops 8199 net 46963 PF 1.92 acerto 71% medG 16.8 medP -21.8 DD 359 saldoMin 679 preco0 0
+   pts/op 28.6 | dias 15 positivos 15 | pior dia 994
+G) positivo apos 15s; se negativo espera voltar ate 90s, 1 ctr: ops 575 net -702 PF 0.82 acerto 68% medG 8.4 medP -21.4 DD 728 saldoMin -2 preco0 0
+   pts/op -6.1 | dias 1 positivos 0 | pior dia -702

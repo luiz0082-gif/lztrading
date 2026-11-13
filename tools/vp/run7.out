@@ -1,0 +1,6 @@
+stop 100 pts: ops 8497 net 56766 PF 2.34 acerto 62% medG 18.9 medP -13.8 DD 115 saldoMin 682 preco0 0
+   pts/op 33.4 | dias 15 positivos 15 | pior dia 1714
+stop 150 pts: ops 8123 net 50600 PF 2.14 acerto 62% medG 18.7 medP -15.3 DD 172 saldoMin 650 preco0 0
+   pts/op 31.1 | dias 15 positivos 15 | pior dia 1468
+stop 750 pts (= R$150 com 1 contrato): ops 7572 net 25107 PF 1.42 acerto 59% medG 18.9 medP -20.0 DD 5782 saldoMin 390 preco0 0
+   pts/op 16.6 | dias 15 positivos 14 | pior dia -3799

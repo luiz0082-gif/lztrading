@@ -1,0 +1,8 @@
+stop 100 pts, SEM escada (1 ctr), R$700: ops 9651 net 54138 PF 2.09 acerto 57% medG 18.8 medP -12.9 DD 173 saldoMin 682 preco0 0
+   dias 21, positivos 21, pior dia 468, melhor dia 12727
+stop 100 pts, COM escada 1-10, R$700: ops 9651 net 296025 PF 2.09 acerto 57% medG 102.6 medP -70.6 DD 1081 saldoMin 586 preco0 0
+   dias 21, positivos 21, pior dia 2984, melhor dia 69311
+stop 150 pts, SEM escada (1 ctr), R$700: ops 9200 net 45724 PF 1.90 acerto 58% medG 18.3 medP -14.0 DD 204 saldoMin 642 preco0 0
+   dias 21, positivos 21, pior dia 371, melhor dia 8675
+stop 150 pts, COM escada 1-10, R$700: ops 9200 net 257696 PF 1.93 acerto 58% medG 101.1 medP -76.2 DD 1578 saldoMin 162 preco0 0
+   dias 21, positivos 21, pior dia 2661, melhor dia 48875

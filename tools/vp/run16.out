@@ -1,0 +1,21 @@
+===== 1 CONTRATO, stop 80, alvo 240 | liquido 69990 ops 9003
+  09h  liquido      9142  ops   987  acerto 74%  por op    9.3
+  10h  liquido     21500  ops  1984  acerto 70%  por op   10.8
+  11h  liquido     16126  ops  1592  acerto 74%  por op   10.1
+  12h  liquido      6750  ops  1111  acerto 73%  por op    6.1
+  13h  liquido      4114  ops   789  acerto 71%  por op    5.2
+  14h  liquido      3043  ops   703  acerto 69%  por op    4.3
+  15h  liquido      4145  ops   748  acerto 71%  por op    5.5
+  16h  liquido      4017  ops   767  acerto 73%  por op    5.2
+  17h  liquido      1153  ops   322  acerto 75%  por op    3.6
+===== ESCADA 1-10, stop 80, alvo 240 | liquido 377657 ops 9003
+  09h  liquido     48484  ops   987  acerto 74%  por op   49.1
+  10h  liquido    120747  ops  1984  acerto 70%  por op   60.9
+  11h  liquido     85661  ops  1592  acerto 74%  por op   53.8
+  12h  liquido     35355  ops  1111  acerto 73%  por op   31.8
+  13h  liquido     21284  ops   789  acerto 71%  por op   27.0
+  14h  liquido     16264  ops   703  acerto 69%  por op   23.1
+  15h  liquido     23800  ops   748  acerto 71%  por op   31.8
+  16h  liquido     20235  ops   767  acerto 73%  por op   26.4
+  17h  liquido      5827  ops   322  acerto 75%  por op   18.1
+FIM3

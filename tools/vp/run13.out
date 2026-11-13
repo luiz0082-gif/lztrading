@@ -1,0 +1,12 @@
+N4) stop 100 pts, tempo no lucro 40 s, 1 ctr: ops 7819 net 36265 PF 1.69 acerto 70% medG 16.3 medP -22.3 DD 444 saldoMin 659 preco0 0
+   pts/op 23.2 | dias 15 positivos 15 | pior dia 328 | maior posicao aberta 0:06:00
+N5) stop 100 pts, tempo no lucro 60 s, 1 ctr: ops 7571 net 42964 PF 1.78 acerto 68% medG 19.1 medP -22.3 DD 422 saldoMin 659 preco0 0
+   pts/op 28.4 | dias 15 positivos 15 | pior dia 505 | maior posicao aberta 0:06:44
+N6) stop 150 pts, tempo no lucro 25 s, 1 ctr: ops 7314 net 33576 PF 1.61 acerto 77% medG 15.7 medP -32.5 DD 516 saldoMin 648 preco0 0
+   pts/op 23.0 | dias 15 positivos 15 | pior dia 155 | maior posicao aberta 0:11:27
+L1) ESCADA 1-10, stop 100 pts, tempo no lucro 25 s: ops 8173 net 248792 PF 1.87 acerto 72% medG 90.6 medP -124.8 DD 2511 saldoMin 644 preco0 0
+   pts/op 152.2 | dias 15 positivos 15 | pior dia 5326 | maior posicao aberta 0:06:00
+L2) ESCADA 1-10, stop R$150 (posicao inteira), tempo no lucro 25 s: ops 6333 net 182205 PF 1.77 acerto 78% medG 84.9 medP -165.9 DD 2852 saldoMin 320 preco0 0
+   pts/op 143.9 | dias 15 positivos 15 | pior dia 1415 | maior posicao aberta 2:20:34
+L3) ESCADA 1-10, stop R$300 (posicao inteira), tempo no lucro 25 s: ops 218 net -848 PF 0.92 acerto 84% medG 56.6 medP -320.1 DD 2151 saldoMin -148 preco0 0
+   pts/op -19.4 | dias 1 positivos 0 | pior dia -848 | maior posicao aberta 0:17:45

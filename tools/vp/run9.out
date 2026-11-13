@@ -1,0 +1,10 @@
+A) v1.06 com tudo novo DESLIGADO, 1 ctr (ref v1.05: 8497 ops, +56766): ops 8497 net 56766 PF 2.34 acerto 62% medG 18.9 medP -13.8 DD 115 saldoMin 682 preco0 0
+   pts/op 33.4 | dias 15 positivos 15 | pior dia 1714
+B) tempo no positivo 8s + hold 25s, 1 ctr: ops 261 net -708 PF 0.43 acerto 70% medG 3.0 medP -16.6 DD 720 saldoMin -8 preco0 0
+   pts/op -13.6 | dias 1 positivos 0 | pior dia -708
+C) tempo no positivo 8s, SEM hold maximo, 1 ctr: ops 263 net -705 PF 0.48 acerto 76% medG 3.2 medP -21.7 DD 717 saldoMin -5 preco0 0
+   pts/op -13.4 | dias 1 positivos 0 | pior dia -705
+D) C com escada 1-10: ops 48 net -744 PF 0.38 acerto 77% medG 12.4 medP -109.4 DD 850 saldoMin -44 preco0 0
+   pts/op -77.5 | dias 1 positivos 0 | pior dia -744
+E) stop em DINHEIRO R$150 (sem stop em pontos) + tempo positivo, sem hold, escada 1-10: ops 35 net -827 PF 0.27 acerto 80% medG 11.2 medP -162.9 DD 851 saldoMin -127 preco0 0
+   pts/op -118.1 | dias 1 positivos 0 | pior dia -827

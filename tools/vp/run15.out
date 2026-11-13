@@ -1,0 +1,10 @@
+--- COMBINACOES (30 dias) ---
+1ctr-g) stop 80 pts + TP 240, tempo-lucro 25 s: ops 9003 net 69990 PF 2.54 acerto 72% medG 17.8 medP -18.0 DD 283 saldoMin 682 preco0 0
+   pts/op 38.9 | dias 21 positivos 21 | pior dia 446 | maior posicao aberta 0:06:11
+1ctr-h) stop 60 pts + TP 240, tempo-lucro 25 s: ops 9349 net 77023 PF 2.87 acerto 68% medG 18.6 medP -13.7 DD 200 saldoMin 682 preco0 0
+   pts/op 41.2 | dias 21 positivos 21 | pior dia 468 | maior posicao aberta 0:06:11
+esc-g) stop 80 pts + TP 240, tempo-lucro 25 s: ops 9003 net 377657 PF 2.51 acerto 72% medG 97.0 medP -99.6 DD 1616 saldoMin 682 preco0 0
+   pts/op 209.7 | dias 21 positivos 21 | pior dia 3031 | maior posicao aberta 0:06:11
+esc-h) stop 60 pts + TP 240, tempo-lucro 25 s: ops 9349 net 437498 PF 2.98 acerto 68% medG 103.9 medP -73.6 DD 1463 saldoMin 682 preco0 0
+   pts/op 234.0 | dias 21 positivos 21 | pior dia 2596 | maior posicao aberta 0:06:11
+FIM2
