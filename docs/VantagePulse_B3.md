@@ -111,6 +111,23 @@ Terminal Clear do usuário, presets da pasta dele, 13/10–11/11 (ToDate 12/11),
 
 Os 5 dias negativos são sempre os mesmos (16, 19, 20, 21 e 22/10). **Qualidade dos dados:** o próprio tester do usuário descartou os ticks reais em 8.988 de 11.839 minutos (76%) e em 14 dias inteiros, usando ticks gerados a partir das barras ("tick prices mismatch" entre ticks e barras M1 da Clear). Portanto nenhum backtest deste scalper de ticks no WINZ26 da Clear é confiável como previsão; a evidência válida é a operação ao vivo/demo (CSV).
 
+## Por que 16–22/10 foram negativos (diagnóstico, 13/11/2026)
+
+No teste da plataforma do usuário (v107 LOTE1 STOP80 TP240, 13/10–02/11), o log do tester mostra que os ticks reais foram **descartados** em 13, 14, 15, 23, 26, 27, 28, 29 e 30/10 (ticks gerados a partir das barras) e **mantidos** só em 16, 19, 20, 21 e 22/10 — exatamente os 5 dias negativos.
+
+| | Dias com ticks GERADOS (9) | Dias com ticks REAIS (5) |
+|---|---|---|
+| Operações por dia | 337–1.272 (média 600) | 984–1.330 (média 1.137) |
+| Pontos por operação | **+46,3** | **−4,6** |
+| Saída por tempo no lucro | 53%, +83 pts | 28%, +28 pts |
+| Alvo (TP) | 9%, +276 pts | **1%** |
+| Stop | 28%, −91 pts | 32%, −86 pts |
+| Trailing | 11%, +31 | 33%, +31 |
+
+Conclusão: o lucro do backtest vem dos ticks gerados (o preço anda "em linha reta" entre os pontos da barra, criando continuidade artificial que o sinal de momentum captura). Com ticks reais o EA ganha ~+30 pts e perde ~−86 pts e fica negativo — igual à demo ao vivo (0 alvos, −R$ 617 em 13/11). Não é sequência ruim nem recuo/stop: **a estratégia, como está, não tem vantagem em ticks reais**.
+
+Caminho de solução: (1) criar um símbolo customizado com 100% dos ticks reais da Clear (barras reconstruídas dos próprios ticks, para o tester não descartar nada); (2) reavaliar o EA só em ticks reais (jun–nov/2026); (3) só então redesenhar entrada/saída. Não operar conta real até lá.
+
 ## Limitações (não omitir)
 
 - **Sem custos**: o tester não cobra corretagem/emolumentos; são ~460 operações/dia.
