@@ -1,0 +1,4 @@
+MES escada 3 sem stop              ops  1188 | liquido       -69 | PF 1.00 | dias + 13/20 | pior dia   -6521 | saldo min  47081 | queda max    8722 | acerto 97% | 306s | manifesto OK
+MES escada 10 sem stop             ops  1188 | liquido       332 | PF 1.01 | dias + 14/20 | pior dia  -17371 | saldo min  41062 | queda max   24094 | acerto 97% | 303s | manifesto OK
+MES escada 10 + stop 1000pts       ops  2811 | liquido      3639 | PF 1.03 | dias + 12/20 | pior dia   -5367 | saldo min  50000 | queda max   19210 | acerto 94% | 306s | manifesto OK
+FIM
