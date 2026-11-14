@@ -1,0 +1,3 @@
+MES stop 500pts                    ops  4511 | liquido     -2430 | PF 0.93 | dias +  7/20 | pior dia    -887 | saldo min  47228 | queda max    2987 | acerto 91% | 321s | manifesto OK
+MES stop 1000pts                   ops  2811 | liquido       651 | PF 1.03 | dias + 12/20 | pior dia    -664 | saldo min  49723 | queda max    2631 | acerto 94% | 339s | manifesto OK
+FIM
