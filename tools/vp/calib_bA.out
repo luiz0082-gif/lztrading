@@ -1,0 +1,9 @@
+sem stop                           ops   396 | liquido      1783 | PF 2.78 | dias +  4/ 5 | pior dia    -258 | saldo min  50000 | queda max     469 | acerto 98% | 117s | manifesto OK
+sem stop+fast80                    ops   155 | liquido        50 | PF 1.04 | dias +  2/ 5 | pior dia    -433 | saldo min  50000 | queda max     660 | acerto 96% | 123s | manifesto OK
+sem stop+tempo60                   ops   394 | liquido      1866 | PF 2.98 | dias +  4/ 5 | pior dia     -46 | saldo min  50000 | queda max     301 | acerto 97% | 117s | manifesto OK
+sem stop+sem tempo                 ops   296 | liquido      1595 | PF 2.89 | dias +  4/ 5 | pior dia    -187 | saldo min  50000 | queda max     458 | acerto 97% | 111s | manifesto OK
+sem stop+TP400                     ops   386 | liquido      1717 | PF 2.71 | dias +  4/ 5 | pior dia    -260 | saldo min  50000 | queda max     469 | acerto 98% | 129s | manifesto OK
+sem stop+fast80+score85            ops    92 | liquido      -293 | PF 0.65 | dias +  3/ 5 | pior dia    -474 | saldo min  49707 | queda max     727 | acerto 97% | 120s | manifesto OK
+sem stop+sem trailing              ops   355 | liquido      1622 | PF 2.64 | dias +  4/ 5 | pior dia    -255 | saldo min  50000 | queda max     469 | acerto 98% | 126s | manifesto OK
+sem stop+fast80+tempo60            ops   148 | liquido       179 | PF 1.15 | dias +  2/ 5 | pior dia    -432 | saldo min  50000 | queda max     671 | acerto 96% | 123s | manifesto OK
+FIM

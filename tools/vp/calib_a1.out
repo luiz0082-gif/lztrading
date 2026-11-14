@@ -1,0 +1,15 @@
+ref 1ctr (ladder off)              ops  1029 | liquido     -1242 | PF 0.83 | dias +  1/ 5 | pior dia    -611 | saldo min  48677 | queda max    1936 | acerto 92% | 129s | manifesto OK
+TP80                               ops  1019 | liquido     -1851 | PF 0.75 | dias +  1/ 5 | pior dia   -1134 | saldo min  47797 | queda max    2260 | acerto 91% | 126s | manifesto OK
+TP400                              ops  1004 | liquido     -1220 | PF 0.83 | dias +  1/ 5 | pior dia    -614 | saldo min  48673 | queda max    1795 | acerto 92% | 129s | manifesto OK
+stop 100pts                        ops     0 | liquido         0 | PF 999.00 | dias +  0/ 0 | pior dia       0 | saldo min  50000 | queda max       0 | acerto 0% | 15s | manifesto SEM CSV (nao verificado)
+stop 300pts                        ops  1439 | liquido      -907 | PF 0.90 | dias +  2/ 5 | pior dia    -620 | saldo min  49073 | queda max    1338 | acerto 89% | 135s | manifesto OK
+sem stop                           ops   396 | liquido      1783 | PF 2.78 | dias +  4/ 5 | pior dia    -258 | saldo min  50000 | queda max     469 | acerto 98% | 126s | manifesto OK
+sem tempo                          ops   890 | liquido       101 | PF 1.02 | dias +  3/ 5 | pior dia    -356 | saldo min  49931 | queda max    1190 | acerto 91% | 126s | manifesto OK
+tempo 60s                          ops  1022 | liquido      -419 | PF 0.94 | dias +  1/ 5 | pior dia    -375 | saldo min  49570 | queda max     981 | acerto 91% | 120s | manifesto OK
+sem trailing                       ops  1016 | liquido      -458 | PF 0.93 | dias +  1/ 5 | pior dia    -497 | saldo min  49442 | queda max    1628 | acerto 93% | 117s | manifesto OK
+sem saida oposta                   ops   957 | liquido     -1182 | PF 0.83 | dias +  1/ 5 | pior dia    -561 | saldo min  48806 | queda max    2136 | acerto 92% | 117s | manifesto OK
+score 85                           ops   776 | liquido      -769 | PF 0.85 | dias +  1/ 5 | pior dia    -521 | saldo min  49220 | queda max    1001 | acerto 92% | 117s | manifesto OK
+fast move 80                       ops   266 | liquido       279 | PF 1.17 | dias +  3/ 5 | pior dia    -326 | saldo min  50000 | queda max     541 | acerto 92% | 114s | manifesto OK
+cooldown 3000                      ops   956 | liquido     -1688 | PF 0.76 | dias +  1/ 5 | pior dia    -617 | saldo min  48290 | queda max    2207 | acerto 92% | 123s | manifesto OK
+max 3/min                          ops  1040 | liquido     -1319 | PF 0.82 | dias +  1/ 5 | pior dia    -642 | saldo min  48600 | queda max    1749 | acerto 92% | 132s | manifesto OK
+FIM
